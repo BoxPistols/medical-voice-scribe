@@ -869,10 +869,6 @@ export default function Home() {
                               <div className="soap-content">{result.soap.subjective.pastMedicalHistory}</div>
                             </div>
                           )}
-                          {/* Simple string fallback */}
-                          {typeof result.soap.S === 'string' && (
-                            <div className="soap-content">{result.soap.S}</div>
-                          )}
                         </div>
                       </div>
 
@@ -915,10 +911,6 @@ export default function Home() {
                               <div className="soap-content">{result.soap.objective.physicalExam}</div>
                             </div>
                           )}
-                          {/* Simple string fallback */}
-                          {typeof result.soap.O === 'string' && (
-                            <div className="soap-content">{result.soap.O}</div>
-                          )}
                         </div>
                       </div>
 
@@ -952,10 +944,6 @@ export default function Home() {
                               <div className="font-bold text-xs text-gray-600 mb-1">臨床的評価</div>
                               <div className="soap-content">{result.soap.assessment.clinicalImpression}</div>
                             </div>
-                          )}
-                          {/* Simple string fallback */}
-                          {typeof result.soap.A === 'string' && (
-                            <div className="soap-content">{result.soap.A}</div>
                           )}
                         </div>
                       </div>
@@ -1010,10 +998,6 @@ export default function Home() {
                               <div className="font-bold text-xs text-gray-600 mb-1">患者指導</div>
                               <div className="soap-content">{result.soap.plan.patientEducation}</div>
                             </div>
-                          )}
-                          {/* Simple string fallback */}
-                          {typeof result.soap.P === 'string' && (
-                            <div className="soap-content">{result.soap.P}</div>
                           )}
                         </div>
                       </div>
