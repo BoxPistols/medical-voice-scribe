@@ -54,6 +54,10 @@ export default function Home() {
 
   // Text-to-speech state
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [showSpeechSettings, setShowSpeechSettings] = useState(false);
+  const [speechRate, setSpeechRate] = useState(1.0);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceIndex, setSelectedVoiceIndex] = useState<number>(0);
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -92,6 +96,22 @@ export default function Home() {
       };
 
       recognitionRef.current = recognition;
+    }
+
+    // Load available voices for text-to-speech
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const japaneseVoices = voices.filter(voice => voice.lang.startsWith('ja'));
+      setAvailableVoices(japaneseVoices);
+      if (japaneseVoices.length > 0 && selectedVoiceIndex === 0) {
+        setSelectedVoiceIndex(0);
+      }
+    };
+
+    loadVoices();
+    // Voices may load asynchronously
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
     return () => {
@@ -256,8 +276,13 @@ export default function Home() {
       const text = extractTextFromSoap(result);
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ja-JP';
-      utterance.rate = 1.0;
+      utterance.rate = speechRate;
       utterance.pitch = 1.0;
+
+      // Apply selected voice if available
+      if (availableVoices.length > 0 && availableVoices[selectedVoiceIndex]) {
+        utterance.voice = availableVoices[selectedVoiceIndex];
+      }
 
       utterance.onend = () => {
         setIsSpeaking(false);
@@ -589,58 +614,127 @@ export default function Home() {
                           </svg>
                           会話テキスト
                         </button>
-                        <h2 className="panel-title">AI生成SOAPカルテ</h2>
-                        <button
-                          onClick={toggleSpeech}
-                          disabled={!result}
-                          className="btn btn-secondary py-1 px-3 text-xs"
-                          aria-label={isSpeaking ? '読み上げを停止' : 'カルテを読み上げ'}
-                        >
-                          {isSpeaking ? (
-                            <>
+                        <h2 className="panel-title text-sm">SOAPカルテ</h2>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={toggleSpeech}
+                            disabled={!result}
+                            className="btn btn-secondary py-1 px-2 text-xs"
+                            aria-label={isSpeaking ? '読み上げを停止' : 'カルテを読み上げ'}
+                          >
+                            {isSpeaking ? (
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <rect x="6" y="6" width="8" height="8" />
                               </svg>
-                              停止
-                            </>
-                          ) : (
-                            <>
+                            ) : (
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                               </svg>
-                              読上
-                            </>
-                          )}
-                        </button>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => setShowSpeechSettings(!showSpeechSettings)}
+                            disabled={!result}
+                            className="btn btn-secondary py-1 px-2 text-xs"
+                            aria-label="音声設定"
+                          >
+                            <svg className={`w-4 h-4 transition-transform ${showSpeechSettings ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        </div>
                       </>
                     ) : (
                       <>
                         <h2 className="panel-title">AI生成SOAPカルテ</h2>
-                        <button
-                          onClick={toggleSpeech}
-                          disabled={!result}
-                          className="btn btn-secondary"
-                          aria-label={isSpeaking ? '読み上げを停止' : 'カルテを読み上げ'}
-                        >
-                          {isSpeaking ? (
-                            <>
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                <rect x="6" y="6" width="8" height="8" />
-                              </svg>
-                              停止
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                              </svg>
-                              読み上げ
-                            </>
-                          )}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={toggleSpeech}
+                            disabled={!result}
+                            className="btn btn-secondary"
+                            aria-label={isSpeaking ? '読み上げを停止' : 'カルテを読み上げ'}
+                          >
+                            {isSpeaking ? (
+                              <>
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                  <rect x="6" y="6" width="8" height="8" />
+                                </svg>
+                                停止
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                </svg>
+                                読み上げ
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => setShowSpeechSettings(!showSpeechSettings)}
+                            disabled={!result}
+                            className="btn btn-secondary p-2"
+                            aria-label="音声設定"
+                            title="音声設定"
+                          >
+                            <svg className={`w-4 h-4 transition-transform ${showSpeechSettings ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        </div>
                       </>
                     )}
                   </div>
+
+                  {/* Speech settings panel */}
+                  {showSpeechSettings && result && (
+                    <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                      <div className="space-y-4">
+                        {/* Speed selection */}
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-2">
+                            読み上げスピード
+                          </label>
+                          <div className="flex flex-wrap gap-2">
+                            {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((rate) => (
+                              <button
+                                key={rate}
+                                onClick={() => setSpeechRate(rate)}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                                  speechRate === rate
+                                    ? 'bg-teal-600 text-white'
+                                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                {rate}x
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Voice selection */}
+                        {availableVoices.length > 0 && (
+                          <div>
+                            <label htmlFor="voice-select" className="block text-xs font-semibold text-gray-700 mb-2">
+                              音声の種類
+                            </label>
+                            <select
+                              id="voice-select"
+                              value={selectedVoiceIndex}
+                              onChange={(e) => setSelectedVoiceIndex(Number(e.target.value))}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            >
+                              {availableVoices.map((voice, index) => (
+                                <option key={index} value={index}>
+                                  {voice.name} ({voice.lang})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 overflow-y-auto">
 
