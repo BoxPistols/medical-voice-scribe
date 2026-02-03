@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import type { SoapNote } from './api/analyze/types';
 
 // Web Speech API type definitions
 interface IWindow extends Window {
@@ -12,12 +13,15 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SoapNote | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   // Resizable layout state (PC)
   const [leftWidth, setLeftWidth] = useState(50); // percentage
   const [isResizing, setIsResizing] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Accordion state (Mobile)
   const [activePanel, setActivePanel] = useState<'transcript' | 'result'>('transcript');
@@ -27,6 +31,15 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
+
+    // Check screen size for responsive layout
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+
     const { webkitSpeechRecognition, SpeechRecognition } = window as unknown as IWindow;
     const Recognition = SpeechRecognition || webkitSpeechRecognition;
 
@@ -50,6 +63,14 @@ export default function Home() {
 
       recognitionRef.current = recognition;
     }
+
+    return () => {
+      window.removeEventListener('resize', checkScreenSize);
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+    };
   }, []);
 
   const toggleRecording = () => {
@@ -64,6 +85,7 @@ export default function Home() {
   const handleAnalyze = async () => {
     if (!transcript) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
@@ -73,28 +95,56 @@ export default function Home() {
       const data = await res.json();
 
       if (data.error) {
-        alert(`Error: ${data.error}`);
+        setError(data.error);
         return;
       }
 
       if (!data.soap) {
         console.error('Invalid data structure:', data);
-        alert('Invalid response format from AI. Please try again.');
+        setError('AIの応答形式が不正です。もう一度お試しください。');
         return;
       }
 
       setResult(data);
     } catch (e) {
       console.error(e);
-      alert('An error occurred. Please check your API key and network connection.');
+      setError('エラーが発生しました。APIキーとネットワーク接続を確認してください。');
     } finally {
       setLoading(false);
     }
   };
 
   const handleClear = () => {
+    if (!transcript && !result) return;
+
+    const hasContent = transcript.length > 0 || result !== null;
+    if (hasContent) {
+      const confirmed = window.confirm(
+        '入力内容と生成結果をすべて削除しますか？\nこの操作は取り消せません。'
+      );
+      if (!confirmed) return;
+    }
+
     setTranscript('');
     setResult(null);
+    setError(null);
+  };
+
+  // Layout presets
+  const setLayoutPreset = (preset: 'equal' | 'left' | 'right') => {
+    setIsTransitioning(true);
+    switch (preset) {
+      case 'equal':
+        setLeftWidth(50);
+        break;
+      case 'left':
+        setLeftWidth(65);
+        break;
+      case 'right':
+        setLeftWidth(35);
+        break;
+    }
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   // Resizer handlers
@@ -159,9 +209,9 @@ export default function Home() {
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-gray-900 leading-none">
-                    Medical Scribe Flow
+                    Medical Voice Scribe
                   </h1>
-                  <p className="text-xs text-gray-500 font-mono">AI問診・カルテ自動生成</p>
+                  <p className="text-xs text-gray-500 font-mono">AI音声問診・カルテ自動生成</p>
                 </div>
               </div>
             </div>
@@ -184,12 +234,12 @@ export default function Home() {
 
       {/* Main content area */}
       <main className="flex-1 relative">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
 
           {/* Control panel */}
-          <div className={`mb-6 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+          <div className={`mb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
             <div className="flex flex-wrap gap-3 items-center justify-between">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 <button
                   onClick={toggleRecording}
                   className={`btn btn-record ${isRecording ? 'recording' : ''}`}
@@ -225,24 +275,27 @@ export default function Home() {
                     </>
                   )}
                 </button>
-                <button
-                  onClick={handleClear}
-                  className="btn btn-secondary"
-                  aria-label="すべてクリア"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  クリア
-                </button>
+
+                {/* Character count */}
+                {transcript && (
+                  <div className="text-sm text-gray-500 font-mono ml-2">
+                    {transcript.length} 文字
+                  </div>
+                )}
               </div>
 
-              {/* Character count */}
-              {transcript && (
-                <div className="text-sm text-gray-500 font-mono">
-                  {transcript.length} 文字
-                </div>
-              )}
+              {/* Clear button - Right side */}
+              <button
+                onClick={handleClear}
+                disabled={!transcript && !result}
+                className="btn btn-secondary"
+                aria-label="すべてクリア"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                クリア
+              </button>
             </div>
           </div>
 
@@ -250,13 +303,16 @@ export default function Home() {
           <div
             ref={containerRef}
             className="relative flex flex-col lg:flex-row gap-0"
-            style={{ minHeight: 'calc(100vh - 280px)' }}
+            style={{ minHeight: 'calc(100vh - 220px)' }}
           >
 
             {/* Left: Transcript input */}
             <section
-              className={`${mounted ? 'animate-fade-in delay-100' : 'opacity-0'} flex-shrink-0 ${activePanel === 'transcript' ? 'block' : 'hidden'} lg:block`}
-              style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${leftWidth}%` : '100%' }}
+              className={`${mounted ? 'animate-fade-in delay-100' : 'opacity-0'} flex-shrink-0 ${!isLargeScreen && activePanel !== 'transcript' ? 'hidden' : 'block'}`}
+              style={{
+                width: isLargeScreen ? `${leftWidth}%` : '100%',
+                transition: isTransitioning ? 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+              }}
               aria-label="会話入力"
             >
               <div className="panel h-full flex flex-col lg:mr-0">
@@ -264,16 +320,18 @@ export default function Home() {
                   <div className="flex items-center justify-between">
                     <h2 className="panel-title">会話テキスト</h2>
                     {/* Mobile accordion toggle */}
-                    <button
-                      onClick={() => setActivePanel('result')}
-                      className="lg:hidden btn btn-secondary py-1 px-3 text-xs"
-                      aria-label="SOAPカルテを表示"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                      カルテ表示
-                    </button>
+                    {!isLargeScreen && (
+                      <button
+                        onClick={() => setActivePanel('result')}
+                        className="btn btn-secondary py-1 px-3 text-xs"
+                        aria-label="SOAPカルテを表示"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        カルテ表示
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="flex-1 p-0 relative">
@@ -297,45 +355,131 @@ export default function Home() {
             </section>
 
             {/* Resizer handle - Desktop only */}
-            <div
-              className="hidden lg:block relative flex-shrink-0 w-1 bg-gray-200 hover:bg-teal-500 transition-colors cursor-col-resize group"
-              onMouseDown={handleMouseDown}
-              role="separator"
-              aria-label="ドラッグして幅を調整"
-              aria-orientation="vertical"
-            >
-              <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
-                <div className="w-1 h-12 rounded-full bg-gray-300 group-hover:bg-teal-500 transition-colors shadow-sm" />
+            {isLargeScreen && (
+              <div
+                className="relative flex-shrink-0 bg-gray-50"
+                style={{ width: '48px' }}
+                role="separator"
+                aria-label="レイアウト調整"
+              >
+                {/* Layout preset buttons - Top positioned */}
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col gap-2 z-10">
+                  <button
+                    onClick={() => setLayoutPreset('left')}
+                    className="layout-btn group"
+                    title="左側を広く"
+                    aria-label="左側を広くする"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="3" y="5" width="10" height="14" className="group-hover:fill-teal-50" />
+                      <rect x="15" y="5" width="6" height="14" className="group-hover:fill-teal-50" />
+                    </svg>
+                  </button>
+
+                  <button
+                    onClick={() => setLayoutPreset('equal')}
+                    className="layout-btn group"
+                    title="均等"
+                    aria-label="左右を均等にする"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="3" y="5" width="8" height="14" className="group-hover:fill-teal-50" />
+                      <rect x="13" y="5" width="8" height="14" className="group-hover:fill-teal-50" />
+                    </svg>
+                  </button>
+
+                  <button
+                    onClick={() => setLayoutPreset('right')}
+                    className="layout-btn group"
+                    title="右側を広く"
+                    aria-label="右側を広くする"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="3" y="5" width="6" height="14" className="group-hover:fill-teal-50" />
+                      <rect x="11" y="5" width="10" height="14" className="group-hover:fill-teal-50" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Draggable divider - Full height */}
+                <div
+                  className="absolute inset-0 flex items-center justify-center cursor-col-resize group"
+                  onMouseDown={handleMouseDown}
+                  style={{ pointerEvents: isTransitioning ? 'none' : 'auto' }}
+                >
+                  {/* Visual line */}
+                  <div className="w-1 h-full bg-gray-200 group-hover:bg-teal-400 transition-colors duration-200">
+                    {/* Grip dots in center */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-1 pointer-events-none">
+                      <div className="w-1 h-1 rounded-full bg-gray-400 group-hover:bg-teal-600" />
+                      <div className="w-1 h-1 rounded-full bg-gray-400 group-hover:bg-teal-600" />
+                      <div className="w-1 h-1 rounded-full bg-gray-400 group-hover:bg-teal-600" />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Right: SOAP results */}
             <section
-              className={`${mounted ? 'animate-fade-in delay-200' : 'opacity-0'} flex-1 ${activePanel === 'result' ? 'block' : 'hidden'} lg:block`}
+              className={`${mounted ? 'animate-fade-in delay-200' : 'opacity-0'} flex-1 ${!isLargeScreen && activePanel !== 'result' ? 'hidden' : 'block'}`}
+              style={{
+                transition: isTransitioning ? 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+              }}
               aria-label="SOAPカルテ結果"
             >
               <div className="panel h-full flex flex-col lg:ml-0">
                 <div className="panel-header">
                   <div className="flex items-center justify-between">
                     {/* Mobile back button */}
-                    <button
-                      onClick={() => setActivePanel('transcript')}
-                      className="lg:hidden btn btn-secondary py-1 px-3 text-xs"
-                      aria-label="会話入力に戻る"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-                      </svg>
-                      戻る
-                    </button>
-                    <h2 className="panel-title">AI生成SOAPカルテ</h2>
-                    <div className="lg:hidden w-16" /> {/* Spacer for centering */}
+                    {!isLargeScreen ? (
+                      <>
+                        <button
+                          onClick={() => setActivePanel('transcript')}
+                          className="btn btn-secondary py-1 px-3 text-xs"
+                          aria-label="会話テキストに戻る"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                          </svg>
+                          会話テキスト
+                        </button>
+                        <h2 className="panel-title">AI生成SOAPカルテ</h2>
+                        <div className="w-20" /> {/* Spacer for centering */}
+                      </>
+                    ) : (
+                      <h2 className="panel-title">AI生成SOAPカルテ</h2>
+                    )}
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
 
+                  {/* Error state */}
+                  {error && (
+                    <div className="m-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-bold text-red-900 mb-1">エラー</h4>
+                          <p className="text-sm text-red-800">{error}</p>
+                        </div>
+                        <button
+                          onClick={() => setError(null)}
+                          className="text-red-600 hover:text-red-800"
+                          aria-label="エラーメッセージを閉じる"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Empty state */}
-                  {!result && !loading && (
+                  {!result && !loading && !error && (
                     <div className="empty-state">
                       <svg
                         className="empty-state-icon"
@@ -602,13 +746,11 @@ export default function Home() {
           </div>
 
           {/* Footer disclaimer */}
-          <footer className={`mt-6 pt-6 border-t border-gray-200 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs text-gray-500">
-              <div>
-                <p className="font-mono">Next.js 14 / OpenAI API / Web Speech API で構築</p>
-              </div>
-              <div className="flex items-center gap-2 text-amber-600 font-semibold">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <footer className={`mt-4 pt-3 border-t border-gray-200 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs text-gray-500">
+              <div className="font-mono">Next.js 14 / OpenAI API / Web Speech API で構築</div>
+              <div className="flex items-center gap-1.5 text-amber-600 font-semibold">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span>デモンストレーション用途のみ - 臨床使用不可</span>
