@@ -40,9 +40,10 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
 
-@theme inline {
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+@layer base {
+  html {
+    color-scheme: light;
+  }
 }
 
 * {
@@ -439,6 +440,44 @@ body::before {
 *:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
+}
+
+/* Layout preset buttons */
+.layout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border-light);
+  color: var(--text-tertiary);
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.layout-btn svg {
+  stroke-width: 1.5;
+}
+
+.layout-btn:hover {
+  background: white;
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  opacity: 1;
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.layout-btn:active {
+  transform: scale(0.95);
+}
+
+.layout-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  opacity: 1;
 }
 
 /* Responsive utilities */
