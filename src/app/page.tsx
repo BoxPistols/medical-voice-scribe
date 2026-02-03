@@ -4,9 +4,35 @@ import { useState, useEffect, useRef } from 'react';
 import type { SoapNote } from './api/analyze/types';
 
 // Web Speech API type definitions
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: {
+      isFinal: boolean;
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognitionInstance;
+}
+
 interface IWindow extends Window {
-  webkitSpeechRecognition: any;
-  SpeechRecognition: any;
+  webkitSpeechRecognition: SpeechRecognitionConstructor;
+  SpeechRecognition: SpeechRecognitionConstructor;
 }
 
 export default function Home() {
@@ -29,7 +55,7 @@ export default function Home() {
   // Text-to-speech state
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
@@ -53,7 +79,7 @@ export default function Home() {
       recognition.interimResults = true;
       recognition.lang = 'ja-JP';
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
@@ -73,6 +99,10 @@ export default function Home() {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
         recognitionRef.current = null;
+      }
+      // Stop speech synthesis on unmount
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
       }
     };
   }, []);
@@ -852,7 +882,7 @@ export default function Home() {
                             <div>
                               <div className="font-bold text-xs text-gray-600 mb-2">処方</div>
                               <div className="space-y-2">
-                                {result.soap.plan.medications.map((med: any, i: number) => (
+                                {result.soap.plan.medications.map((med, i: number) => (
                                   <div key={i} className="bg-white rounded border border-gray-300 p-3">
                                     <div className="font-bold text-sm mb-1">{med.name}</div>
                                     <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
