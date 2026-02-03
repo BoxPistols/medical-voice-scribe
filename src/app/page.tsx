@@ -26,8 +26,12 @@ export default function Home() {
   // Accordion state (Mobile)
   const [activePanel, setActivePanel] = useState<'transcript' | 'result'>('transcript');
 
+  // Text-to-speech state
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
   const recognitionRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -125,9 +129,120 @@ export default function Home() {
       if (!confirmed) return;
     }
 
+    // Stop speech if speaking
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+
     setTranscript('');
     setResult(null);
     setError(null);
+  };
+
+  // Text-to-speech functions
+  const extractTextFromSoap = (soapNote: SoapNote): string => {
+    let text = '';
+
+    // Summary
+    if (soapNote.summary) {
+      text += `要約。${soapNote.summary}\n\n`;
+    }
+
+    // Patient Info
+    if (soapNote.patientInfo) {
+      text += '患者情報。';
+      if (soapNote.patientInfo.chiefComplaint) {
+        text += `主訴、${soapNote.patientInfo.chiefComplaint}。`;
+      }
+      if (soapNote.patientInfo.duration) {
+        text += `期間、${soapNote.patientInfo.duration}。`;
+      }
+      text += '\n\n';
+    }
+
+    // Subjective
+    text += 'S、主観的情報。';
+    if (soapNote.soap.subjective?.presentIllness) {
+      text += `現病歴、${soapNote.soap.subjective.presentIllness}。`;
+    }
+    if (soapNote.soap.subjective?.symptoms?.length > 0) {
+      text += `症状、${soapNote.soap.subjective.symptoms.join('、')}。`;
+    }
+    if (soapNote.soap.subjective?.severity) {
+      text += `重症度、${soapNote.soap.subjective.severity}。`;
+    }
+    text += '\n\n';
+
+    // Objective
+    text += 'O、客観的情報。';
+    if (soapNote.soap.objective?.vitalSigns) {
+      const vs = soapNote.soap.objective.vitalSigns;
+      text += `バイタルサイン、血圧${vs.bloodPressure}、脈拍${vs.pulse}、体温${vs.temperature}、呼吸数${vs.respiratoryRate}。`;
+    }
+    if (soapNote.soap.objective?.physicalExam) {
+      text += `身体所見、${soapNote.soap.objective.physicalExam}。`;
+    }
+    text += '\n\n';
+
+    // Assessment
+    text += 'A、評価・診断。';
+    if (soapNote.soap.assessment?.diagnosis) {
+      text += `診断名、${soapNote.soap.assessment.diagnosis}。`;
+    }
+    if (soapNote.soap.assessment?.differentialDiagnosis?.length > 0) {
+      text += `鑑別診断、${soapNote.soap.assessment.differentialDiagnosis.join('、')}。`;
+    }
+    text += '\n\n';
+
+    // Plan
+    text += 'P、治療計画。';
+    if (soapNote.soap.plan?.treatment) {
+      text += `治療方針、${soapNote.soap.plan.treatment}。`;
+    }
+    if (soapNote.soap.plan?.medications?.length > 0) {
+      text += '処方、';
+      soapNote.soap.plan.medications.forEach((med, i) => {
+        text += `${i + 1}、${med.name}、用量${med.dosage}、用法${med.frequency}、期間${med.duration}。`;
+      });
+    }
+    if (soapNote.soap.plan?.followUp) {
+      text += `フォローアップ、${soapNote.soap.plan.followUp}。`;
+    }
+
+    return text;
+  };
+
+  const toggleSpeech = () => {
+    if (!result) return;
+
+    if (isSpeaking) {
+      // Stop speaking
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      speechSynthesisRef.current = null;
+    } else {
+      // Start speaking
+      const text = extractTextFromSoap(result);
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ja-JP';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        speechSynthesisRef.current = null;
+      };
+
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        speechSynthesisRef.current = null;
+      };
+
+      speechSynthesisRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
+    }
   };
 
   // Layout presets
@@ -445,10 +560,55 @@ export default function Home() {
                           会話テキスト
                         </button>
                         <h2 className="panel-title">AI生成SOAPカルテ</h2>
-                        <div className="w-20" /> {/* Spacer for centering */}
+                        <button
+                          onClick={toggleSpeech}
+                          disabled={!result}
+                          className="btn btn-secondary py-1 px-3 text-xs"
+                          aria-label={isSpeaking ? '読み上げを停止' : 'カルテを読み上げ'}
+                        >
+                          {isSpeaking ? (
+                            <>
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <rect x="6" y="6" width="8" height="8" />
+                              </svg>
+                              停止
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                              </svg>
+                              読上
+                            </>
+                          )}
+                        </button>
                       </>
                     ) : (
-                      <h2 className="panel-title">AI生成SOAPカルテ</h2>
+                      <>
+                        <h2 className="panel-title">AI生成SOAPカルテ</h2>
+                        <button
+                          onClick={toggleSpeech}
+                          disabled={!result}
+                          className="btn btn-secondary"
+                          aria-label={isSpeaking ? '読み上げを停止' : 'カルテを読み上げ'}
+                        >
+                          {isSpeaking ? (
+                            <>
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <rect x="6" y="6" width="8" height="8" />
+                              </svg>
+                              停止
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                              </svg>
+                              読み上げ
+                            </>
+                          )}
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
