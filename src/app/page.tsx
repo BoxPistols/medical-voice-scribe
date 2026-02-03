@@ -59,6 +59,11 @@ export default function Home() {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState<number>(0);
 
+  // Clock and timer state
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -127,13 +132,55 @@ export default function Home() {
     };
   }, []);
 
+  // Clock update effect
+  useEffect(() => {
+    const clockInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(clockInterval);
+  }, []);
+
+  // Recording elapsed time effect
+  useEffect(() => {
+    if (!isRecording || recordingStartTime === null) {
+      return;
+    }
+    const timerInterval = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - recordingStartTime) / 1000));
+    }, 1000);
+    return () => clearInterval(timerInterval);
+  }, [isRecording, recordingStartTime]);
+
   const toggleRecording = () => {
     if (isRecording) {
       recognitionRef.current?.stop();
     } else {
       recognitionRef.current?.start();
+      setRecordingStartTime(Date.now());
+      setElapsedTime(0);
     }
     setIsRecording(!isRecording);
+  };
+
+  // Format time as HH:MM:SS
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  };
+
+  // Format elapsed time as MM:SS or HH:MM:SS
+  const formatElapsedTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleAnalyze = async () => {
@@ -384,6 +431,21 @@ export default function Home() {
                   <p className="text-xs text-gray-500 font-mono">AI音声問診・カルテ自動生成</p>
                 </div>
               </div>
+            </div>
+
+            {/* Center: Clock and Timer */}
+            <div className="flex flex-col items-center">
+              {/* Current time - subtle color, bold, h1 size */}
+              <time className="text-2xl sm:text-3xl font-bold text-gray-400 font-mono tracking-wider">
+                {mounted ? formatTime(currentTime) : '--:--:--'}
+              </time>
+              {/* Recording elapsed time */}
+              {isRecording && (
+                <div className="flex items-center gap-1.5 text-sm text-orange-500 font-mono">
+                  <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                  <span>経過 {formatElapsedTime(elapsedTime)}</span>
+                </div>
+              )}
             </div>
 
             {/* Status indicator */}
