@@ -136,7 +136,8 @@ export default function Home() {
     const handleClickOutside = (event: MouseEvent) => {
       if (showExportMenu) {
         const target = event.target as HTMLElement;
-        if (!target.closest('.relative')) {
+        // Check if click is outside the export menu container
+        if (!target.closest('[data-export-menu]')) {
           setShowExportMenu(false);
         }
       }
@@ -253,7 +254,10 @@ export default function Home() {
       ['鑑別診断', result.soap.assessment?.differentialDiagnosis?.join(', ') || ''],
       ['臨床的印象', result.soap.assessment?.clinicalImpression || ''],
       ['治療方針', result.soap.plan?.treatment || ''],
-      ['処方薬', result.soap.plan?.medications?.map(m => `${m.name} ${m.dosage} ${m.frequency} ${m.duration}`).join('; ') || ''],
+      ['処方薬', result.soap.plan?.medications?.map(m => {
+        const parts = [m.name, m.dosage, m.frequency, m.duration].filter(p => p);
+        return parts.join(' ');
+      }).join('; ') || ''],
       ['検査', result.soap.plan?.tests?.join(', ') || ''],
       ['紹介', result.soap.plan?.referral || ''],
       ['フォローアップ', result.soap.plan?.followUp || ''],
@@ -299,20 +303,30 @@ export default function Home() {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const imported = JSON.parse(e.target?.result as string) as SoapNote;
+        const content = e.target?.result as string;
+        if (!content) {
+          throw new Error('ファイルの内容が空です。');
+        }
+
+        const imported = JSON.parse(content);
+        
+        // Validate that imported is an object
+        if (typeof imported !== 'object' || imported === null) {
+          throw new Error('無効なJSON形式です。');
+        }
         
         // Schema validation
         if (!imported.soap || !imported.patientInfo) {
-          throw new Error('Invalid SOAP note format');
+          throw new Error('SOAPノート形式が正しくありません。soapまたはpatientInfoが見つかりません。');
         }
 
         // Validate required SOAP sections
         if (!imported.soap.subjective || !imported.soap.objective || 
             !imported.soap.assessment || !imported.soap.plan) {
-          throw new Error('Missing required SOAP sections');
+          throw new Error('必須のSOAPセクション（S/O/A/P）が不足しています。');
         }
 
-        setResult(imported);
+        setResult(imported as SoapNote);
         setError(null);
         
         // Switch to result panel on mobile
@@ -321,7 +335,12 @@ export default function Home() {
         }
       } catch (err) {
         console.error('Import error:', err);
-        setError('ファイルの読み込みに失敗しました。正しいJSON形式のSOAPカルテファイルか確認してください。');
+        const errorMessage = err instanceof Error ? err.message : 'ファイルの読み込みに失敗しました。';
+        if (errorMessage.includes('JSON')) {
+          setError('ファイルの読み込みに失敗しました。正しいJSON形式のSOAPカルテファイルか確認してください。');
+        } else {
+          setError(errorMessage);
+        }
       }
     };
 
@@ -774,7 +793,7 @@ export default function Home() {
                           </button>
 
                           {/* Export dropdown */}
-                          <div className="relative">
+                          <div className="relative" data-export-menu>
                             <button
                               onClick={() => setShowExportMenu(!showExportMenu)}
                               disabled={!result}
@@ -859,7 +878,7 @@ export default function Home() {
                           </button>
                           
                           {/* Export dropdown */}
-                          <div className="relative">
+                          <div className="relative" data-export-menu>
                             <button
                               onClick={() => setShowExportMenu(!showExportMenu)}
                               disabled={!result}
