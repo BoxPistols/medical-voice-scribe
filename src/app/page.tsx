@@ -59,9 +59,13 @@ export default function Home() {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState<number>(0);
 
+  // Export/Import state
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -127,6 +131,23 @@ export default function Home() {
     };
   }, []);
 
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showExportMenu) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.relative')) {
+          setShowExportMenu(false);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showExportMenu]);
+
   const toggleRecording = () => {
     if (isRecording) {
       recognitionRef.current?.stop();
@@ -188,6 +209,130 @@ export default function Home() {
     setTranscript('');
     setResult(null);
     setError(null);
+  };
+
+  // Export/Import functions
+  const exportAsJson = () => {
+    if (!result) return;
+    
+    const dataStr = JSON.stringify(result, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    link.download = `soap_note_${timestamp}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+
+  const exportAsCsv = () => {
+    if (!result) return;
+
+    const csvRows = [
+      ['項目', '内容'],
+      ['要約', result.summary || ''],
+      ['主訴', result.patientInfo?.chiefComplaint || ''],
+      ['期間', result.patientInfo?.duration || ''],
+      ['現病歴', result.soap.subjective?.presentIllness || ''],
+      ['症状', result.soap.subjective?.symptoms?.join(', ') || ''],
+      ['重症度', result.soap.subjective?.severity || ''],
+      ['発症', result.soap.subjective?.onset || ''],
+      ['随伴症状', result.soap.subjective?.associatedSymptoms?.join(', ') || ''],
+      ['既往歴', result.soap.subjective?.pastMedicalHistory || ''],
+      ['内服薬', result.soap.subjective?.medications?.join(', ') || ''],
+      ['血圧', result.soap.objective?.vitalSigns?.bloodPressure || ''],
+      ['脈拍', result.soap.objective?.vitalSigns?.pulse || ''],
+      ['体温', result.soap.objective?.vitalSigns?.temperature || ''],
+      ['呼吸数', result.soap.objective?.vitalSigns?.respiratoryRate || ''],
+      ['身体所見', result.soap.objective?.physicalExam || ''],
+      ['検査所見', result.soap.objective?.laboratoryFindings || ''],
+      ['診断名', result.soap.assessment?.diagnosis || ''],
+      ['ICD-10', result.soap.assessment?.icd10 || ''],
+      ['鑑別診断', result.soap.assessment?.differentialDiagnosis?.join(', ') || ''],
+      ['臨床的印象', result.soap.assessment?.clinicalImpression || ''],
+      ['治療方針', result.soap.plan?.treatment || ''],
+      ['処方薬', result.soap.plan?.medications?.map(m => `${m.name} ${m.dosage} ${m.frequency} ${m.duration}`).join('; ') || ''],
+      ['検査', result.soap.plan?.tests?.join(', ') || ''],
+      ['紹介', result.soap.plan?.referral || ''],
+      ['フォローアップ', result.soap.plan?.followUp || ''],
+      ['患者教育', result.soap.plan?.patientEducation || ''],
+    ];
+
+    const csvContent = csvRows.map(row => 
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+    
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    link.download = `soap_note_${timestamp}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // File size limit: 10MB
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      setError('ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。');
+      return;
+    }
+
+    // Only accept JSON files
+    if (!file.name.endsWith('.json')) {
+      setError('JSON形式のファイルのみインポート可能です。');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target?.result as string) as SoapNote;
+        
+        // Schema validation
+        if (!imported.soap || !imported.patientInfo) {
+          throw new Error('Invalid SOAP note format');
+        }
+
+        // Validate required SOAP sections
+        if (!imported.soap.subjective || !imported.soap.objective || 
+            !imported.soap.assessment || !imported.soap.plan) {
+          throw new Error('Missing required SOAP sections');
+        }
+
+        setResult(imported);
+        setError(null);
+        
+        // Switch to result panel on mobile
+        if (!isLargeScreen) {
+          setActivePanel('result');
+        }
+      } catch (err) {
+        console.error('Import error:', err);
+        setError('ファイルの読み込みに失敗しました。正しいJSON形式のSOAPカルテファイルか確認してください。');
+      }
+    };
+
+    reader.onerror = () => {
+      setError('ファイルの読み込みに失敗しました。');
+    };
+
+    reader.readAsText(file);
+    
+    // Reset input to allow re-importing the same file
+    event.target.value = '';
   };
 
   // Text-to-speech functions
@@ -616,6 +761,58 @@ export default function Home() {
                         </button>
                         <h2 className="panel-title text-sm">SOAPカルテ</h2>
                         <div className="flex items-center gap-1">
+                          {/* Import button */}
+                          <button
+                            onClick={handleImportClick}
+                            className="btn btn-secondary py-1 px-2 text-xs"
+                            aria-label="インポート"
+                            title="インポート"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                          </button>
+
+                          {/* Export dropdown */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowExportMenu(!showExportMenu)}
+                              disabled={!result}
+                              className="btn btn-secondary py-1 px-2 text-xs"
+                              aria-label="エクスポート"
+                              title="エクスポート"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                            </button>
+                            
+                            {showExportMenu && result && (
+                              <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                                <div className="py-1">
+                                  <button
+                                    onClick={exportAsJson}
+                                    className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    JSON
+                                  </button>
+                                  <button
+                                    onClick={exportAsCsv}
+                                    className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    CSV
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
                           <button
                             onClick={toggleSpeech}
                             disabled={!result}
@@ -648,6 +845,64 @@ export default function Home() {
                       <>
                         <h2 className="panel-title">AI生成SOAPカルテ</h2>
                         <div className="flex items-center gap-2">
+                          {/* Import button */}
+                          <button
+                            onClick={handleImportClick}
+                            className="btn btn-secondary"
+                            aria-label="カルテをインポート"
+                            title="カルテをインポート"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            <span className="hidden sm:inline">インポート</span>
+                          </button>
+                          
+                          {/* Export dropdown */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowExportMenu(!showExportMenu)}
+                              disabled={!result}
+                              className="btn btn-secondary"
+                              aria-label="カルテをエクスポート"
+                              title="カルテをエクスポート"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                              <span className="hidden sm:inline">エクスポート</span>
+                              <svg className={`w-3 h-3 ml-1 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            
+                            {/* Export menu dropdown */}
+                            {showExportMenu && result && (
+                              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                                <div className="py-1">
+                                  <button
+                                    onClick={exportAsJson}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    JSON形式
+                                  </button>
+                                  <button
+                                    onClick={exportAsCsv}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    CSV形式
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
                           <button
                             onClick={toggleSpeech}
                             disabled={!result}
@@ -1027,6 +1282,16 @@ export default function Home() {
           </footer>
         </div>
       </main>
+
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        onChange={handleFileImport}
+        className="hidden"
+        aria-label="JSONファイルを選択"
+      />
     </div>
   );
 }
