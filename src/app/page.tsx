@@ -1411,7 +1411,7 @@ export default function Home() {
                   style={{ pointerEvents: isTransitioning ? 'none' : 'auto' }}
                 >
                   {/* Visual line */}
-                  <div className="w-1 h-full bg-gray-300 dark:bg-gray-600 group-hover:bg-teal-400 dark:group-hover:bg-teal-500 transition-colors duration-200">
+                  <div className="w-1 h-full bg-gray-200/60 dark:bg-gray-600 group-hover:bg-teal-400 dark:group-hover:bg-teal-500 transition-colors duration-200">
                     {/* Grip dots in center */}
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-1 pointer-events-none">
                       <div className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-500 group-hover:bg-teal-600 dark:group-hover:bg-teal-400" />
@@ -1525,11 +1525,11 @@ export default function Home() {
                         {/* 上段: 見出し */}
                         <h2 className="panel-title">AI生成SOAPカルテ</h2>
                         {/* 下段: アクションボタン群 */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center flex-wrap gap-2">
                           {/* Import button */}
                           <button
                             onClick={handleImportClick}
-                            className="btn btn-secondary"
+                            className="btn btn-secondary text-xs py-1.5 px-3"
                             aria-label="カルテをインポート"
                             data-tooltip="JSON形式でカルテをインポート"
                           >
@@ -1542,7 +1542,7 @@ export default function Home() {
                             <button
                               onClick={() => setShowExportMenu(!showExportMenu)}
                               disabled={!result}
-                              className="btn btn-secondary"
+                              className="btn btn-secondary text-xs py-1.5 px-3"
                               aria-label="カルテをエクスポート"
                               data-tooltip="JSON/CSV形式でエクスポート"
                             >
@@ -1578,7 +1578,7 @@ export default function Home() {
                           <button
                             onClick={copyFullChart}
                             disabled={!result}
-                            className="btn btn-secondary"
+                            className="btn btn-secondary text-xs py-1.5 px-3"
                             aria-label="カルテ全体をコピー"
                             data-tooltip="カルテ全体をクリップボードにコピー"
                           >
@@ -1589,7 +1589,7 @@ export default function Home() {
                           <button
                             onClick={toggleSpeech}
                             disabled={!result}
-                            className="btn btn-secondary"
+                            className="btn btn-secondary text-xs py-1.5 px-3"
                             aria-label={isSpeaking ? '読み上げを停止' : 'カルテを読み上げ'}
                             data-tooltip={isSpeaking ? '読み上げ停止' : 'カルテを音声で読み上げ'}
                           >
@@ -1608,7 +1608,7 @@ export default function Home() {
                           <button
                             onClick={() => setShowSpeechSettings(!showSpeechSettings)}
                             disabled={!result}
-                            className="btn btn-secondary p-2"
+                            className="btn btn-secondary text-xs p-1.5"
                             aria-label="音声設定"
                             data-tooltip="音声・速度設定"
                           >
