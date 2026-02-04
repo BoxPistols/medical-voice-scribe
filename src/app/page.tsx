@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import type { SoapNote, ModelId } from './api/analyze/types';
-import { AVAILABLE_MODELS, DEFAULT_MODEL } from './api/analyze/types';
+import { useState, useEffect, useRef } from "react";
+import type { SoapNote, ModelId } from "./api/analyze/types";
+import { AVAILABLE_MODELS, DEFAULT_MODEL } from "./api/analyze/types";
 import {
   MicrophoneIcon,
   SparklesIcon,
@@ -34,16 +34,16 @@ import {
   ComputerDesktopIcon,
   DocumentIcon,
   DocumentChartBarIcon,
-} from '@heroicons/react/24/outline';
-import { StopIcon as StopIconSolid } from '@heroicons/react/24/solid';
+} from "@heroicons/react/24/outline";
+import { StopIcon as StopIconSolid } from "@heroicons/react/24/solid";
 
 // Custom Keyboard Icon Component
 const KeyboardIcon = ({ className }: { className?: string }) => (
-  <svg 
-    className={className} 
-    fill="none" 
-    viewBox="0 0 24 24" 
-    stroke="currentColor" 
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
     strokeWidth="2"
     aria-hidden="true"
   >
@@ -54,23 +54,23 @@ const KeyboardIcon = ({ className }: { className?: string }) => (
 
 // Types for Shortcuts
 type ActionId =
-  | 'toggleRecording'
-  | 'analyze'
-  | 'clear'
-  | 'toggleSpeech'
-  | 'increaseSpeechRate'
-  | 'decreaseSpeechRate'
-  | 'import'
-  | 'exportJson'
-  | 'exportCsv'
-  | 'themeLight'
-  | 'themeDark'
-  | 'themeSystem'
-  | 'layoutLeft'
-  | 'layoutEqual'
-  | 'layoutRight'
-  | 'toggleSettings'
-  | 'toggleHelp';
+  | "toggleRecording"
+  | "analyze"
+  | "clear"
+  | "toggleSpeech"
+  | "increaseSpeechRate"
+  | "decreaseSpeechRate"
+  | "import"
+  | "exportJson"
+  | "exportCsv"
+  | "themeLight"
+  | "themeDark"
+  | "themeSystem"
+  | "layoutLeft"
+  | "layoutEqual"
+  | "layoutRight"
+  | "toggleSettings"
+  | "toggleHelp";
 
 interface ShortcutKey {
   key: string;
@@ -80,7 +80,7 @@ interface ShortcutKey {
   meta?: boolean; // Windows key on Windows
 }
 
-type ShortcutGroup = 'basic' | 'speech' | 'file' | 'theme' | 'layout' | 'other';
+type ShortcutGroup = "basic" | "speech" | "file" | "theme" | "layout" | "other";
 
 interface ShortcutDef {
   id: ActionId;
@@ -91,32 +91,70 @@ interface ShortcutDef {
 }
 
 const SHORTCUT_GROUPS: { id: ShortcutGroup; label: string }[] = [
-  { id: 'basic', label: '基本操作' },
-  { id: 'speech', label: '音声読み上げ' },
-  { id: 'file', label: 'ファイル' },
-  { id: 'theme', label: 'テーマ' },
-  { id: 'layout', label: 'レイアウト' },
-  { id: 'other', label: 'その他' },
+  { id: "basic", label: "基本操作" },
+  { id: "speech", label: "音声読み上げ" },
+  { id: "file", label: "ファイル" },
+  { id: "theme", label: "テーマ" },
+  { id: "layout", label: "レイアウト" },
+  { id: "other", label: "その他" },
 ];
 
 const SHORTCUT_DEFS: ShortcutDef[] = [
-  { id: 'toggleRecording', label: '録音開始/停止', default: { key: 'r' }, modifierDefault: { key: 'r', ctrl: true }, group: 'basic' },
-  { id: 'analyze', label: 'カルテ生成', default: { key: 'a' }, modifierDefault: { key: 'a', ctrl: true }, group: 'basic' },
-  { id: 'clear', label: 'すべてクリア', default: { key: 'c' }, group: 'basic' },
-  { id: 'toggleSpeech', label: '開始/停止', default: { key: 'v' }, modifierDefault: { key: 'v', ctrl: true }, group: 'speech' },
-  { id: 'increaseSpeechRate', label: '速度を上げる', default: { key: '=' }, group: 'speech' },
-  { id: 'decreaseSpeechRate', label: '速度を下げる', default: { key: '-' }, group: 'speech' },
-  { id: 'import', label: 'インポート', default: { key: 'i' }, group: 'file' },
-  { id: 'exportJson', label: 'JSON', default: { key: 'j' }, group: 'file' },
-  { id: 'exportCsv', label: 'CSV', default: { key: 'e' }, group: 'file' },
-  { id: 'themeLight', label: 'ライト', default: { key: 'l' }, group: 'theme' },
-  { id: 'themeDark', label: 'ダーク', default: { key: 'd' }, group: 'theme' },
-  { id: 'themeSystem', label: '自動', default: { key: 'm' }, group: 'theme' },
-  { id: 'layoutLeft', label: '左重視', default: { key: '1' }, group: 'layout' },
-  { id: 'layoutEqual', label: '均等', default: { key: '2' }, group: 'layout' },
-  { id: 'layoutRight', label: '右重視', default: { key: '3' }, group: 'layout' },
-  { id: 'toggleSettings', label: 'ショートカット設定', default: { key: 'k' }, group: 'other' },
-  { id: 'toggleHelp', label: 'ヘルプ', default: { key: 'h' }, group: 'other' },
+  {
+    id: "toggleRecording",
+    label: "録音開始/停止",
+    default: { key: "r" },
+    modifierDefault: { key: "r", ctrl: true },
+    group: "basic",
+  },
+  {
+    id: "analyze",
+    label: "カルテ生成",
+    default: { key: "a" },
+    modifierDefault: { key: "a", ctrl: true },
+    group: "basic",
+  },
+  { id: "clear", label: "すべてクリア", default: { key: "c" }, group: "basic" },
+  {
+    id: "toggleSpeech",
+    label: "開始/停止",
+    default: { key: "v" },
+    modifierDefault: { key: "v", ctrl: true },
+    group: "speech",
+  },
+  {
+    id: "increaseSpeechRate",
+    label: "速度を上げる",
+    default: { key: "=" },
+    group: "speech",
+  },
+  {
+    id: "decreaseSpeechRate",
+    label: "速度を下げる",
+    default: { key: "-" },
+    group: "speech",
+  },
+  { id: "import", label: "インポート", default: { key: "i" }, group: "file" },
+  { id: "exportJson", label: "JSON", default: { key: "j" }, group: "file" },
+  { id: "exportCsv", label: "CSV", default: { key: "e" }, group: "file" },
+  { id: "themeLight", label: "ライト", default: { key: "l" }, group: "theme" },
+  { id: "themeDark", label: "ダーク", default: { key: "d" }, group: "theme" },
+  { id: "themeSystem", label: "自動", default: { key: "m" }, group: "theme" },
+  { id: "layoutLeft", label: "左重視", default: { key: "1" }, group: "layout" },
+  { id: "layoutEqual", label: "均等", default: { key: "2" }, group: "layout" },
+  {
+    id: "layoutRight",
+    label: "右重視",
+    default: { key: "3" },
+    group: "layout",
+  },
+  {
+    id: "toggleSettings",
+    label: "ショートカット設定",
+    default: { key: "k" },
+    group: "other",
+  },
+  { id: "toggleHelp", label: "ヘルプ", default: { key: "h" }, group: "other" },
 ];
 
 // Constants
@@ -125,7 +163,7 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 // Helper functions
 const getTimestampForFilename = (): string => {
   // Returns format: 2026-02-03T14-30-45
-  return new Date().toISOString().split('.')[0].replace(/:/g, '-');
+  return new Date().toISOString().split(".")[0].replace(/:/g, "-");
 };
 
 const escapeCsvCell = (value: unknown): string => {
@@ -166,21 +204,26 @@ interface IWindow extends Window {
 
 // Helper to detect platform
 const isMacPlatform = (): boolean => {
-  if (typeof navigator === 'undefined') return false;
+  if (typeof navigator === "undefined") return false;
   // Check both userAgent and platform for better compatibility
-  return /Mac|iPod|iPhone|iPad/.test(navigator.platform) ||
-         /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+  return (
+    /Mac|iPod|iPhone|iPad/.test(navigator.platform) ||
+    /Mac|iPhone|iPad|iPod/.test(navigator.userAgent)
+  );
 };
 
 // Helper to get platform-specific defaults
-const getPlatformDefaultShortcuts = (useModifiers: boolean = false): Record<ActionId, ShortcutKey> => {
+const getPlatformDefaultShortcuts = (
+  useModifiers: boolean = false
+): Record<ActionId, ShortcutKey> => {
   const isMac = isMacPlatform();
 
   return SHORTCUT_DEFS.reduce((acc, def) => {
     // If useModifiers is true and a modifierDefault exists, use it. Otherwise use default.
-    const sourceKey = (useModifiers && def.modifierDefault) ? def.modifierDefault : def.default;
+    const sourceKey =
+      useModifiers && def.modifierDefault ? def.modifierDefault : def.default;
     const key = { ...sourceKey };
-    
+
     // Swap Ctrl for Meta on Mac for actions defined with Ctrl
     if (isMac && key.ctrl) {
       key.ctrl = false;
@@ -191,27 +234,30 @@ const getPlatformDefaultShortcuts = (useModifiers: boolean = false): Record<Acti
 };
 
 // Shortcut helper
-const formatShortcut = (shortcut: ShortcutKey | undefined, compact: boolean = false): string => {
-  if (!shortcut) return '-';
+const formatShortcut = (
+  shortcut: ShortcutKey | undefined,
+  compact: boolean = false
+): string => {
+  if (!shortcut) return "-";
 
   const isMac = isMacPlatform();
   const parts = [];
 
-  if (shortcut.meta) parts.push(isMac ? (compact ? 'Cmd' : 'Cmd') : 'Win');
-  if (shortcut.ctrl) parts.push(isMac ? (compact ? 'Cmd' : 'Cmd') : 'Ctrl');
-  if (shortcut.alt) parts.push(isMac ? 'Opt' : 'Alt');
-  if (shortcut.shift) parts.push('Shift');
+  if (shortcut.meta) parts.push(isMac ? (compact ? "Cmd" : "Cmd") : "Win");
+  if (shortcut.ctrl) parts.push(isMac ? (compact ? "Cmd" : "Cmd") : "Ctrl");
+  if (shortcut.alt) parts.push(isMac ? "Opt" : "Alt");
+  if (shortcut.shift) parts.push("Shift");
 
   let keyDisplay = shortcut.key.toUpperCase();
-  if (keyDisplay === ' ') keyDisplay = 'Space';
+  if (keyDisplay === " ") keyDisplay = "Space";
   parts.push(keyDisplay);
 
-  return compact ? parts.join('+') : parts.join(' + ');
+  return compact ? parts.join("+") : parts.join(" + ");
 };
 
 export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [transcript, setTranscript] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SoapNote | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -219,7 +265,7 @@ export default function Home() {
 
   // Streaming state
   const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingText, setStreamingText] = useState('');
+  const [streamingText, setStreamingText] = useState("");
 
   // Resizable layout state (PC)
   const [leftWidth, setLeftWidth] = useState(50); // percentage
@@ -228,20 +274,24 @@ export default function Home() {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Accordion state (Mobile)
-  const [activePanel, setActivePanel] = useState<'transcript' | 'result'>('transcript');
+  const [activePanel, setActivePanel] = useState<"transcript" | "result">(
+    "transcript"
+  );
 
   // Text-to-speech state
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showSpeechSettings, setShowSpeechSettings] = useState(false);
   const [speechRate, setSpeechRate] = useState(1.0);
-  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [availableVoices, setAvailableVoices] = useState<
+    SpeechSynthesisVoice[]
+  >([]);
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState<number>(0);
 
   // Export/Import state
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showExportPreview, setShowExportPreview] = useState(false);
   const [exportPreviewData, setExportPreviewData] = useState<{
-    type: 'json' | 'csv';
+    type: "json" | "csv";
     content: string;
     filename: string;
   } | null>(null);
@@ -250,19 +300,26 @@ export default function Home() {
   const [showHelp, setShowHelp] = useState(false);
 
   // Theme and settings state
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
 
   // AI Model selection state
   const [selectedModel, setSelectedModel] = useState<ModelId>(DEFAULT_MODEL);
 
   // Shortcuts state
   const [useModifiers, setUseModifiers] = useState(true); // Default to true (Command+R etc)
-  const [shortcuts, setShortcuts] = useState<Record<ActionId, ShortcutKey>>(() => {
-    // Initial state will be updated in useEffect
-    return SHORTCUT_DEFS.reduce((acc, def) => ({ ...acc, [def.id]: def.default }), {} as Record<ActionId, ShortcutKey>);
-  });
+  const [shortcuts, setShortcuts] = useState<Record<ActionId, ShortcutKey>>(
+    () => {
+      // Initial state will be updated in useEffect
+      return SHORTCUT_DEFS.reduce(
+        (acc, def) => ({ ...acc, [def.id]: def.default }),
+        {} as Record<ActionId, ShortcutKey>
+      );
+    }
+  );
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
-  const [editingShortcutId, setEditingShortcutId] = useState<ActionId | null>(null);
+  const [editingShortcutId, setEditingShortcutId] = useState<ActionId | null>(
+    null
+  );
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const speechCurrentIndexRef = useRef<number>(0);
@@ -273,32 +330,40 @@ export default function Home() {
 
   // Theme management - Load from localStorage
   useEffect(() => {
-    const savedTheme = localStorage.getItem('medical-scribe-theme') as 'light' | 'dark' | 'system' | null;
+    const savedTheme = localStorage.getItem("medical-scribe-theme") as
+      | "light"
+      | "dark"
+      | "system"
+      | null;
     if (savedTheme) {
       setTheme(savedTheme);
     }
-    
+
     // Load modifier setting
-    const savedUseModifiers = localStorage.getItem('medical-scribe-use-modifiers');
+    const savedUseModifiers = localStorage.getItem(
+      "medical-scribe-use-modifiers"
+    );
     if (savedUseModifiers !== null) {
-      setUseModifiers(savedUseModifiers === 'true');
+      setUseModifiers(savedUseModifiers === "true");
     }
 
     // Load AI model setting
-    const savedModel = localStorage.getItem('medical-scribe-model') as ModelId | null;
-    if (savedModel && AVAILABLE_MODELS.some(m => m.id === savedModel)) {
+    const savedModel = localStorage.getItem(
+      "medical-scribe-model"
+    ) as ModelId | null;
+    if (savedModel && AVAILABLE_MODELS.some((m) => m.id === savedModel)) {
       setSelectedModel(savedModel);
     }
   }, []);
 
   // Save modifier setting
   useEffect(() => {
-    localStorage.setItem('medical-scribe-use-modifiers', String(useModifiers));
+    localStorage.setItem("medical-scribe-use-modifiers", String(useModifiers));
   }, [useModifiers]);
 
   // Save AI model setting
   useEffect(() => {
-    localStorage.setItem('medical-scribe-model', selectedModel);
+    localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
 
   // Theme management - Apply theme
@@ -306,43 +371,45 @@ export default function Home() {
     const applyTheme = () => {
       const root = document.documentElement;
 
-      if (theme === 'system') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (theme === "system") {
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
         if (prefersDark) {
-          root.setAttribute('data-theme', 'dark');
+          root.setAttribute("data-theme", "dark");
         } else {
-          root.removeAttribute('data-theme');
+          root.removeAttribute("data-theme");
         }
-      } else if (theme === 'dark') {
-        root.setAttribute('data-theme', 'dark');
+      } else if (theme === "dark") {
+        root.setAttribute("data-theme", "dark");
       } else {
-        root.removeAttribute('data-theme');
+        root.removeAttribute("data-theme");
       }
 
-      localStorage.setItem('medical-scribe-theme', theme);
+      localStorage.setItem("medical-scribe-theme", theme);
     };
 
     applyTheme();
 
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = () => {
-      if (theme === 'system') {
+      if (theme === "system") {
         applyTheme();
       }
     };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
   // Shortcuts management - Load/Save
   useEffect(() => {
     // Clear old legacy shortcuts
-    localStorage.removeItem('medical-scribe-shortcuts');
-    localStorage.removeItem('medical-scribe-shortcuts-v2');
-    localStorage.removeItem('medical-scribe-shortcuts-v3');
+    localStorage.removeItem("medical-scribe-shortcuts");
+    localStorage.removeItem("medical-scribe-shortcuts-v2");
+    localStorage.removeItem("medical-scribe-shortcuts-v3");
 
-    const savedShortcuts = localStorage.getItem('medical-scribe-shortcuts-v4');
+    const savedShortcuts = localStorage.getItem("medical-scribe-shortcuts-v4");
     const defaults = getPlatformDefaultShortcuts(useModifiers);
 
     if (savedShortcuts) {
@@ -353,7 +420,7 @@ export default function Home() {
         // For now, we trust the user's saved preferences if they exist, but apply defaults for missing keys
         setShortcuts({ ...defaults, ...parsed });
       } catch (e) {
-        console.error('Failed to parse shortcuts:', e);
+        console.error("Failed to parse shortcuts:", e);
         setShortcuts(defaults);
       }
     } else {
@@ -362,7 +429,10 @@ export default function Home() {
   }, [useModifiers]); // Re-load defaults when useModifiers changes
 
   useEffect(() => {
-    localStorage.setItem('medical-scribe-shortcuts-v4', JSON.stringify(shortcuts));
+    localStorage.setItem(
+      "medical-scribe-shortcuts-v4",
+      JSON.stringify(shortcuts)
+    );
   }, [shortcuts]);
 
   // Close shortcuts modal with Escape key
@@ -370,14 +440,14 @@ export default function Home() {
     if (!showShortcutsModal) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setShowShortcutsModal(false);
         setEditingShortcutId(null);
       }
     };
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [showShortcutsModal]);
 
   // Close help modal with Escape key
@@ -385,13 +455,13 @@ export default function Home() {
     if (!showHelp) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setShowHelp(false);
       }
     };
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [showHelp]);
 
   useEffect(() => {
@@ -403,26 +473,27 @@ export default function Home() {
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
 
-    const { webkitSpeechRecognition, SpeechRecognition } = window as unknown as IWindow;
+    const { webkitSpeechRecognition, SpeechRecognition } =
+      window as unknown as IWindow;
     const Recognition = SpeechRecognition || webkitSpeechRecognition;
 
     if (Recognition) {
       const recognition = new Recognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'ja-JP';
+      recognition.lang = "ja-JP";
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let finalTranscript = '';
+        let finalTranscript = "";
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
             finalTranscript += event.results[i][0].transcript;
           }
         }
         if (finalTranscript) {
-          setTranscript((prev) => prev + finalTranscript + '。\n');
+          setTranscript((prev) => prev + finalTranscript + "。\n");
         }
       };
 
@@ -432,7 +503,9 @@ export default function Home() {
     // Load available voices for text-to-speech
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
-      const japaneseVoices = voices.filter(voice => voice.lang.startsWith('ja'));
+      const japaneseVoices = voices.filter((voice) =>
+        voice.lang.startsWith("ja")
+      );
       setAvailableVoices(japaneseVoices);
       if (japaneseVoices.length > 0 && selectedVoiceIndex === 0) {
         setSelectedVoiceIndex(0);
@@ -446,7 +519,7 @@ export default function Home() {
     }
 
     return () => {
-      window.removeEventListener('resize', checkScreenSize);
+      window.removeEventListener("resize", checkScreenSize);
       if (recognitionRef.current) {
         recognitionRef.current.stop();
         recognitionRef.current = null;
@@ -461,7 +534,7 @@ export default function Home() {
   // Close modals on Escape key
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         if (showHelp) {
           setShowHelp(false);
         } else if (showExportPreview) {
@@ -471,8 +544,8 @@ export default function Home() {
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [showHelp, showExportPreview]);
 
   // Close export menu when clicking outside
@@ -481,15 +554,15 @@ export default function Home() {
       if (showExportMenu) {
         const target = event.target as HTMLElement;
         // Check if click is outside the export menu container
-        if (!target.closest('[data-export-menu]')) {
+        if (!target.closest("[data-export-menu]")) {
           setShowExportMenu(false);
         }
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [showExportMenu]);
 
@@ -506,20 +579,24 @@ export default function Home() {
     if (!transcript) return;
     setLoading(true);
     setIsStreaming(true);
-    setStreamingText('');
+    setStreamingText("");
     setError(null);
     setResult(null);
 
     try {
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: transcript, stream: true, model: selectedModel }),
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: transcript,
+          stream: true,
+          model: selectedModel,
+        }),
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        setError(errorData.error || 'APIエラーが発生しました');
+        setError(errorData.error || "APIエラーが発生しました");
         setIsStreaming(false);
         setLoading(false);
         return;
@@ -527,24 +604,24 @@ export default function Home() {
 
       const reader = res.body?.getReader();
       if (!reader) {
-        setError('ストリーミングレスポンスの取得に失敗しました');
+        setError("ストリーミングレスポンスの取得に失敗しました");
         setIsStreaming(false);
         setLoading(false);
         return;
       }
 
       const decoder = new TextDecoder();
-      let accumulatedText = '';
+      let accumulatedText = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        const lines = chunk.split("\n");
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
 
@@ -560,13 +637,15 @@ export default function Home() {
                 try {
                   const parsedResult = JSON.parse(accumulatedText);
                   if (!parsedResult.soap) {
-                    setError('AIの応答形式が不正です。もう一度お試しください。');
+                    setError(
+                      "AIの応答形式が不正です。もう一度お試しください。"
+                    );
                   } else {
                     setResult(parsedResult);
                   }
                 } catch (parseError) {
-                  console.error('JSON parse error:', parseError);
-                  setError('AIの応答を解析できませんでした。');
+                  console.error("JSON parse error:", parseError);
+                  setError("AIの応答を解析できませんでした。");
                 }
                 setIsStreaming(false);
                 setLoading(false);
@@ -585,7 +664,9 @@ export default function Home() {
       }
     } catch (e) {
       console.error(e);
-      setError('エラーが発生しました。APIキーとネットワーク接続を確認してください。');
+      setError(
+        "エラーが発生しました。APIキーとネットワーク接続を確認してください。"
+      );
     } finally {
       setIsStreaming(false);
       setLoading(false);
@@ -598,7 +679,7 @@ export default function Home() {
     const hasContent = transcript.length > 0 || result !== null;
     if (hasContent) {
       const confirmed = window.confirm(
-        '入力内容と生成結果をすべて削除しますか？\nこの操作は取り消せません。'
+        "入力内容と生成結果をすべて削除しますか？\nこの操作は取り消せません。"
       );
       if (!confirmed) return;
     }
@@ -609,40 +690,42 @@ export default function Home() {
       setIsSpeaking(false);
     }
 
-    setTranscript('');
+    setTranscript("");
     setResult(null);
     setError(null);
   };
 
   // Theme and settings functions
-  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
   };
 
   const handleThemeCycle = () => {
-    setTheme(prev => {
-      if (prev === 'light') return 'dark';
-      if (prev === 'dark') return 'system';
-      return 'light';
+    setTheme((prev) => {
+      if (prev === "light") return "dark";
+      if (prev === "dark") return "system";
+      return "light";
     });
   };
 
   const handleResetSettings = () => {
-    const confirmed = window.confirm('すべての設定（テーマ・ショートカット）をリセットしますか？');
+    const confirmed = window.confirm(
+      "すべての設定（テーマ・ショートカット）をリセットしますか？"
+    );
     if (confirmed) {
-      setTheme('system');
-      localStorage.removeItem('medical-scribe-theme');
-      
+      setTheme("system");
+      localStorage.removeItem("medical-scribe-theme");
+
       // Reset shortcuts with platform defaults
       // Default to useModifiers = true on reset as per requirement
       setUseModifiers(true);
-      localStorage.setItem('medical-scribe-use-modifiers', 'true');
-      
+      localStorage.setItem("medical-scribe-use-modifiers", "true");
+
       const defaults = getPlatformDefaultShortcuts(true);
       setShortcuts(defaults);
-      localStorage.removeItem('medical-scribe-shortcuts-v2');
-      localStorage.removeItem('medical-scribe-shortcuts-v3');
-      localStorage.removeItem('medical-scribe-shortcuts-v4');
+      localStorage.removeItem("medical-scribe-shortcuts-v2");
+      localStorage.removeItem("medical-scribe-shortcuts-v3");
+      localStorage.removeItem("medical-scribe-shortcuts-v4");
 
       setSpeechRate(1.0);
       setSelectedVoiceIndex(0);
@@ -653,13 +736,13 @@ export default function Home() {
     setUseModifiers(enabled);
     // When toggling, reset shortcuts to the defaults for that mode
     // Clear localStorage so useEffect doesn't restore old shortcuts
-    localStorage.removeItem('medical-scribe-shortcuts-v4');
+    localStorage.removeItem("medical-scribe-shortcuts-v4");
     const defaults = getPlatformDefaultShortcuts(enabled);
     setShortcuts(defaults);
   };
 
   const handleShortcutChange = (id: ActionId, key: ShortcutKey) => {
-    setShortcuts(prev => ({ ...prev, [id]: key }));
+    setShortcuts((prev) => ({ ...prev, [id]: key }));
     setEditingShortcutId(null);
   };
 
@@ -671,9 +754,9 @@ export default function Home() {
     const filename = `soap_note_${getTimestampForFilename()}.json`;
 
     setExportPreviewData({
-      type: 'json',
+      type: "json",
       content: dataStr,
-      filename
+      filename,
     });
     setShowExportPreview(true);
     setShowExportMenu(false);
@@ -682,18 +765,22 @@ export default function Home() {
   const confirmExport = () => {
     if (!exportPreviewData) return;
 
-    if (exportPreviewData.type === 'json') {
-      const blob = new Blob([exportPreviewData.content], { type: 'application/json' });
+    if (exportPreviewData.type === "json") {
+      const blob = new Blob([exportPreviewData.content], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = exportPreviewData.filename;
       link.click();
       URL.revokeObjectURL(url);
-    } else if (exportPreviewData.type === 'csv') {
-      const blob = new Blob(['\uFEFF' + exportPreviewData.content], { type: 'text/csv;charset=utf-8;' });
+    } else if (exportPreviewData.type === "csv") {
+      const blob = new Blob(["\uFEFF" + exportPreviewData.content], {
+        type: "text/csv;charset=utf-8;",
+      });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = exportPreviewData.filename;
       link.click();
@@ -708,78 +795,99 @@ export default function Home() {
     if (!result) return;
 
     const csvRows = [
-      ['項目', '内容'],
-      ['要約', result.summary || ''],
-      ['主訴', result.patientInfo?.chiefComplaint || ''],
-      ['期間', result.patientInfo?.duration || ''],
-      ['現病歴', result.soap.subjective?.presentIllness || ''],
-      ['症状', result.soap.subjective?.symptoms?.join(', ') || ''],
-      ['重症度', result.soap.subjective?.severity || ''],
-      ['発症', result.soap.subjective?.onset || ''],
-      ['随伴症状', result.soap.subjective?.associatedSymptoms?.join(', ') || ''],
-      ['既往歴', result.soap.subjective?.pastMedicalHistory || ''],
-      ['内服薬', result.soap.subjective?.medications?.join(', ') || ''],
-      ['血圧', result.soap.objective?.vitalSigns?.bloodPressure || ''],
-      ['脈拍', result.soap.objective?.vitalSigns?.pulse || ''],
-      ['体温', result.soap.objective?.vitalSigns?.temperature || ''],
-      ['呼吸数', result.soap.objective?.vitalSigns?.respiratoryRate || ''],
-      ['身体所見', result.soap.objective?.physicalExam || ''],
-      ['検査所見', result.soap.objective?.laboratoryFindings || ''],
-      ['診断名', result.soap.assessment?.diagnosis || ''],
-      ['ICD-10', result.soap.assessment?.icd10 || ''],
-      ['鑑別診断', result.soap.assessment?.differentialDiagnosis?.join(', ') || ''],
-      ['臨床的印象', result.soap.assessment?.clinicalImpression || ''],
-      ['治療方針', result.soap.plan?.treatment || ''],
-      ['処方薬', result.soap.plan?.medications?.map(m => {
-        const parts = [m?.name, m?.dosage, m?.frequency, m?.duration].filter(p => p !== undefined && p !== null && p !== '');
-        return parts.join(' ');
-      }).join('; ') || ''],
-      ['検査', result.soap.plan?.tests?.join(', ') || ''],
-      ['紹介', result.soap.plan?.referral || ''],
-      ['フォローアップ', result.soap.plan?.followUp || ''],
-      ['患者教育', result.soap.plan?.patientEducation || ''],
+      ["項目", "内容"],
+      ["要約", result.summary || ""],
+      ["主訴", result.patientInfo?.chiefComplaint || ""],
+      ["期間", result.patientInfo?.duration || ""],
+      ["現病歴", result.soap.subjective?.presentIllness || ""],
+      ["症状", result.soap.subjective?.symptoms?.join(", ") || ""],
+      ["重症度", result.soap.subjective?.severity || ""],
+      ["発症", result.soap.subjective?.onset || ""],
+      [
+        "随伴症状",
+        result.soap.subjective?.associatedSymptoms?.join(", ") || "",
+      ],
+      ["既往歴", result.soap.subjective?.pastMedicalHistory || ""],
+      ["内服薬", result.soap.subjective?.medications?.join(", ") || ""],
+      ["血圧", result.soap.objective?.vitalSigns?.bloodPressure || ""],
+      ["脈拍", result.soap.objective?.vitalSigns?.pulse || ""],
+      ["体温", result.soap.objective?.vitalSigns?.temperature || ""],
+      ["呼吸数", result.soap.objective?.vitalSigns?.respiratoryRate || ""],
+      ["身体所見", result.soap.objective?.physicalExam || ""],
+      ["検査所見", result.soap.objective?.laboratoryFindings || ""],
+      ["診断名", result.soap.assessment?.diagnosis || ""],
+      ["ICD-10", result.soap.assessment?.icd10 || ""],
+      [
+        "鑑別診断",
+        result.soap.assessment?.differentialDiagnosis?.join(", ") || "",
+      ],
+      ["臨床的印象", result.soap.assessment?.clinicalImpression || ""],
+      ["治療方針", result.soap.plan?.treatment || ""],
+      [
+        "処方薬",
+        result.soap.plan?.medications
+          ?.map((m) => {
+            const parts = [
+              m?.name,
+              m?.dosage,
+              m?.frequency,
+              m?.duration,
+            ].filter((p) => p !== undefined && p !== null && p !== "");
+            return parts.join(" ");
+          })
+          .join("; ") || "",
+      ],
+      ["検査", result.soap.plan?.tests?.join(", ") || ""],
+      ["紹介", result.soap.plan?.referral || ""],
+      ["フォローアップ", result.soap.plan?.followUp || ""],
+      ["患者教育", result.soap.plan?.patientEducation || ""],
     ];
 
-    const csvContent = csvRows.map(row =>
-      row.map(escapeCsvCell).join(',')
-    ).join('\n');
+    const csvContent = csvRows
+      .map((row) => row.map(escapeCsvCell).join(","))
+      .join("\n");
 
     const filename = `soap_note_${getTimestampForFilename()}.csv`;
 
     setExportPreviewData({
-      type: 'csv',
+      type: "csv",
       content: csvContent,
-      filename
+      filename,
     });
     setShowExportPreview(true);
     setShowExportMenu(false);
   };
 
   // Copy functions
-  const copyToClipboard = async (text: string, label: string = 'カルテ') => {
+  const copyToClipboard = async (text: string, label: string = "カルテ") => {
     try {
       await navigator.clipboard.writeText(text);
       alert(`${label}をクリップボードにコピーしました`);
     } catch (err) {
-      console.error('Failed to copy:', err);
-      alert('コピーに失敗しました');
+      console.error("Failed to copy:", err);
+      alert("コピーに失敗しました");
     }
   };
 
   const copyFullChart = () => {
     if (!result) return;
     const fullText = extractTextFromSoap(result);
-    copyToClipboard(fullText, '全体カルテ');
+    copyToClipboard(fullText, "全体カルテ");
   };
 
   const copySectionS = () => {
     if (!result) return;
-    let text = '【主観的情報 (Subjective)】\n\n';
+    let text = "【主観的情報 (Subjective)】\n\n";
     if (result.soap.subjective?.presentIllness) {
       text += `現病歴:\n${result.soap.subjective.presentIllness}\n\n`;
     }
-    if (result.soap.subjective?.symptoms && result.soap.subjective.symptoms.length > 0) {
-      text += `症状:\n${result.soap.subjective.symptoms.map(s => `• ${s}`).join('\n')}\n\n`;
+    if (
+      result.soap.subjective?.symptoms &&
+      result.soap.subjective.symptoms.length > 0
+    ) {
+      text += `症状:\n${result.soap.subjective.symptoms
+        .map((s) => `• ${s}`)
+        .join("\n")}\n\n`;
     }
     if (result.soap.subjective?.severity) {
       text += `重症度: ${result.soap.subjective.severity}\n\n`;
@@ -787,66 +895,74 @@ export default function Home() {
     if (result.soap.subjective?.pastMedicalHistory) {
       text += `既往歴:\n${result.soap.subjective.pastMedicalHistory}\n`;
     }
-    copyToClipboard(text, 'Sセクション');
+    copyToClipboard(text, "Sセクション");
   };
 
   const copySectionO = () => {
     if (!result) return;
-    let text = '【客観的情報 (Objective)】\n\n';
+    let text = "【客観的情報 (Objective)】\n\n";
     if (result.soap.objective?.vitalSigns) {
-      text += 'バイタルサイン:\n';
+      text += "バイタルサイン:\n";
       const vs = result.soap.objective.vitalSigns;
       if (vs.bloodPressure) text += `• 血圧: ${vs.bloodPressure}\n`;
       if (vs.pulse) text += `• 脈拍: ${vs.pulse}\n`;
       if (vs.temperature) text += `• 体温: ${vs.temperature}\n`;
       if (vs.respiratoryRate) text += `• 呼吸数: ${vs.respiratoryRate}\n`;
-      text += '\n';
+      text += "\n";
     }
     if (result.soap.objective?.physicalExam) {
       text += `身体所見:\n${result.soap.objective.physicalExam}\n`;
     }
-    copyToClipboard(text, 'Oセクション');
+    copyToClipboard(text, "Oセクション");
   };
 
   const copySectionA = () => {
     if (!result) return;
-    let text = '【評価・診断 (Assessment)】\n\n';
+    let text = "【評価・診断 (Assessment)】\n\n";
     if (result.soap.assessment?.diagnosis) {
       text += `診断名: ${result.soap.assessment.diagnosis}\n`;
       if (result.soap.assessment.icd10) {
         text += `ICD-10: ${result.soap.assessment.icd10}\n`;
       }
-      text += '\n';
+      text += "\n";
     }
-    if (result.soap.assessment?.differentialDiagnosis && result.soap.assessment.differentialDiagnosis.length > 0) {
-      text += `鑑別診断:\n${result.soap.assessment.differentialDiagnosis.map(d => `• ${d}`).join('\n')}\n\n`;
+    if (
+      result.soap.assessment?.differentialDiagnosis &&
+      result.soap.assessment.differentialDiagnosis.length > 0
+    ) {
+      text += `鑑別診断:\n${result.soap.assessment.differentialDiagnosis
+        .map((d) => `• ${d}`)
+        .join("\n")}\n\n`;
     }
     if (result.soap.assessment?.clinicalImpression) {
       text += `臨床的評価:\n${result.soap.assessment.clinicalImpression}\n`;
     }
-    copyToClipboard(text, 'Aセクション');
+    copyToClipboard(text, "Aセクション");
   };
 
   const copySectionP = () => {
     if (!result) return;
-    let text = '【計画 (Plan)】\n\n';
+    let text = "【計画 (Plan)】\n\n";
     if (result.soap.plan?.treatment) {
       text += `治療方針:\n${result.soap.plan.treatment}\n\n`;
     }
-    if (result.soap.plan?.medications && result.soap.plan.medications.length > 0) {
-      text += '処方:\n';
+    if (
+      result.soap.plan?.medications &&
+      result.soap.plan.medications.length > 0
+    ) {
+      text += "処方:\n";
       result.soap.plan.medications.forEach((med, i) => {
-        text += `${i + 1}. ${med.name || ''}\n`;
+        text += `${i + 1}. ${med.name || ""}\n`;
         if (med.dosage) text += `   用量: ${med.dosage}\n`;
         if (med.frequency) text += `   頻度: ${med.frequency}\n`;
         if (med.duration) text += `   期間: ${med.duration}\n`;
       });
-      text += '\n';
+      text += "\n";
     }
     if (result.soap.plan?.followUp) {
       text += `フォローアップ:\n${result.soap.plan.followUp}\n`;
     }
-    copyToClipboard(text, 'Pセクション');
+    copyToClipboard(text, "Pセクション");
   };
 
   const handleImportClick = () => {
@@ -859,13 +975,15 @@ export default function Home() {
 
     // File size limit
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      setError('ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。');
+      setError(
+        "ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。"
+      );
       return;
     }
 
     // Only accept JSON files
-    if (!file.name.endsWith('.json')) {
-      setError('JSON形式のファイルのみインポート可能です。');
+    if (!file.name.endsWith(".json")) {
+      setError("JSON形式のファイルのみインポート可能です。");
       return;
     }
 
@@ -874,49 +992,62 @@ export default function Home() {
       try {
         const content = e.target?.result as string;
         if (!content) {
-          throw new Error('ファイルの内容が空です。');
+          throw new Error("ファイルの内容が空です。");
         }
 
         const imported = JSON.parse(content);
-        
+
         // Validate that imported is an object
-        if (typeof imported !== 'object' || imported === null) {
-          throw new Error('無効なJSON形式です。');
+        if (typeof imported !== "object" || imported === null) {
+          throw new Error("無効なJSON形式です。");
         }
-        
+
         // Schema validation
         if (!imported.soap || !imported.patientInfo) {
-          throw new Error('SOAPノート形式が正しくありません。soapまたはpatientInfoが見つかりません。');
+          throw new Error(
+            "SOAPノート形式が正しくありません。soapまたはpatientInfoが見つかりません。"
+          );
         }
 
         // Validate required SOAP sections
-        if (!imported.soap.subjective || !imported.soap.objective || 
-            !imported.soap.assessment || !imported.soap.plan) {
-          throw new Error('必須のSOAPセクション（S/O/A/P）が不足しています。');
+        if (
+          !imported.soap.subjective ||
+          !imported.soap.objective ||
+          !imported.soap.assessment ||
+          !imported.soap.plan
+        ) {
+          throw new Error("必須のSOAPセクション（S/O/A/P）が不足しています。");
         }
 
         // Validate that SOAP sections have the correct structure
-        if (typeof imported.soap.subjective !== 'object' || 
-            typeof imported.soap.objective !== 'object' ||
-            typeof imported.soap.assessment !== 'object' ||
-            typeof imported.soap.plan !== 'object') {
-          throw new Error('SOAPセクションの構造が正しくありません。');
+        if (
+          typeof imported.soap.subjective !== "object" ||
+          typeof imported.soap.objective !== "object" ||
+          typeof imported.soap.assessment !== "object" ||
+          typeof imported.soap.plan !== "object"
+        ) {
+          throw new Error("SOAPセクションの構造が正しくありません。");
         }
 
         setResult(imported as SoapNote);
         setError(null);
-        
+
         // Switch to result panel on mobile
         if (!isLargeScreen) {
-          setActivePanel('result');
+          setActivePanel("result");
         }
       } catch (err) {
-        console.error('Import error:', err);
-        const errorMessage = err instanceof Error ? err.message : 'ファイルの読み込みに失敗しました。';
-        
+        console.error("Import error:", err);
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "ファイルの読み込みに失敗しました。";
+
         // Handle JSON syntax errors specifically
         if (err instanceof SyntaxError) {
-          setError('ファイルの読み込みに失敗しました。正しいJSON形式のSOAPカルテファイルか確認してください。');
+          setError(
+            "ファイルの読み込みに失敗しました。正しいJSON形式のSOAPカルテファイルか確認してください。"
+          );
         } else {
           setError(errorMessage);
         }
@@ -924,18 +1055,18 @@ export default function Home() {
     };
 
     reader.onerror = () => {
-      setError('ファイルの読み込みに失敗しました。');
+      setError("ファイルの読み込みに失敗しました。");
     };
 
     reader.readAsText(file);
-    
+
     // Reset input to allow re-importing the same file
-    event.target.value = '';
+    event.target.value = "";
   };
 
   // Text-to-speech functions
   const extractTextFromSoap = (soapNote: SoapNote): string => {
-    let text = '';
+    let text = "";
 
     // Summary
     if (soapNote.summary) {
@@ -944,31 +1075,31 @@ export default function Home() {
 
     // Patient Info
     if (soapNote.patientInfo) {
-      text += '患者情報。';
+      text += "患者情報。";
       if (soapNote.patientInfo.chiefComplaint) {
         text += `主訴、${soapNote.patientInfo.chiefComplaint}。`;
       }
       if (soapNote.patientInfo.duration) {
         text += `期間、${soapNote.patientInfo.duration}。`;
       }
-      text += '\n\n';
+      text += "\n\n";
     }
 
     // Subjective
-    text += 'S、主観的情報。';
+    text += "S、主観的情報。";
     if (soapNote.soap.subjective?.presentIllness) {
       text += `現病歴、${soapNote.soap.subjective.presentIllness}。`;
     }
     if (soapNote.soap.subjective?.symptoms?.length > 0) {
-      text += `症状、${soapNote.soap.subjective.symptoms.join('、')}。`;
+      text += `症状、${soapNote.soap.subjective.symptoms.join("、")}。`;
     }
     if (soapNote.soap.subjective?.severity) {
       text += `重症度、${soapNote.soap.subjective.severity}。`;
     }
-    text += '\n\n';
+    text += "\n\n";
 
     // Objective
-    text += 'O、客観的情報。';
+    text += "O、客観的情報。";
     if (soapNote.soap.objective?.vitalSigns) {
       const vs = soapNote.soap.objective.vitalSigns;
       text += `バイタルサイン、血圧${vs.bloodPressure}、脈拍${vs.pulse}、体温${vs.temperature}、呼吸数${vs.respiratoryRate}。`;
@@ -976,27 +1107,31 @@ export default function Home() {
     if (soapNote.soap.objective?.physicalExam) {
       text += `身体所見、${soapNote.soap.objective.physicalExam}。`;
     }
-    text += '\n\n';
+    text += "\n\n";
 
     // Assessment
-    text += 'A、評価・診断。';
+    text += "A、評価・診断。";
     if (soapNote.soap.assessment?.diagnosis) {
       text += `診断名、${soapNote.soap.assessment.diagnosis}。`;
     }
     if (soapNote.soap.assessment?.differentialDiagnosis?.length > 0) {
-      text += `鑑別診断、${soapNote.soap.assessment.differentialDiagnosis.join('、')}。`;
+      text += `鑑別診断、${soapNote.soap.assessment.differentialDiagnosis.join(
+        "、"
+      )}。`;
     }
-    text += '\n\n';
+    text += "\n\n";
 
     // Plan
-    text += 'P、治療計画。';
+    text += "P、治療計画。";
     if (soapNote.soap.plan?.treatment) {
       text += `治療方針、${soapNote.soap.plan.treatment}。`;
     }
     if (soapNote.soap.plan?.medications?.length > 0) {
-      text += '処方、';
+      text += "処方、";
       soapNote.soap.plan.medications.forEach((med, i) => {
-        text += `${i + 1}、${med.name}、用量${med.dosage}、用法${med.frequency}、期間${med.duration}。`;
+        text += `${i + 1}、${med.name}、用量${med.dosage}、用法${
+          med.frequency
+        }、期間${med.duration}。`;
       });
     }
     if (soapNote.soap.plan?.followUp) {
@@ -1025,7 +1160,7 @@ export default function Home() {
     }
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.lang = 'ja-JP';
+    utterance.lang = "ja-JP";
     utterance.rate = speechRate;
     utterance.pitch = 1.0;
 
@@ -1083,12 +1218,12 @@ export default function Home() {
   // Effect: Handle real-time Voice changes (System)
   useEffect(() => {
     if (!isSpeaking || !result) return;
-    
+
     // Restart System TTS from current position with new voice
     // Add a small delay to ensure previous speech is cancelled properly
     const text = extractTextFromSoap(result);
     const currentIndex = speechCurrentIndexRef.current;
-    
+
     const timer = setTimeout(() => {
       playSystemTTS(text, currentIndex);
     }, 50);
@@ -1097,16 +1232,16 @@ export default function Home() {
   }, [selectedVoiceIndex, availableVoices]);
 
   // Layout presets
-  const setLayoutPreset = (preset: 'equal' | 'left' | 'right') => {
+  const setLayoutPreset = (preset: "equal" | "left" | "right") => {
     setIsTransitioning(true);
     switch (preset) {
-      case 'equal':
+      case "equal":
         setLeftWidth(50);
         break;
-      case 'left':
+      case "left":
         setLeftWidth(65);
         break;
-      case 'right':
+      case "right":
         setLeftWidth(35);
         break;
     }
@@ -1122,13 +1257,13 @@ export default function Home() {
       e.stopPropagation();
 
       // Cancel on Escape
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setEditingShortcutId(null);
         return;
       }
 
       // Ignore modifier keys alone
-      if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
+      if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) return;
 
       const newShortcut: ShortcutKey = {
         key: e.key,
@@ -1138,15 +1273,18 @@ export default function Home() {
         meta: e.metaKey,
       };
 
-      setShortcuts(prev => ({
+      setShortcuts((prev) => ({
         ...prev,
-        [editingShortcutId]: newShortcut
+        [editingShortcutId]: newShortcut,
       }));
       setEditingShortcutId(null);
     };
 
-    window.addEventListener('keydown', handleEditKeyDown, { capture: true });
-    return () => window.removeEventListener('keydown', handleEditKeyDown, { capture: true });
+    window.addEventListener("keydown", handleEditKeyDown, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", handleEditKeyDown, {
+        capture: true,
+      });
   }, [editingShortcutId]);
 
   // Keyboard shortcuts listener
@@ -1154,13 +1292,16 @@ export default function Home() {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check if user is typing
       const target = e.target as HTMLElement;
-      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      const isInput =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
 
       // Ignore if editing a shortcut
       if (editingShortcutId) return;
 
       // Find matching shortcut
-      const actionId = (Object.keys(shortcuts) as ActionId[]).find(id => {
+      const actionId = (Object.keys(shortcuts) as ActionId[]).find((id) => {
         const s = shortcuts[id];
         return (
           e.key.toLowerCase() === s.key.toLowerCase() &&
@@ -1177,7 +1318,7 @@ export default function Home() {
         // AND specifically allow the user's requested actions even in inputs
         const s = shortcuts[actionId];
         const hasModifier = s.ctrl || s.alt || s.meta;
-        
+
         if (isInput && !hasModifier) {
           // If typing and shortcut has no modifiers, ignore shortcut to allow typing
           return;
@@ -1187,21 +1328,21 @@ export default function Home() {
         // e.g., Cmd+R (Reload) or Cmd+A (Select All) if they are mapped to actions
         // Only prevent if we are actually handling the shortcut
         e.preventDefault();
-        
+
         switch (actionId) {
-          case 'toggleRecording':
+          case "toggleRecording":
             toggleRecording();
             break;
-          case 'analyze':
+          case "analyze":
             handleAnalyze();
             break;
-          case 'clear':
+          case "clear":
             handleClear();
             break;
-          case 'toggleSpeech':
+          case "toggleSpeech":
             toggleSpeech();
             break;
-          case 'increaseSpeechRate': {
+          case "increaseSpeechRate": {
             const rates = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
             const currentIndex = rates.indexOf(speechRate);
             if (currentIndex < rates.length - 1) {
@@ -1209,7 +1350,7 @@ export default function Home() {
             }
             break;
           }
-          case 'decreaseSpeechRate': {
+          case "decreaseSpeechRate": {
             const rates = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
             const currentIndex = rates.indexOf(speechRate);
             if (currentIndex > 0) {
@@ -1217,46 +1358,61 @@ export default function Home() {
             }
             break;
           }
-          case 'import':
+          case "import":
             fileInputRef.current?.click();
             break;
-          case 'exportJson':
+          case "exportJson":
             exportAsJson();
             break;
-          case 'exportCsv':
+          case "exportCsv":
             exportAsCsv();
             break;
-          case 'themeLight':
-            handleThemeChange('light');
+          case "themeLight":
+            handleThemeChange("light");
             break;
-          case 'themeDark':
-            handleThemeChange('dark');
+          case "themeDark":
+            handleThemeChange("dark");
             break;
-          case 'themeSystem':
-            handleThemeChange('system');
+          case "themeSystem":
+            handleThemeChange("system");
             break;
-          case 'layoutLeft':
-            if (isLargeScreen) setLayoutPreset('left');
+          case "layoutLeft":
+            if (isLargeScreen) setLayoutPreset("left");
             break;
-          case 'layoutEqual':
-            if (isLargeScreen) setLayoutPreset('equal');
+          case "layoutEqual":
+            if (isLargeScreen) setLayoutPreset("equal");
             break;
-          case 'layoutRight':
-            if (isLargeScreen) setLayoutPreset('right');
+          case "layoutRight":
+            if (isLargeScreen) setLayoutPreset("right");
             break;
-          case 'toggleSettings':
-            setShowShortcutsModal(prev => !prev);
+          case "toggleSettings":
+            setShowShortcutsModal((prev) => !prev);
             break;
-          case 'toggleHelp':
-            setShowHelp(prev => !prev);
+          case "toggleHelp":
+            setShowHelp((prev) => !prev);
             break;
         }
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [shortcuts, editingShortcutId, isRecording, transcript, loading, result, isSpeaking, showShortcutsModal, showHelp, isLargeScreen, theme, availableVoices, selectedVoiceIndex, speechRate]); // Add all dependencies used in actions
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    shortcuts,
+    editingShortcutId,
+    isRecording,
+    transcript,
+    loading,
+    result,
+    isSpeaking,
+    showShortcutsModal,
+    showHelp,
+    isLargeScreen,
+    theme,
+    availableVoices,
+    selectedVoiceIndex,
+    speechRate,
+  ]); // Add all dependencies used in actions
 
   // Resizer handlers
   const handleMouseDown = () => {
@@ -1268,7 +1424,8 @@ export default function Home() {
       if (!isResizing || !containerRef.current) return;
 
       const containerRect = containerRef.current.getBoundingClientRect();
-      const newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      const newLeftWidth =
+        ((e.clientX - containerRect.left) / containerRect.width) * 100;
 
       // Constrain between 30% and 70%
       if (newLeftWidth >= 30 && newLeftWidth <= 70) {
@@ -1281,17 +1438,17 @@ export default function Home() {
     };
 
     if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     };
   }, [isResizing]);
 
@@ -1300,27 +1457,39 @@ export default function Home() {
       {/* Minimal header - sticky on scroll */}
       <header className="app-header">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-12">
             {/* Branding */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
-                  <MicrophoneIcon className="w-5 h-5 text-white" strokeWidth={2.5} aria-hidden="true" />
+                  <MicrophoneIcon
+                    className="w-5 h-5 text-white"
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                  />
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-theme-primary leading-none">
                     Medical Voice Scribe
                   </h1>
-                  <p className="text-xs text-theme-secondary font-medium mt-0.5">AI音声問診・カルテ自動生成</p>
+                  <p className="text-xs text-theme-secondary font-medium mt-0.5">
+                    AI音声問診・カルテ自動生成
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Status indicator */}
             <div className="hidden sm:flex items-center gap-3">
-              <div className={`status-badge ${isRecording ? 'recording' : 'idle'}`}>
-                <div className={`status-indicator ${isRecording ? 'recording' : 'idle'} ${isRecording ? 'recording-pulse' : ''}`} />
-                {isRecording ? '録音中' : '待機中'}
+              <div
+                className={`status-badge ${isRecording ? "recording" : "idle"}`}
+              >
+                <div
+                  className={`status-indicator ${
+                    isRecording ? "recording" : "idle"
+                  } ${isRecording ? "recording-pulse" : ""}`}
+                />
+                {isRecording ? "録音中" : "待機中"}
               </div>
 
               {/* AI Model selector */}
@@ -1328,7 +1497,7 @@ export default function Home() {
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-3 pr-8 py-1.5 text-sm text-theme-primary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-3 pr-8 py-1.5 text-xs text-theme-primary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-blue-500"
                   aria-label="AIモデル選択"
                   title="使用するAIモデルを選択"
                 >
@@ -1338,7 +1507,10 @@ export default function Home() {
                     </option>
                   ))}
                 </select>
-                <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-tertiary pointer-events-none" aria-hidden="true" />
+                <ChevronDownIcon
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-tertiary pointer-events-none"
+                  aria-hidden="true"
+                />
               </div>
 
               {/* Icon buttons - unified grid */}
@@ -1358,11 +1530,26 @@ export default function Home() {
                   onClick={handleThemeCycle}
                   className="w-10 h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="テーマ切り替え"
-                  data-tooltip={`テーマ: ${theme === 'system' ? '自動' : theme === 'light' ? 'ライト' : 'ダーク'}`}
+                  data-tooltip={`テーマ: ${
+                    theme === "system"
+                      ? "自動"
+                      : theme === "light"
+                      ? "ライト"
+                      : "ダーク"
+                  }`}
                 >
-                  {theme === 'light' && <SunIcon className="w-6 h-6" aria-hidden="true" />}
-                  {theme === 'dark' && <MoonIcon className="w-6 h-6" aria-hidden="true" />}
-                  {theme === 'system' && <ComputerDesktopIcon className="w-6 h-6" aria-hidden="true" />}
+                  {theme === "light" && (
+                    <SunIcon className="w-6 h-6" aria-hidden="true" />
+                  )}
+                  {theme === "dark" && (
+                    <MoonIcon className="w-6 h-6" aria-hidden="true" />
+                  )}
+                  {theme === "system" && (
+                    <ComputerDesktopIcon
+                      className="w-6 h-6"
+                      aria-hidden="true"
+                    />
+                  )}
                 </button>
 
                 {/* Help button */}
@@ -1372,14 +1559,21 @@ export default function Home() {
                   aria-label="ヘルプを表示"
                   data-tooltip="ヘルプ"
                 >
-                  <QuestionMarkCircleIcon className="w-6 h-6" aria-hidden="true" />
+                  <QuestionMarkCircleIcon
+                    className="w-6 h-6"
+                    aria-hidden="true"
+                  />
                 </button>
               </div>
             </div>
 
             {/* Mobile menu */}
             <div className="sm:hidden flex items-center gap-2">
-              <div className={`status-indicator ${isRecording ? 'recording recording-pulse' : 'idle'}`} />
+              <div
+                className={`status-indicator ${
+                  isRecording ? "recording recording-pulse" : "idle"
+                }`}
+              />
 
               {/* AI Model selector (Mobile) */}
               <div className="relative">
@@ -1395,7 +1589,10 @@ export default function Home() {
                     </option>
                   ))}
                 </select>
-                <ChevronDownIcon className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-theme-tertiary pointer-events-none" aria-hidden="true" />
+                <ChevronDownIcon
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-theme-tertiary pointer-events-none"
+                  aria-hidden="true"
+                />
               </div>
 
               {/* Shortcut settings button (Mobile) */}
@@ -1413,11 +1610,23 @@ export default function Home() {
                 onClick={handleThemeCycle}
                 className="p-1.5 rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="テーマ切り替え"
-                title={`テーマを切り替え: 現在 ${theme === 'system' ? '自動' : theme === 'light' ? 'ライト' : 'ダーク'}`}
+                title={`テーマを切り替え: 現在 ${
+                  theme === "system"
+                    ? "自動"
+                    : theme === "light"
+                    ? "ライト"
+                    : "ダーク"
+                }`}
               >
-                {theme === 'light' && <SunIcon className="w-5 h-5" aria-hidden="true" />}
-                {theme === 'dark' && <MoonIcon className="w-5 h-5" aria-hidden="true" />}
-                {theme === 'system' && <ComputerDesktopIcon className="w-5 h-5" aria-hidden="true" />}
+                {theme === "light" && (
+                  <SunIcon className="w-5 h-5" aria-hidden="true" />
+                )}
+                {theme === "dark" && (
+                  <MoonIcon className="w-5 h-5" aria-hidden="true" />
+                )}
+                {theme === "system" && (
+                  <ComputerDesktopIcon className="w-5 h-5" aria-hidden="true" />
+                )}
               </button>
 
               <button
@@ -1426,7 +1635,10 @@ export default function Home() {
                 aria-label="ヘルプを表示"
                 title="使い方ガイド"
               >
-                <QuestionMarkCircleIcon className="w-5 h-5" aria-hidden="true" />
+                <QuestionMarkCircleIcon
+                  className="w-5 h-5"
+                  aria-hidden="true"
+                />
               </button>
             </div>
           </div>
@@ -1435,26 +1647,27 @@ export default function Home() {
 
       {/* Main content area */}
       <main className="flex-1 relative">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
-
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
           {/* Control panel */}
-          <div className={`mb-4 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+          <div className={`mb-2 ${mounted ? "animate-fade-in" : "opacity-0"}`}>
             <div className="flex flex-wrap gap-3 items-center justify-between">
               <div className="flex flex-wrap gap-2 items-center">
                 <button
                   onClick={toggleRecording}
-                  className={`btn btn-record ${isRecording ? 'recording' : ''}`}
-                  aria-label={isRecording ? '録音を停止' : '録音を開始'}
+                  className={`btn btn-record ${isRecording ? "recording" : ""}`}
+                  aria-label={isRecording ? "録音を停止" : "録音を開始"}
                   aria-pressed={isRecording}
-                  data-tooltip={isRecording ? '録音を停止' : '音声入力を開始'}
+                  data-tooltip={isRecording ? "録音を停止" : "音声入力を開始"}
                 >
                   {isRecording ? (
                     <StopIcon className="w-4 h-4" aria-hidden="true" />
                   ) : (
                     <MicrophoneIcon className="w-4 h-4" aria-hidden="true" />
                   )}
-                  {isRecording ? '停止' : '録音'}
-                  <span className="text-xs opacity-70 ml-1">[{formatShortcut(shortcuts.toggleRecording, true)}]</span>
+                  {isRecording ? "停止" : "録音"}
+                  <span className="text-xs opacity-70 ml-1">
+                    [{formatShortcut(shortcuts.toggleRecording, true)}]
+                  </span>
                 </button>
                 <button
                   onClick={handleAnalyze}
@@ -1472,7 +1685,9 @@ export default function Home() {
                     <>
                       <SparklesIcon className="w-4 h-4" aria-hidden="true" />
                       カルテ生成
-                      <span className="text-xs opacity-70 ml-1">[{formatShortcut(shortcuts.analyze, true)}]</span>
+                      <span className="text-xs opacity-70 ml-1">
+                        [{formatShortcut(shortcuts.analyze, true)}]
+                      </span>
                     </>
                   )}
                 </button>
@@ -1495,7 +1710,9 @@ export default function Home() {
               >
                 <TrashIcon className="w-4 h-4" aria-hidden="true" />
                 クリア
-                <span className="text-xs opacity-70 ml-1">[{formatShortcut(shortcuts.clear, true)}]</span>
+                <span className="text-xs opacity-70 ml-1">
+                  [{formatShortcut(shortcuts.clear, true)}]
+                </span>
               </button>
             </div>
           </div>
@@ -1504,15 +1721,22 @@ export default function Home() {
           <div
             ref={containerRef}
             className="relative flex flex-col lg:flex-row gap-0"
-            style={{ minHeight: 'calc(100vh - 220px)' }}
+            style={{ minHeight: "calc(100vh - 160px)" }}
           >
-
             {/* Left: Transcript input */}
             <section
-              className={`${mounted ? 'animate-fade-in delay-100' : 'opacity-0'} flex-shrink-0 ${!isLargeScreen && activePanel !== 'transcript' ? 'hidden' : 'block'}`}
+              className={`${
+                mounted ? "animate-fade-in delay-100" : "opacity-0"
+              } flex-shrink-0 ${
+                !isLargeScreen && activePanel !== "transcript"
+                  ? "hidden"
+                  : "block"
+              }`}
               style={{
-                width: isLargeScreen ? `${leftWidth}%` : '100%',
-                transition: isTransitioning ? 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+                width: isLargeScreen ? `${leftWidth}%` : "100%",
+                transition: isTransitioning
+                  ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                  : "none",
               }}
               aria-label="会話入力"
             >
@@ -1524,9 +1748,13 @@ export default function Home() {
                       {/* Shortcut mode toggle */}
                       <div className="flex items-center gap-1.5 text-xs text-theme-secondary">
                         <button
-                          onClick={() => handleUseModifiersChange(!useModifiers)}
+                          onClick={() =>
+                            handleUseModifiersChange(!useModifiers)
+                          }
                           className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 ${
-                            useModifiers ? 'bg-teal-600' : 'bg-gray-300 dark:bg-gray-600'
+                            useModifiers
+                              ? "bg-teal-600"
+                              : "bg-gray-300 dark:bg-gray-600"
                           }`}
                           role="switch"
                           aria-checked={useModifiers}
@@ -1535,7 +1763,7 @@ export default function Home() {
                           <span
                             aria-hidden="true"
                             className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              useModifiers ? 'translate-x-4' : 'translate-x-0'
+                              useModifiers ? "translate-x-4" : "translate-x-0"
                             }`}
                           />
                         </button>
@@ -1551,7 +1779,7 @@ export default function Home() {
                     {/* Mobile accordion toggle */}
                     {!isLargeScreen && (
                       <button
-                        onClick={() => setActivePanel('result')}
+                        onClick={() => setActivePanel("result")}
                         className="btn btn-secondary py-1 px-3 text-xs"
                         aria-label="SOAPカルテを表示"
                         data-tooltip="カルテ表示に切り替え"
@@ -1586,45 +1814,99 @@ export default function Home() {
             {isLargeScreen && (
               <div
                 className="relative flex-shrink-0"
-                style={{ width: '48px' }}
+                style={{ width: "48px" }}
                 role="separator"
                 aria-label="レイアウト調整"
               >
                 {/* Layout preset buttons - Top positioned */}
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col gap-2 z-10">
                   <button
-                    onClick={() => setLayoutPreset('left')}
+                    onClick={() => setLayoutPreset("left")}
                     className="layout-btn group"
                     title="左側を広く"
                     aria-label="左側を広くする"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="3" y="5" width="10" height="14" className="group-hover:fill-teal-50" />
-                      <rect x="15" y="5" width="6" height="14" className="group-hover:fill-teal-50" />
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <rect
+                        x="3"
+                        y="5"
+                        width="10"
+                        height="14"
+                        className="group-hover:fill-teal-50"
+                      />
+                      <rect
+                        x="15"
+                        y="5"
+                        width="6"
+                        height="14"
+                        className="group-hover:fill-teal-50"
+                      />
                     </svg>
                   </button>
 
                   <button
-                    onClick={() => setLayoutPreset('equal')}
+                    onClick={() => setLayoutPreset("equal")}
                     className="layout-btn group"
                     title="均等"
                     aria-label="左右を均等にする"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="3" y="5" width="8" height="14" className="group-hover:fill-teal-50" />
-                      <rect x="13" y="5" width="8" height="14" className="group-hover:fill-teal-50" />
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <rect
+                        x="3"
+                        y="5"
+                        width="8"
+                        height="14"
+                        className="group-hover:fill-teal-50"
+                      />
+                      <rect
+                        x="13"
+                        y="5"
+                        width="8"
+                        height="14"
+                        className="group-hover:fill-teal-50"
+                      />
                     </svg>
                   </button>
 
                   <button
-                    onClick={() => setLayoutPreset('right')}
+                    onClick={() => setLayoutPreset("right")}
                     className="layout-btn group"
                     title="右側を広く"
                     aria-label="右側を広くする"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="3" y="5" width="6" height="14" className="group-hover:fill-teal-50" />
-                      <rect x="11" y="5" width="10" height="14" className="group-hover:fill-teal-50" />
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <rect
+                        x="3"
+                        y="5"
+                        width="6"
+                        height="14"
+                        className="group-hover:fill-teal-50"
+                      />
+                      <rect
+                        x="11"
+                        y="5"
+                        width="10"
+                        height="14"
+                        className="group-hover:fill-teal-50"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -1633,7 +1915,7 @@ export default function Home() {
                 <div
                   className="absolute inset-0 flex items-center justify-center cursor-col-resize group"
                   onMouseDown={handleMouseDown}
-                  style={{ pointerEvents: isTransitioning ? 'none' : 'auto' }}
+                  style={{ pointerEvents: isTransitioning ? "none" : "auto" }}
                 >
                   {/* Visual line */}
                   <div className="resize-handle-line">
@@ -1650,9 +1932,15 @@ export default function Home() {
 
             {/* Right: SOAP results */}
             <section
-              className={`${mounted ? 'animate-fade-in delay-200' : 'opacity-0'} flex-1 ${!isLargeScreen && activePanel !== 'result' ? 'hidden' : 'block'}`}
+              className={`${
+                mounted ? "animate-fade-in delay-200" : "opacity-0"
+              } flex-1 ${
+                !isLargeScreen && activePanel !== "result" ? "hidden" : "block"
+              }`}
               style={{
-                transition: isTransitioning ? 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+                transition: isTransitioning
+                  ? "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                  : "none",
               }}
               aria-label="SOAPカルテ結果"
             >
@@ -1665,7 +1953,7 @@ export default function Home() {
                         {/* 1段目: 戻るボタンと見出し */}
                         <div className="flex items-center justify-between">
                           <button
-                            onClick={() => setActivePanel('transcript')}
+                            onClick={() => setActivePanel("transcript")}
                             className="btn btn-secondary py-1 px-2 text-xs flex items-center gap-1"
                             aria-label="会話テキストに戻る"
                             data-tooltip="会話テキストに戻る"
@@ -1673,7 +1961,9 @@ export default function Home() {
                             <ArrowLeftIcon className="w-4 h-4" />
                             <span>会話</span>
                           </button>
-                          <h2 className="panel-title text-sm whitespace-nowrap">カルテ</h2>
+                          <h2 className="panel-title text-sm whitespace-nowrap">
+                            カルテ
+                          </h2>
                         </div>
                         {/* 2段目: アクションボタン群 */}
                         <div className="flex items-center justify-end gap-1">
@@ -1725,8 +2015,14 @@ export default function Home() {
                             onClick={toggleSpeech}
                             disabled={!result}
                             className="btn btn-secondary py-1 px-2 text-xs"
-                            aria-label={isSpeaking ? '読み上げを停止' : 'カルテを読み上げ'}
-                            data-tooltip={isSpeaking ? '読み上げ停止' : 'カルテを音声で読み上げ'}
+                            aria-label={
+                              isSpeaking ? "読み上げを停止" : "カルテを読み上げ"
+                            }
+                            data-tooltip={
+                              isSpeaking
+                                ? "読み上げ停止"
+                                : "カルテを音声で読み上げ"
+                            }
                           >
                             {isSpeaking ? (
                               <StopIconSolid className="w-4 h-4" />
@@ -1735,13 +2031,19 @@ export default function Home() {
                             )}
                           </button>
                           <button
-                            onClick={() => setShowSpeechSettings(!showSpeechSettings)}
+                            onClick={() =>
+                              setShowSpeechSettings(!showSpeechSettings)
+                            }
                             disabled={!result}
                             className="btn btn-secondary py-1 px-2 text-xs"
                             aria-label="音声設定"
                             data-tooltip="音声・速度設定"
                           >
-                            <ChevronDownIcon className={`w-4 h-4 transition-transform ${showSpeechSettings ? 'rotate-180' : ''}`} />
+                            <ChevronDownIcon
+                              className={`w-4 h-4 transition-transform ${
+                                showSpeechSettings ? "rotate-180" : ""
+                              }`}
+                            />
                           </button>
                         </div>
                       </div>
@@ -1757,7 +2059,10 @@ export default function Home() {
                             className="flex items-center gap-1.5 text-xs text-theme-secondary hover:text-theme-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             aria-label="カルテ全体をコピー"
                           >
-                            <ClipboardDocumentIcon className="w-4 h-4" aria-hidden="true" />
+                            <ClipboardDocumentIcon
+                              className="w-4 h-4"
+                              aria-hidden="true"
+                            />
                             <span>全体コピー</span>
                           </button>
                         </div>
@@ -1770,7 +2075,10 @@ export default function Home() {
                             aria-label="カルテをインポート"
                             data-tooltip="JSON形式でカルテをインポート"
                           >
-                            <ArrowUpTrayIcon className="w-4 h-4" aria-hidden="true" />
+                            <ArrowUpTrayIcon
+                              className="w-4 h-4"
+                              aria-hidden="true"
+                            />
                             <span className="hidden sm:inline">Import</span>
                           </button>
 
@@ -1783,9 +2091,17 @@ export default function Home() {
                               aria-label="カルテをエクスポート"
                               data-tooltip="JSON/CSV形式でエクスポート"
                             >
-                              <ArrowDownTrayIcon className="w-4 h-4" aria-hidden="true" />
+                              <ArrowDownTrayIcon
+                                className="w-4 h-4"
+                                aria-hidden="true"
+                              />
                               <span className="hidden sm:inline">Export</span>
-                              <ChevronDownIcon className={`w-3 h-3 ml-1 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} aria-hidden="true" />
+                              <ChevronDownIcon
+                                className={`w-3 h-3 ml-1 transition-transform ${
+                                  showExportMenu ? "rotate-180" : ""
+                                }`}
+                                aria-hidden="true"
+                              />
                             </button>
 
                             {/* Export menu dropdown */}
@@ -1815,31 +2131,58 @@ export default function Home() {
                             onClick={toggleSpeech}
                             disabled={!result}
                             className="btn btn-secondary text-xs py-1 px-2"
-                            aria-label={isSpeaking ? '読み上げを停止' : 'カルテを読み上げ'}
-                            data-tooltip={isSpeaking ? '読み上げ停止' : 'カルテを音声で読み上げ'}
+                            aria-label={
+                              isSpeaking ? "読み上げを停止" : "カルテを読み上げ"
+                            }
+                            data-tooltip={
+                              isSpeaking
+                                ? "読み上げ停止"
+                                : "カルテを音声で読み上げ"
+                            }
                           >
                             {isSpeaking ? (
                               <>
-                                <StopIconSolid className="w-4 h-4" aria-hidden="true" />
+                                <StopIconSolid
+                                  className="w-4 h-4"
+                                  aria-hidden="true"
+                                />
                                 Stop
-                                <span className="opacity-70 ml-1">[{formatShortcut(shortcuts.toggleSpeech, true)}]</span>
+                                <span className="opacity-70 ml-1">
+                                  [
+                                  {formatShortcut(shortcuts.toggleSpeech, true)}
+                                  ]
+                                </span>
                               </>
                             ) : (
                               <>
-                                <SpeakerWaveIcon className="w-4 h-4" aria-hidden="true" />
+                                <SpeakerWaveIcon
+                                  className="w-4 h-4"
+                                  aria-hidden="true"
+                                />
                                 Voice
-                                <span className="opacity-70 ml-1">[{formatShortcut(shortcuts.toggleSpeech, true)}]</span>
+                                <span className="opacity-70 ml-1">
+                                  [
+                                  {formatShortcut(shortcuts.toggleSpeech, true)}
+                                  ]
+                                </span>
                               </>
                             )}
                           </button>
                           <button
-                            onClick={() => setShowSpeechSettings(!showSpeechSettings)}
+                            onClick={() =>
+                              setShowSpeechSettings(!showSpeechSettings)
+                            }
                             disabled={!result}
                             className="btn btn-secondary text-xs p-1.5"
                             aria-label="音声設定"
                             data-tooltip="音声・速度設定"
                           >
-                            <ChevronDownIcon className={`w-4 h-4 transition-transform ${showSpeechSettings ? 'rotate-180' : ''}`} aria-hidden="true" />
+                            <ChevronDownIcon
+                              className={`w-4 h-4 transition-transform ${
+                                showSpeechSettings ? "rotate-180" : ""
+                              }`}
+                              aria-hidden="true"
+                            />
                           </button>
                         </div>
                       </div>
@@ -1863,8 +2206,8 @@ export default function Home() {
                                 onClick={() => setSpeechRate(rate)}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                                   speechRate === rate
-                                    ? 'bg-theme-active'
-                                    : 'bg-theme-surface text-theme-primary border border-theme-border hover:bg-theme-card'
+                                    ? "bg-theme-active"
+                                    : "bg-theme-surface text-theme-primary border border-theme-border hover:bg-theme-card"
                                 }`}
                               >
                                 {rate}x
@@ -1876,13 +2219,18 @@ export default function Home() {
                         {/* Voice selection */}
                         {availableVoices.length > 0 && (
                           <div>
-                            <label htmlFor="voice-select" className="block text-xs font-semibold text-theme-secondary mb-2">
+                            <label
+                              htmlFor="voice-select"
+                              className="block text-xs font-semibold text-theme-secondary mb-2"
+                            >
                               システム音声の選択
                             </label>
                             <select
                               id="voice-select"
                               value={selectedVoiceIndex}
-                              onChange={(e) => setSelectedVoiceIndex(Number(e.target.value))}
+                              onChange={(e) =>
+                                setSelectedVoiceIndex(Number(e.target.value))
+                              }
                               className="w-full px-3 py-2 text-sm border border-theme-border rounded-md bg-theme-surface text-theme-primary focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             >
                               {availableVoices.map((voice, index) => (
@@ -1898,16 +2246,26 @@ export default function Home() {
                   )}
                 </div>
                 <div className="flex-1 overflow-y-auto">
-
                   {/* Error state */}
                   {error && (
                     <div className="m-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                       <div className="flex items-start gap-3">
-                        <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        <svg
+                          className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         <div className="flex-1">
-                          <h4 className="text-sm font-bold text-red-900 mb-1">エラー</h4>
+                          <h4 className="text-sm font-bold text-red-900 mb-1">
+                            エラー
+                          </h4>
                           <p className="text-sm text-red-800">{error}</p>
                         </div>
                         <button
@@ -1915,8 +2273,18 @@ export default function Home() {
                           className="text-red-600 hover:text-red-800"
                           aria-label="エラーメッセージを閉じる"
                         >
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                       </div>
@@ -1926,9 +2294,13 @@ export default function Home() {
                   {/* Empty state */}
                   {!result && !loading && !error && (
                     <div className="empty-state">
-                      <DocumentTextIcon className="empty-state-icon" aria-hidden="true" />
+                      <DocumentTextIcon
+                        className="empty-state-icon"
+                        aria-hidden="true"
+                      />
                       <p className="empty-state-text">
-                        まだ解析されていません<br />
+                        まだ解析されていません
+                        <br />
                         会話を録音してSOAPカルテを生成してください
                       </p>
                     </div>
@@ -1938,20 +2310,48 @@ export default function Home() {
                   {loading && (
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="loading-spinner animate-spin" style={{ width: '1.5rem', height: '1.5rem', borderWidth: '2px' }} />
-                        <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                          {isStreaming ? 'リアルタイム生成中...' : '解析準備中...'}
+                        <div
+                          className="loading-spinner animate-spin"
+                          style={{
+                            width: "1.5rem",
+                            height: "1.5rem",
+                            borderWidth: "2px",
+                          }}
+                        />
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
+                          {isStreaming
+                            ? "リアルタイム生成中..."
+                            : "解析準備中..."}
                         </span>
-                        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>GPT-4o-mini</span>
+                        <span
+                          className="text-xs"
+                          style={{ color: "var(--text-tertiary)" }}
+                        >
+                          GPT-4o-mini
+                        </span>
                       </div>
                       {isStreaming && streamingText && (
-                        <div className="rounded-lg p-4 border" style={{
-                          backgroundColor: 'var(--bg-tertiary)',
-                          borderColor: 'var(--border-primary)'
-                        }}>
-                          <pre className="text-xs font-mono whitespace-pre-wrap break-all max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
+                        <div
+                          className="rounded-lg p-4 border"
+                          style={{
+                            backgroundColor: "var(--bg-tertiary)",
+                            borderColor: "var(--border-primary)",
+                          }}
+                        >
+                          <pre
+                            className="text-xs font-mono whitespace-pre-wrap break-all max-h-96 overflow-y-auto"
+                            style={{ color: "var(--text-secondary)" }}
+                          >
                             {streamingText}
-                            <span className="inline-block w-2 h-4 animate-pulse ml-0.5" style={{ backgroundColor: 'var(--accent-primary)' }} />
+                            <span
+                              className="inline-block w-2 h-4 animate-pulse ml-0.5"
+                              style={{
+                                backgroundColor: "var(--accent-primary)",
+                              }}
+                            />
                           </pre>
                         </div>
                       )}
@@ -1965,12 +2365,25 @@ export default function Home() {
                       {result.summary && (
                         <div className="p-6 rounded-lg shadow-sm border-l-4 border-amber-600 dark:border-amber-500 border border-amber-200 dark:border-amber-600/40">
                           <div className="flex items-center gap-2 mb-2">
-                            <svg className="w-5 h-5 text-amber-600 dark:text-amber-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            <svg
+                              className="w-5 h-5 text-amber-600 dark:text-amber-500"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clipRule="evenodd"
+                              />
                             </svg>
-                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">要約</h3>
+                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">
+                              要約
+                            </h3>
                           </div>
-                          <p className="text-sm text-theme-primary leading-relaxed">{result.summary}</p>
+                          <p className="text-sm text-theme-primary leading-relaxed">
+                            {result.summary}
+                          </p>
                         </div>
                       )}
 
@@ -1978,22 +2391,41 @@ export default function Home() {
                       {result.patientInfo && (
                         <div className="p-6 rounded-lg shadow-sm border-l-4 border-blue-600 dark:border-blue-500 border border-blue-200 dark:border-blue-600/40">
                           <div className="flex items-center gap-2 mb-3">
-                            <svg className="w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            <svg
+                              className="w-5 h-5 text-blue-600 dark:text-blue-500"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                clipRule="evenodd"
+                              />
                             </svg>
-                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">患者情報</h3>
+                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">
+                              患者情報
+                            </h3>
                           </div>
                           <div className="grid grid-cols-2 gap-3 text-sm">
                             {result.patientInfo.chiefComplaint && (
                               <>
-                                <div className="text-theme-secondary font-semibold">主訴:</div>
-                                <div className="text-theme-primary">{result.patientInfo.chiefComplaint}</div>
+                                <div className="text-theme-secondary font-semibold">
+                                  主訴:
+                                </div>
+                                <div className="text-theme-primary">
+                                  {result.patientInfo.chiefComplaint}
+                                </div>
                               </>
                             )}
                             {result.patientInfo.duration && (
                               <>
-                                <div className="text-theme-secondary font-semibold">期間:</div>
-                                <div className="text-theme-primary">{result.patientInfo.duration}</div>
+                                <div className="text-theme-secondary font-semibold">
+                                  期間:
+                                </div>
+                                <div className="text-theme-primary">
+                                  {result.patientInfo.duration}
+                                </div>
                               </>
                             )}
                           </div>
@@ -2012,37 +2444,59 @@ export default function Home() {
                         </button>
                         <div className="soap-label">
                           <div className="flex items-center gap-2">
-                            <div className="soap-badge" style={{ background: 'var(--soap-s)' }}>S</div>
+                            <div
+                              className="soap-badge"
+                              style={{ background: "var(--soap-s)" }}
+                            >
+                              S
+                            </div>
                             主観的情報
                           </div>
                         </div>
                         <div className="space-y-3 text-sm">
                           {result.soap.subjective?.presentIllness && (
                             <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">現病歴</div>
-                              <div className="soap-content">{result.soap.subjective.presentIllness}</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">
+                                現病歴
+                              </div>
+                              <div className="soap-content">
+                                {result.soap.subjective.presentIllness}
+                              </div>
                             </div>
                           )}
-                          {result.soap.subjective?.symptoms && result.soap.subjective.symptoms.length > 0 && (
-                            <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">症状</div>
-                              <ul className="list-disc list-inside soap-content space-y-1">
-                                {result.soap.subjective.symptoms.map((s: string, i: number) => (
-                                  <li key={i}>{s}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                          {result.soap.subjective?.symptoms &&
+                            result.soap.subjective.symptoms.length > 0 && (
+                              <div>
+                                <div className="font-bold text-xs text-theme-secondary mb-1">
+                                  症状
+                                </div>
+                                <ul className="list-disc list-inside soap-content space-y-1">
+                                  {result.soap.subjective.symptoms.map(
+                                    (s: string, i: number) => (
+                                      <li key={i}>{s}</li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            )}
                           {result.soap.subjective?.severity && (
                             <div>
-                              <span className="font-bold text-xs text-theme-secondary">重症度: </span>
-                              <span className="soap-content">{result.soap.subjective.severity}</span>
+                              <span className="font-bold text-xs text-theme-secondary">
+                                重症度:{" "}
+                              </span>
+                              <span className="soap-content">
+                                {result.soap.subjective.severity}
+                              </span>
                             </div>
                           )}
                           {result.soap.subjective?.pastMedicalHistory && (
                             <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">既往歴</div>
-                              <div className="soap-content">{result.soap.subjective.pastMedicalHistory}</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">
+                                既往歴
+                              </div>
+                              <div className="soap-content">
+                                {result.soap.subjective.pastMedicalHistory}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -2059,32 +2513,64 @@ export default function Home() {
                         </button>
                         <div className="soap-label">
                           <div className="flex items-center gap-2">
-                            <div className="soap-badge" style={{ background: 'var(--soap-o)' }}>O</div>
+                            <div
+                              className="soap-badge"
+                              style={{ background: "var(--soap-o)" }}
+                            >
+                              O
+                            </div>
                             客観的情報
                           </div>
                         </div>
                         <div className="space-y-3 text-sm">
                           {result.soap.objective?.vitalSigns && (
                             <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-2">バイタルサイン</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-2">
+                                バイタルサイン
+                              </div>
                               <div className="rounded border border-theme-soft overflow-hidden">
                                 <table className="w-full text-xs">
                                   <tbody className="divide-y divide-theme-soft">
                                     <tr>
-                                      <td className="px-3 py-2 bg-theme-table-header font-semibold text-theme-tertiary">血圧</td>
-                                      <td className="px-3 py-2 text-theme-secondary">{result.soap.objective.vitalSigns.bloodPressure}</td>
+                                      <td className="px-3 py-2 bg-theme-table-header font-semibold text-theme-tertiary">
+                                        血圧
+                                      </td>
+                                      <td className="px-3 py-2 text-theme-secondary">
+                                        {
+                                          result.soap.objective.vitalSigns
+                                            .bloodPressure
+                                        }
+                                      </td>
                                     </tr>
                                     <tr>
-                                      <td className="px-3 py-2 bg-theme-table-header font-semibold text-theme-tertiary">脈拍</td>
-                                      <td className="px-3 py-2 text-theme-secondary">{result.soap.objective.vitalSigns.pulse}</td>
+                                      <td className="px-3 py-2 bg-theme-table-header font-semibold text-theme-tertiary">
+                                        脈拍
+                                      </td>
+                                      <td className="px-3 py-2 text-theme-secondary">
+                                        {result.soap.objective.vitalSigns.pulse}
+                                      </td>
                                     </tr>
                                     <tr>
-                                      <td className="px-3 py-2 bg-theme-table-header font-semibold text-theme-tertiary">体温</td>
-                                      <td className="px-3 py-2 text-theme-secondary">{result.soap.objective.vitalSigns.temperature}</td>
+                                      <td className="px-3 py-2 bg-theme-table-header font-semibold text-theme-tertiary">
+                                        体温
+                                      </td>
+                                      <td className="px-3 py-2 text-theme-secondary">
+                                        {
+                                          result.soap.objective.vitalSigns
+                                            .temperature
+                                        }
+                                      </td>
                                     </tr>
                                     <tr>
-                                      <td className="px-3 py-2 bg-theme-table-header font-semibold text-theme-tertiary">呼吸数</td>
-                                      <td className="px-3 py-2 text-theme-secondary">{result.soap.objective.vitalSigns.respiratoryRate}</td>
+                                      <td className="px-3 py-2 bg-theme-table-header font-semibold text-theme-tertiary">
+                                        呼吸数
+                                      </td>
+                                      <td className="px-3 py-2 text-theme-secondary">
+                                        {
+                                          result.soap.objective.vitalSigns
+                                            .respiratoryRate
+                                        }
+                                      </td>
                                     </tr>
                                   </tbody>
                                 </table>
@@ -2093,8 +2579,12 @@ export default function Home() {
                           )}
                           {result.soap.objective?.physicalExam && (
                             <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">身体所見</div>
-                              <div className="soap-content">{result.soap.objective.physicalExam}</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">
+                                身体所見
+                              </div>
+                              <div className="soap-content">
+                                {result.soap.objective.physicalExam}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -2111,34 +2601,55 @@ export default function Home() {
                         </button>
                         <div className="soap-label">
                           <div className="flex items-center gap-2">
-                            <div className="soap-badge" style={{ background: 'var(--soap-a)' }}>A</div>
+                            <div
+                              className="soap-badge"
+                              style={{ background: "var(--soap-a)" }}
+                            >
+                              A
+                            </div>
                             評価・診断
                           </div>
                         </div>
                         <div className="space-y-3 text-sm">
                           {result.soap.assessment?.diagnosis && (
                             <div className="flex flex-wrap gap-2 items-center">
-                              <span className="font-bold text-xs text-theme-secondary">診断名:</span>
-                              <span className="soap-content font-bold">{result.soap.assessment.diagnosis}</span>
+                              <span className="font-bold text-xs text-theme-secondary">
+                                診断名:
+                              </span>
+                              <span className="soap-content font-bold">
+                                {result.soap.assessment.diagnosis}
+                              </span>
                               {result.soap.assessment?.icd10 && (
-                                <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded font-mono">{result.soap.assessment.icd10}</span>
+                                <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded font-mono">
+                                  {result.soap.assessment.icd10}
+                                </span>
                               )}
                             </div>
                           )}
-                          {result.soap.assessment?.differentialDiagnosis && result.soap.assessment.differentialDiagnosis.length > 0 && (
-                            <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">鑑別診断</div>
-                              <ul className="list-disc list-inside soap-content space-y-1">
-                                {result.soap.assessment.differentialDiagnosis.map((d: string, i: number) => (
-                                  <li key={i}>{d}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                          {result.soap.assessment?.differentialDiagnosis &&
+                            result.soap.assessment.differentialDiagnosis
+                              .length > 0 && (
+                              <div>
+                                <div className="font-bold text-xs text-theme-secondary mb-1">
+                                  鑑別診断
+                                </div>
+                                <ul className="list-disc list-inside soap-content space-y-1">
+                                  {result.soap.assessment.differentialDiagnosis.map(
+                                    (d: string, i: number) => (
+                                      <li key={i}>{d}</li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            )}
                           {result.soap.assessment?.clinicalImpression && (
                             <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">臨床的評価</div>
-                              <div className="soap-content">{result.soap.assessment.clinicalImpression}</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">
+                                臨床的評価
+                              </div>
+                              <div className="soap-content">
+                                {result.soap.assessment.clinicalImpression}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -2155,54 +2666,101 @@ export default function Home() {
                         </button>
                         <div className="soap-label">
                           <div className="flex items-center gap-2">
-                            <div className="soap-badge" style={{ background: 'var(--soap-p)' }}>P</div>
+                            <div
+                              className="soap-badge"
+                              style={{ background: "var(--soap-p)" }}
+                            >
+                              P
+                            </div>
                             治療計画
                           </div>
                         </div>
                         <div className="space-y-3 text-sm">
                           {result.soap.plan?.treatment && (
                             <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">治療方針</div>
-                              <div className="soap-content">{result.soap.plan.treatment}</div>
-                            </div>
-                          )}
-                          {result.soap.plan?.medications && result.soap.plan.medications.length > 0 && (
-                            <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-2">処方</div>
-                              <div className="space-y-2">
-                                {result.soap.plan.medications.map((med, i: number) => (
-                                  <div key={i} className="bg-theme-surface rounded border border-theme-glass p-3">
-                                    <div className="font-bold text-sm text-theme-primary mb-1">{med.name}</div>
-                                    <div className="grid grid-cols-3 gap-2 text-xs text-theme-secondary">
-                                      <div><span className="font-semibold">用量:</span> {med.dosage}</div>
-                                      <div><span className="font-semibold">用法:</span> {med.frequency}</div>
-                                      <div><span className="font-semibold">期間:</span> {med.duration}</div>
-                                    </div>
-                                  </div>
-                                ))}
+                              <div className="font-bold text-xs text-theme-secondary mb-1">
+                                治療方針
+                              </div>
+                              <div className="soap-content">
+                                {result.soap.plan.treatment}
                               </div>
                             </div>
                           )}
-                          {result.soap.plan?.tests && result.soap.plan.tests.length > 0 && (
-                            <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">追加検査</div>
-                              <ul className="list-disc list-inside soap-content space-y-1">
-                                {result.soap.plan.tests.map((t: string, i: number) => (
-                                  <li key={i}>{t}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                          {result.soap.plan?.medications &&
+                            result.soap.plan.medications.length > 0 && (
+                              <div>
+                                <div className="font-bold text-xs text-theme-secondary mb-2">
+                                  処方
+                                </div>
+                                <div className="space-y-2">
+                                  {result.soap.plan.medications.map(
+                                    (med, i: number) => (
+                                      <div
+                                        key={i}
+                                        className="bg-theme-surface rounded border border-theme-glass p-3"
+                                      >
+                                        <div className="font-bold text-sm text-theme-primary mb-1">
+                                          {med.name}
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 text-xs text-theme-secondary">
+                                          <div>
+                                            <span className="font-semibold">
+                                              用量:
+                                            </span>{" "}
+                                            {med.dosage}
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold">
+                                              用法:
+                                            </span>{" "}
+                                            {med.frequency}
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold">
+                                              期間:
+                                            </span>{" "}
+                                            {med.duration}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          {result.soap.plan?.tests &&
+                            result.soap.plan.tests.length > 0 && (
+                              <div>
+                                <div className="font-bold text-xs text-theme-secondary mb-1">
+                                  追加検査
+                                </div>
+                                <ul className="list-disc list-inside soap-content space-y-1">
+                                  {result.soap.plan.tests.map(
+                                    (t: string, i: number) => (
+                                      <li key={i}>{t}</li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            )}
                           {result.soap.plan?.followUp && (
                             <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">フォローアップ</div>
-                              <div className="soap-content">{result.soap.plan.followUp}</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">
+                                フォローアップ
+                              </div>
+                              <div className="soap-content">
+                                {result.soap.plan.followUp}
+                              </div>
                             </div>
                           )}
                           {result.soap.plan?.patientEducation && (
                             <div>
-                              <div className="font-bold text-xs text-theme-secondary mb-1">患者指導</div>
-                              <div className="soap-content">{result.soap.plan.patientEducation}</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">
+                                患者指導
+                              </div>
+                              <div className="soap-content">
+                                {result.soap.plan.patientEducation}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -2210,7 +2768,7 @@ export default function Home() {
 
                       {/* Generated timestamp */}
                       <div className="px-6 py-3 bg-theme-card text-xs text-theme-tertiary font-mono border-t border-theme-border">
-                        生成時刻: {new Date().toLocaleTimeString('ja-JP')}
+                        生成時刻: {new Date().toLocaleTimeString("ja-JP")}
                       </div>
                     </div>
                   )}
@@ -2226,7 +2784,8 @@ export default function Home() {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-theme-soft bg-theme-modal-header rounded-t-2xl">
                   <h3 className="text-lg font-semibold text-theme-primary">
-                    エクスポートプレビュー ({exportPreviewData.type.toUpperCase()})
+                    エクスポートプレビュー (
+                    {exportPreviewData.type.toUpperCase()})
                   </h3>
                   <button
                     onClick={() => {
@@ -2244,7 +2803,9 @@ export default function Home() {
                 <div className="flex-1 overflow-y-auto px-6 py-4 bg-theme-modal-content">
                   <div className="mb-4 flex items-center gap-2 text-sm text-theme-secondary">
                     <DocumentIcon className="w-4 h-4" />
-                    <span className="font-mono">{exportPreviewData.filename}</span>
+                    <span className="font-mono">
+                      {exportPreviewData.filename}
+                    </span>
                   </div>
                   <pre className="bg-theme-modal-card border border-theme-border rounded-lg p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words text-theme-primary">
                     {exportPreviewData.content}
@@ -2265,7 +2826,7 @@ export default function Home() {
                   <button
                     onClick={confirmExport}
                     className="px-4 py-2 text-sm font-medium text-white border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center gap-2 transition-all hover:brightness-110"
-                    style={{ background: 'var(--gradient-primary)' }}
+                    style={{ background: "var(--gradient-primary)" }}
                   >
                     <ArrowDownTrayIcon className="w-4 h-4" />
                     ダウンロード
@@ -2282,10 +2843,15 @@ export default function Home() {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border bg-theme-modal-header rounded-t-2xl">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg" style={{ background: 'var(--gradient-primary)' }}>
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg"
+                      style={{ background: "var(--gradient-primary)" }}
+                    >
                       <QuestionMarkCircleIcon className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-theme-primary">使い方ガイド</h3>
+                    <h3 className="text-xl font-bold text-theme-primary">
+                      使い方ガイド
+                    </h3>
                   </div>
                   <button
                     onClick={() => setShowHelp(false)}
@@ -2306,7 +2872,8 @@ export default function Home() {
                         このアプリについて
                       </h4>
                       <p className="text-sm text-theme-secondary leading-relaxed">
-                        Medical Voice Scribeは、音声による医療問診を自動的にSOAPカルテ形式に変換するデモアプリケーションです。
+                        Medical Voice
+                        Scribeは、音声による医療問診を自動的にSOAPカルテ形式に変換するデモアプリケーションです。
                         医療現場での記録業務の効率化を目的としています。
                       </p>
                     </div>
@@ -2319,33 +2886,60 @@ export default function Home() {
                       </h4>
                       <ol className="space-y-3 text-sm text-theme-secondary">
                         <li className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            1
+                          </span>
                           <div>
-                            <span className="font-semibold">録音ボタンをクリック</span>して、音声入力を開始します。マイクの使用許可を求められた場合は許可してください。
+                            <span className="font-semibold">
+                              録音ボタンをクリック
+                            </span>
+                            して、音声入力を開始します。マイクの使用許可を求められた場合は許可してください。
                           </div>
                         </li>
                         <li className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            2
+                          </span>
                           <div>
-                            医師と患者の会話を<span className="font-semibold">自然に話します</span>。問診内容、症状、診察結果などを含めてください。
+                            医師と患者の会話を
+                            <span className="font-semibold">
+                              自然に話します
+                            </span>
+                            。問診内容、症状、診察結果などを含めてください。
                           </div>
                         </li>
                         <li className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            3
+                          </span>
                           <div>
-                            録音が完了したら<span className="font-semibold">停止ボタン</span>をクリックし、テキスト化された内容を確認します。
+                            録音が完了したら
+                            <span className="font-semibold">停止ボタン</span>
+                            をクリックし、テキスト化された内容を確認します。
                           </div>
                         </li>
                         <li className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            4
+                          </span>
                           <div>
-                            必要に応じてテキストを編集し、<span className="font-semibold">「SOAP生成」ボタン</span>をクリックします。
+                            必要に応じてテキストを編集し、
+                            <span className="font-semibold">
+                              「SOAP生成」ボタン
+                            </span>
+                            をクリックします。
                           </div>
                         </li>
                         <li className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">5</span>
+                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            5
+                          </span>
                           <div>
-                            AIが自動的に<span className="font-semibold">SOAP形式のカルテ</span>を生成します。
+                            AIが自動的に
+                            <span className="font-semibold">
+                              SOAP形式のカルテ
+                            </span>
+                            を生成します。
                           </div>
                         </li>
                       </ol>
@@ -2359,20 +2953,36 @@ export default function Home() {
                       </h4>
                       <div className="grid sm:grid-cols-2 gap-3 text-sm">
                         <div className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
-                          <div className="font-semibold text-theme-primary mb-1">🎤 音声入力</div>
-                          <div className="text-theme-secondary text-xs">ブラウザの音声認識機能を使用してリアルタイムに文字起こし</div>
+                          <div className="font-semibold text-theme-primary mb-1">
+                            🎤 音声入力
+                          </div>
+                          <div className="text-theme-secondary text-xs">
+                            ブラウザの音声認識機能を使用してリアルタイムに文字起こし
+                          </div>
                         </div>
                         <div className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
-                          <div className="font-semibold text-theme-primary mb-1">🤖 AI生成</div>
-                          <div className="text-theme-secondary text-xs">OpenAI GPT-4oを使用したSOAPカルテの自動生成</div>
+                          <div className="font-semibold text-theme-primary mb-1">
+                            🤖 AI生成
+                          </div>
+                          <div className="text-theme-secondary text-xs">
+                            OpenAI GPT-4oを使用したSOAPカルテの自動生成
+                          </div>
                         </div>
                         <div className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
-                          <div className="font-semibold text-theme-primary mb-1">🔊 読み上げ</div>
-                          <div className="text-theme-secondary text-xs">生成されたカルテをシステム音声で読み上げ（速度・音声調整可能）</div>
+                          <div className="font-semibold text-theme-primary mb-1">
+                            🔊 読み上げ
+                          </div>
+                          <div className="text-theme-secondary text-xs">
+                            生成されたカルテをシステム音声で読み上げ（速度・音声調整可能）
+                          </div>
                         </div>
                         <div className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
-                          <div className="font-semibold text-theme-primary mb-1">💾 保存・共有</div>
-                          <div className="text-theme-secondary text-xs">JSON/CSV形式でエクスポート、インポートが可能</div>
+                          <div className="font-semibold text-theme-primary mb-1">
+                            💾 保存・共有
+                          </div>
+                          <div className="text-theme-secondary text-xs">
+                            JSON/CSV形式でエクスポート、インポートが可能
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2385,31 +2995,67 @@ export default function Home() {
                       </h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex gap-3">
-                          <div className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold" style={{ background: 'var(--soap-s)' }}>S</div>
+                          <div
+                            className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold"
+                            style={{ background: "var(--soap-s)" }}
+                          >
+                            S
+                          </div>
                           <div>
-                            <span className="font-semibold text-theme-primary">Subjective（主観的情報）</span>
-                            <p className="text-theme-secondary text-xs mt-0.5">患者が訴える症状や感じていること</p>
+                            <span className="font-semibold text-theme-primary">
+                              Subjective（主観的情報）
+                            </span>
+                            <p className="text-theme-secondary text-xs mt-0.5">
+                              患者が訴える症状や感じていること
+                            </p>
                           </div>
                         </div>
                         <div className="flex gap-3">
-                          <div className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold" style={{ background: 'var(--soap-o)' }}>O</div>
+                          <div
+                            className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold"
+                            style={{ background: "var(--soap-o)" }}
+                          >
+                            O
+                          </div>
                           <div>
-                            <span className="font-semibold text-theme-primary">Objective（客観的情報）</span>
-                            <p className="text-theme-secondary text-xs mt-0.5">測定可能な検査結果やバイタルサイン</p>
+                            <span className="font-semibold text-theme-primary">
+                              Objective（客観的情報）
+                            </span>
+                            <p className="text-theme-secondary text-xs mt-0.5">
+                              測定可能な検査結果やバイタルサイン
+                            </p>
                           </div>
                         </div>
                         <div className="flex gap-3">
-                          <div className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold" style={{ background: 'var(--soap-a)' }}>A</div>
+                          <div
+                            className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold"
+                            style={{ background: "var(--soap-a)" }}
+                          >
+                            A
+                          </div>
                           <div>
-                            <span className="font-semibold text-theme-primary">Assessment（評価）</span>
-                            <p className="text-theme-secondary text-xs mt-0.5">診断名や臨床的な評価・判断</p>
+                            <span className="font-semibold text-theme-primary">
+                              Assessment（評価）
+                            </span>
+                            <p className="text-theme-secondary text-xs mt-0.5">
+                              診断名や臨床的な評価・判断
+                            </p>
                           </div>
                         </div>
                         <div className="flex gap-3">
-                          <div className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold" style={{ background: 'var(--soap-p)' }}>P</div>
+                          <div
+                            className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold"
+                            style={{ background: "var(--soap-p)" }}
+                          >
+                            P
+                          </div>
                           <div>
-                            <span className="font-semibold text-theme-primary">Plan（計画）</span>
-                            <p className="text-theme-secondary text-xs mt-0.5">治療方針、処方、追加検査、フォローアップ</p>
+                            <span className="font-semibold text-theme-primary">
+                              Plan（計画）
+                            </span>
+                            <p className="text-theme-secondary text-xs mt-0.5">
+                              治療方針、処方、追加検査、フォローアップ
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -2424,19 +3070,32 @@ export default function Home() {
                       <ul className="space-y-1 text-xs text-theme-warning">
                         <li className="flex gap-2">
                           <span>•</span>
-                          <span>このアプリは<strong>デモンストレーション用途</strong>です。実際の臨床現場での使用は想定していません。</span>
+                          <span>
+                            このアプリは
+                            <strong>デモンストレーション用途</strong>
+                            です。実際の臨床現場での使用は想定していません。
+                          </span>
                         </li>
                         <li className="flex gap-2">
                           <span>•</span>
-                          <span>生成されたカルテ内容は必ず<strong>医療従事者が確認・修正</strong>してください。</span>
+                          <span>
+                            生成されたカルテ内容は必ず
+                            <strong>医療従事者が確認・修正</strong>
+                            してください。
+                          </span>
                         </li>
                         <li className="flex gap-2">
                           <span>•</span>
-                          <span>個人情報や機密情報を含むデータの入力は<strong>避けてください</strong>。</span>
+                          <span>
+                            個人情報や機密情報を含むデータの入力は
+                            <strong>避けてください</strong>。
+                          </span>
                         </li>
                         <li className="flex gap-2">
                           <span>•</span>
-                          <span>音声認識の精度はブラウザやマイクの品質に依存します。</span>
+                          <span>
+                            音声認識の精度はブラウザやマイクの品質に依存します。
+                          </span>
                         </li>
                       </ul>
                     </div>
@@ -2448,7 +3107,7 @@ export default function Home() {
                   <button
                     onClick={() => setShowHelp(false)}
                     className="px-5 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors whitespace-nowrap"
-                    style={{ background: 'var(--gradient-primary)' }}
+                    style={{ background: "var(--gradient-primary)" }}
                   >
                     閉じる
                   </button>
@@ -2468,8 +3127,12 @@ export default function Home() {
                       <KeyboardIcon className="w-6 h-6 text-theme-primary" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-theme-primary">ショートカット設定</h3>
-                      <p className="text-xs text-theme-secondary">クリックしてキー割り当てを変更できます</p>
+                      <h3 className="text-xl font-bold text-theme-primary">
+                        ショートカット設定
+                      </h3>
+                      <p className="text-xs text-theme-secondary">
+                        クリックしてキー割り当てを変更できます
+                      </p>
                     </div>
                   </div>
                   <button
@@ -2489,15 +3152,23 @@ export default function Home() {
                   <div className="px-6 py-4 border-b border-theme-soft bg-theme-modal-content-alt">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-medium text-theme-primary">修飾キーショートカットを使用</div>
+                        <div className="font-medium text-theme-primary">
+                          修飾キーショートカットを使用
+                        </div>
                         <div className="text-xs text-theme-secondary mt-0.5">
-                          オンにすると、テキスト入力中でも <span className="font-mono bg-theme-highlight px-1 rounded">Cmd+R</span> などで操作できます
+                          オンにすると、テキスト入力中でも{" "}
+                          <span className="font-mono bg-theme-highlight px-1 rounded">
+                            Cmd+R
+                          </span>{" "}
+                          などで操作できます
                         </div>
                       </div>
                       <button
                         onClick={() => handleUseModifiersChange(!useModifiers)}
                         className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
-                          useModifiers ? 'bg-teal-600' : 'bg-gray-200 dark:bg-gray-700'
+                          useModifiers
+                            ? "bg-teal-600"
+                            : "bg-gray-200 dark:bg-gray-700"
                         }`}
                         role="switch"
                         aria-checked={useModifiers}
@@ -2506,7 +3177,7 @@ export default function Home() {
                         <span
                           aria-hidden="true"
                           className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            useModifiers ? 'translate-x-5' : 'translate-x-0'
+                            useModifiers ? "translate-x-5" : "translate-x-0"
                           }`}
                         />
                       </button>
@@ -2515,7 +3186,9 @@ export default function Home() {
 
                   <div className="divide-y divide-theme-soft">
                     {SHORTCUT_GROUPS.map((group) => {
-                      const groupShortcuts = SHORTCUT_DEFS.filter(def => def.group === group.id);
+                      const groupShortcuts = SHORTCUT_DEFS.filter(
+                        (def) => def.group === group.id
+                      );
                       if (groupShortcuts.length === 0) return null;
 
                       return (
@@ -2531,36 +3204,48 @@ export default function Home() {
                           {groupShortcuts.map((def) => {
                             const isEditing = editingShortcutId === def.id;
                             const current = shortcuts[def.id] || def.default;
-                            const platformDefault = getPlatformDefaultShortcuts(useModifiers)[def.id];
+                            const platformDefault =
+                              getPlatformDefaultShortcuts(useModifiers)[def.id];
 
                             return (
                               <div
                                 key={def.id}
                                 className={`flex items-center justify-between px-6 py-3 transition-colors ${
                                   isEditing
-                                    ? 'bg-theme-highlight'
-                                    : 'hover:bg-theme-card'
+                                    ? "bg-theme-highlight"
+                                    : "hover:bg-theme-card"
                                 }`}
                               >
-                                <span className="text-sm text-theme-primary pl-2">{def.label}</span>
+                                <span className="text-sm text-theme-primary pl-2">
+                                  {def.label}
+                                </span>
 
                                 <div className="flex items-center gap-3">
                                   <button
                                     onClick={() => setEditingShortcutId(def.id)}
                                     className={`
                                       min-w-[100px] px-3 py-1.5 rounded-md text-sm font-mono border transition-all
-                                      ${isEditing
-                                        ? 'bg-theme-surface border-teal-500 text-theme-accent ring-2 ring-teal-500/20'
-                                        : 'bg-theme-card border-transparent text-theme-primary hover:border-theme-light'
+                                      ${
+                                        isEditing
+                                          ? "bg-theme-surface border-teal-500 text-theme-accent ring-2 ring-teal-500/20"
+                                          : "bg-theme-card border-transparent text-theme-primary hover:border-theme-light"
                                       }
                                     `}
                                   >
-                                    {isEditing ? 'キーを入力...' : formatShortcut(current)}
+                                    {isEditing
+                                      ? "キーを入力..."
+                                      : formatShortcut(current)}
                                   </button>
 
-                                  {JSON.stringify(current) !== JSON.stringify(platformDefault) && (
+                                  {JSON.stringify(current) !==
+                                    JSON.stringify(platformDefault) && (
                                     <button
-                                      onClick={() => handleShortcutChange(def.id, platformDefault)}
+                                      onClick={() =>
+                                        handleShortcutChange(
+                                          def.id,
+                                          platformDefault
+                                        )
+                                      }
                                       className="p-1.5 text-theme-tertiary hover:text-red-500 transition-colors"
                                       title="デフォルトに戻す"
                                     >
@@ -2601,12 +3286,27 @@ export default function Home() {
           )}
 
           {/* Footer disclaimer */}
-          <footer className={`mt-4 pt-3 border-t border-theme-soft ${mounted ? 'animate-fade-in' : 'opacity-0'}`}>
+          <footer
+            className={`mt-2 pt-2 border-t border-theme-soft ${
+              mounted ? "animate-fade-in" : "opacity-0"
+            }`}
+          >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs text-theme-tertiary">
-              <div className="font-mono">Next.js 14 / OpenAI API / Web Speech API で構築</div>
+              <div className="font-mono">
+                Next.js 14 / OpenAI API / Web Speech API で構築
+              </div>
               <div className="flex items-center gap-1.5 text-amber-600 font-semibold">
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span>デモンストレーション用途のみ - 臨床使用不可</span>
               </div>
