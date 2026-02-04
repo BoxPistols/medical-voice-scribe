@@ -102,7 +102,7 @@ const SHORTCUT_DEFS: ShortcutDef[] = [
   { id: 'toggleRecording', label: '録音開始/停止', default: { key: 'r' }, modifierDefault: { key: 'r', ctrl: true }, group: 'basic' },
   { id: 'analyze', label: 'カルテ生成', default: { key: 'a' }, modifierDefault: { key: 'a', ctrl: true }, group: 'basic' },
   { id: 'clear', label: 'すべてクリア', default: { key: 'c' }, group: 'basic' },
-  { id: 'toggleSpeech', label: '開始/停止', default: { key: 's' }, group: 'speech' },
+  { id: 'toggleSpeech', label: '開始/停止', default: { key: 'v' }, modifierDefault: { key: 'v', ctrl: true }, group: 'speech' },
   { id: 'increaseSpeechRate', label: '速度を上げる', default: { key: '=' }, group: 'speech' },
   { id: 'decreaseSpeechRate', label: '速度を下げる', default: { key: '-' }, group: 'speech' },
   { id: 'import', label: 'インポート', default: { key: 'i' }, group: 'file' },
@@ -1768,11 +1768,13 @@ export default function Home() {
                               <>
                                 <StopIconSolid className="w-4 h-4" aria-hidden="true" />
                                 Stop
+                                <span className="opacity-70 ml-1">[{formatShortcut(shortcuts.toggleSpeech, true)}]</span>
                               </>
                             ) : (
                               <>
                                 <SpeakerWaveIcon className="w-4 h-4" aria-hidden="true" />
                                 Voice
+                                <span className="opacity-70 ml-1">[{formatShortcut(shortcuts.toggleSpeech, true)}]</span>
                               </>
                             )}
                           </button>
