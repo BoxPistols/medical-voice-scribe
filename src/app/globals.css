@@ -264,12 +264,15 @@ body::before {
   padding: 1.25rem;
   border-left: 4px solid;
   background: white;
+  border-radius: 0.5rem;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
 }
 
 .soap-section:hover {
   background: var(--bg-tertiary);
   transform: translateX(2px);
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.08);
 }
 
 .soap-section.subjective {
