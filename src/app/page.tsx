@@ -742,10 +742,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Minimal header - sticky on scroll */}
-      <header
-        className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200"
-        style={{ boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)' }}
-      >
+      <header className="app-header">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Branding */}
@@ -755,10 +752,10 @@ export default function Home() {
                   <DocumentTextIcon className="w-5 h-5 text-white" strokeWidth={2.5} aria-hidden="true" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold text-gray-900 leading-none">
+                  <h1 className="text-lg font-bold text-theme-primary leading-none">
                     Medical Voice Scribe
                   </h1>
-                  <p className="text-xs text-gray-500 font-medium mt-0.5">AI音声問診・カルテ自動生成</p>
+                  <p className="text-xs text-theme-secondary font-medium mt-0.5">AI音声問診・カルテ自動生成</p>
                 </div>
               </div>
             </div>
@@ -769,9 +766,69 @@ export default function Home() {
                 <div className={`status-indicator ${isRecording ? 'recording' : 'idle'} ${isRecording ? 'recording-pulse' : ''}`} />
                 {isRecording ? '録音中' : '待機中'}
               </div>
+
+              {/* Settings button */}
+              <div className="relative" data-settings-menu>
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className="p-2 rounded-lg text-theme-tertiary btn-theme-hover"
+                  aria-label="設定"
+                  title="設定"
+                >
+                  <Cog6ToothIcon className="w-5 h-5" aria-hidden="true" />
+                </button>
+
+                {/* Settings dropdown */}
+                {showSettings && (
+                  <div className="settings-dropdown">
+                    {/* Theme section */}
+                    <div className="settings-section">
+                      <label className="settings-label">テーマ</label>
+                      <div className="theme-toggle-group">
+                        <button
+                          onClick={() => handleThemeChange('light')}
+                          className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
+                          title="ライトモード"
+                        >
+                          <SunIcon className="w-4 h-4 inline mr-1" />
+                          ライト
+                        </button>
+                        <button
+                          onClick={() => handleThemeChange('dark')}
+                          className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
+                          title="ダークモード"
+                        >
+                          <MoonIcon className="w-4 h-4 inline mr-1" />
+                          ダーク
+                        </button>
+                        <button
+                          onClick={() => handleThemeChange('system')}
+                          className={`theme-toggle-btn ${theme === 'system' ? 'active' : ''}`}
+                          title="システム設定に従う"
+                        >
+                          <ComputerDesktopIcon className="w-4 h-4 inline mr-1" />
+                          自動
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Reset section */}
+                    <div className="settings-section">
+                      <button
+                        onClick={handleResetSettings}
+                        className="settings-reset-btn"
+                      >
+                        <TrashIcon className="w-4 h-4 inline mr-2" />
+                        設定をリセット
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={() => setShowHelp(true)}
-                className="p-2 rounded-lg text-gray-500 hover:text-teal-600 hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="ヘルプを表示"
                 title="使い方を見る"
               >
@@ -779,12 +836,72 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Mobile menu placeholder */}
+            {/* Mobile menu */}
             <div className="sm:hidden flex items-center gap-2">
               <div className={`status-indicator ${isRecording ? 'recording recording-pulse' : 'idle'}`} />
+
+              {/* Settings button (Mobile) */}
+              <div className="relative" data-settings-menu>
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className="p-1.5 rounded-lg text-theme-tertiary btn-theme-hover"
+                  aria-label="設定"
+                  title="設定"
+                >
+                  <Cog6ToothIcon className="w-5 h-5" aria-hidden="true" />
+                </button>
+
+                {/* Settings dropdown */}
+                {showSettings && (
+                  <div className="settings-dropdown">
+                    {/* Theme section */}
+                    <div className="settings-section">
+                      <label className="settings-label">テーマ</label>
+                      <div className="theme-toggle-group">
+                        <button
+                          onClick={() => handleThemeChange('light')}
+                          className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
+                          title="ライトモード"
+                        >
+                          <SunIcon className="w-4 h-4 inline mr-1" />
+                          ライト
+                        </button>
+                        <button
+                          onClick={() => handleThemeChange('dark')}
+                          className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
+                          title="ダークモード"
+                        >
+                          <MoonIcon className="w-4 h-4 inline mr-1" />
+                          ダーク
+                        </button>
+                        <button
+                          onClick={() => handleThemeChange('system')}
+                          className={`theme-toggle-btn ${theme === 'system' ? 'active' : ''}`}
+                          title="システム設定に従う"
+                        >
+                          <ComputerDesktopIcon className="w-4 h-4 inline mr-1" />
+                          自動
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Reset section */}
+                    <div className="settings-section">
+                      <button
+                        onClick={handleResetSettings}
+                        className="settings-reset-btn"
+                      >
+                        <TrashIcon className="w-4 h-4 inline mr-2" />
+                        設定をリセット
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={() => setShowHelp(true)}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-teal-600 hover:bg-gray-100 transition-colors"
+                className="p-1.5 rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="ヘルプを表示"
                 title="使い方を見る"
               >

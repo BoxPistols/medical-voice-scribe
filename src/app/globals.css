@@ -854,6 +854,29 @@ body::after {
   padding: 0 1rem;
 }
 
+/* Theme-aware text colors */
+.text-theme-primary {
+  color: var(--text-primary);
+}
+
+.text-theme-secondary {
+  color: var(--text-secondary);
+}
+
+.text-theme-tertiary {
+  color: var(--text-tertiary);
+}
+
+/* Theme-aware button hover */
+.btn-theme-hover {
+  transition: all 0.2s ease;
+}
+
+.btn-theme-hover:hover {
+  color: var(--accent-primary);
+  background: var(--glass-bg);
+}
+
 /* Resize handle styles with theme support */
 .resize-handle-line {
   width: 0.25rem;
