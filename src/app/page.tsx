@@ -1987,26 +1987,21 @@ export default function Home() {
               <div className="panel h-full flex flex-col lg:ml-0 overflow-hidden">
                 <div className="panel-header">
                   <div className="flex items-center justify-between">
-                    {/* Mobile layout */}
+                    {/* Mobile layout - 1行に横並び */}
                     {!isLargeScreen ? (
-                      <div className="w-full space-y-2">
-                        {/* 1段目: 戻るボタンと見出し */}
-                        <div className="flex items-center justify-between">
-                          <button
-                            onClick={() => setActivePanel("transcript")}
-                            className="btn btn-secondary py-1 px-2 text-xs flex items-center gap-1"
-                            aria-label="会話テキストに戻る"
-                            data-tooltip="会話テキストに戻る"
-                          >
-                            <ArrowLeftIcon className="w-4 h-4" />
-                            <span>会話</span>
-                          </button>
-                          <h2 className="panel-title text-sm whitespace-nowrap">
-                            カルテ
-                          </h2>
-                        </div>
-                        {/* 2段目: アクションボタン群 */}
-                        <div className="flex items-center justify-end gap-1">
+                      <div className="w-full flex items-center justify-between gap-2">
+                        {/* 左: 戻るボタン */}
+                        <button
+                          onClick={() => setActivePanel("transcript")}
+                          className="btn btn-secondary py-1 px-2 text-xs flex items-center gap-1 shrink-0"
+                          aria-label="会話テキストに戻る"
+                          data-tooltip="会話テキストに戻る"
+                        >
+                          <ArrowLeftIcon className="w-4 h-4" />
+                          <span>会話</span>
+                        </button>
+                        {/* 右: アクションボタン群 */}
+                        <div className="flex items-center gap-1">
                           {/* Import button */}
                           <button
                             onClick={handleImportClick}
