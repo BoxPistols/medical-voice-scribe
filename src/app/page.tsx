@@ -1078,7 +1078,7 @@ export default function Home() {
                 aria-label="キーボード設定"
                 title="キーボードショートカット設定"
               >
-                <CommandLineIcon className="w-5 h-5" aria-hidden="true" />
+                <KeyboardIcon className="w-5 h-5" aria-hidden="true" />
               </button>
 
               {/* Theme toggle button */}
@@ -1114,7 +1114,7 @@ export default function Home() {
                 aria-label="キーボード設定"
                 title="キーボードショートカット設定"
               >
-                <CommandLineIcon className="w-5 h-5" aria-hidden="true" />
+                <KeyboardIcon className="w-5 h-5" aria-hidden="true" />
               </button>
 
               {/* Theme toggle button (Mobile) */}
@@ -1515,12 +1515,12 @@ export default function Home() {
 
                   {/* Speech settings panel */}
                   {showSpeechSettings && result && (
-                    <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                    <div className="border-b border-theme-border bg-theme-card px-6 py-4">
                       <div className="space-y-4">
                         {/* Service Selection */}
                         {/* Speed selection */}
                         <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-2">
+                          <label className="block text-xs font-semibold text-theme-secondary mb-2">
                             読み上げスピード
                           </label>
                           <div className="flex flex-wrap gap-2">
@@ -1531,7 +1531,7 @@ export default function Home() {
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                                   speechRate === rate
                                     ? 'bg-teal-600 text-white'
-                                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                    : 'bg-theme-surface text-theme-primary border border-theme-border hover:bg-theme-card'
                                 }`}
                               >
                                 {rate}x
@@ -1543,14 +1543,14 @@ export default function Home() {
                         {/* Voice selection */}
                         {availableVoices.length > 0 && (
                           <div>
-                            <label htmlFor="voice-select" className="block text-xs font-semibold text-gray-700 mb-2">
+                            <label htmlFor="voice-select" className="block text-xs font-semibold text-theme-secondary mb-2">
                               システム音声の選択
                             </label>
                             <select
                               id="voice-select"
                               value={selectedVoiceIndex}
                               onChange={(e) => setSelectedVoiceIndex(Number(e.target.value))}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                              className="w-full px-3 py-2 text-sm border border-theme-border rounded-md bg-theme-surface text-theme-primary focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             >
                               {availableVoices.map((voice, index) => (
                                 <option key={index} value={index}>
@@ -1617,37 +1617,37 @@ export default function Home() {
                     <div className="space-y-3 p-6">
                       {/* Summary */}
                       {result.summary && (
-                        <div className="p-6 bg-amber-50 rounded-lg shadow-sm border-l-4 border-amber-600">
+                        <div className="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-lg shadow-sm border-l-4 border-amber-600 dark:border-amber-500">
                           <div className="flex items-center gap-2 mb-2">
-                            <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <svg className="w-5 h-5 text-amber-600 dark:text-amber-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                             </svg>
-                            <h3 className="font-bold text-sm text-gray-900 uppercase tracking-wide">要約</h3>
+                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">要約</h3>
                           </div>
-                          <p className="text-sm text-gray-700 leading-relaxed">{result.summary}</p>
+                          <p className="text-sm text-theme-primary leading-relaxed">{result.summary}</p>
                         </div>
                       )}
 
                       {/* Patient Info */}
                       {result.patientInfo && (
-                        <div className="p-6 bg-blue-50 rounded-lg shadow-sm border-l-4 border-blue-600">
+                        <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm border-l-4 border-blue-600 dark:border-blue-500">
                           <div className="flex items-center gap-2 mb-3">
-                            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <svg className="w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                             </svg>
-                            <h3 className="font-bold text-sm text-gray-900 uppercase tracking-wide">患者情報</h3>
+                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">患者情報</h3>
                           </div>
                           <div className="grid grid-cols-2 gap-3 text-sm">
                             {result.patientInfo.chiefComplaint && (
                               <>
-                                <div className="text-gray-600 font-semibold">主訴:</div>
-                                <div className="text-gray-900">{result.patientInfo.chiefComplaint}</div>
+                                <div className="text-theme-secondary font-semibold">主訴:</div>
+                                <div className="text-theme-primary">{result.patientInfo.chiefComplaint}</div>
                               </>
                             )}
                             {result.patientInfo.duration && (
                               <>
-                                <div className="text-gray-600 font-semibold">期間:</div>
-                                <div className="text-gray-900">{result.patientInfo.duration}</div>
+                                <div className="text-theme-secondary font-semibold">期間:</div>
+                                <div className="text-theme-primary">{result.patientInfo.duration}</div>
                               </>
                             )}
                           </div>
@@ -1823,7 +1823,7 @@ export default function Home() {
                       </div>
 
                       {/* Generated timestamp */}
-                      <div className="px-6 py-3 bg-gray-50 text-xs text-gray-500 font-mono border-t border-gray-200">
+                      <div className="px-6 py-3 bg-theme-card text-xs text-theme-tertiary font-mono border-t border-theme-border">
                         生成時刻: {new Date().toLocaleTimeString('ja-JP')}
                       </div>
                     </div>
