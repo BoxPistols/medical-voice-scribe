@@ -14,7 +14,7 @@ function getOpenAIClient() {
 
 export async function POST(req: Request) {
   try {
-    const { text } = await req.json();
+    const { text, stream: useStream } = await req.json();
 
     if (!text) {
       return NextResponse.json(
@@ -25,6 +25,48 @@ export async function POST(req: Request) {
 
     const openai = getOpenAIClient();
 
+    // ストリーミングモード
+    if (useStream) {
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: text },
+        ],
+        response_format: { type: "json_object" },
+        stream: true,
+      });
+
+      const encoder = new TextEncoder();
+      const readableStream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of stream) {
+              const content = chunk.choices[0]?.delta?.content || '';
+              if (content) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+              }
+            }
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+            controller.close();
+          } catch (error) {
+            console.error('Streaming error:', error);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'ストリーミング中にエラーが発生しました' })}\n\n`));
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(readableStream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    // 非ストリーミングモード（従来の動作）
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

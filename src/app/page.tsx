@@ -198,6 +198,10 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
+  // Streaming state
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+
   // Resizable layout state (PC)
   const [leftWidth, setLeftWidth] = useState(50); // percentage
   const [isResizing, setIsResizing] = useState(false);
@@ -476,31 +480,89 @@ export default function Home() {
   const handleAnalyze = async () => {
     if (!transcript) return;
     setLoading(true);
+    setIsStreaming(true);
+    setStreamingText('');
     setError(null);
+    setResult(null);
+
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: transcript }),
+        body: JSON.stringify({ text: transcript, stream: true }),
       });
-      const data = await res.json();
 
-      if (data.error) {
-        setError(data.error);
+      if (!res.ok) {
+        const errorData = await res.json();
+        setError(errorData.error || 'APIエラーが発生しました');
+        setIsStreaming(false);
+        setLoading(false);
         return;
       }
 
-      if (!data.soap) {
-        console.error('Invalid data structure:', data);
-        setError('AIの応答形式が不正です。もう一度お試しください。');
+      const reader = res.body?.getReader();
+      if (!reader) {
+        setError('ストリーミングレスポンスの取得に失敗しました');
+        setIsStreaming(false);
+        setLoading(false);
         return;
       }
 
-      setResult(data);
+      const decoder = new TextDecoder();
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.error) {
+                setError(data.error);
+                setIsStreaming(false);
+                setLoading(false);
+                return;
+              }
+
+              if (data.done) {
+                // Parse the accumulated JSON
+                try {
+                  const parsedResult = JSON.parse(accumulatedText);
+                  if (!parsedResult.soap) {
+                    setError('AIの応答形式が不正です。もう一度お試しください。');
+                  } else {
+                    setResult(parsedResult);
+                  }
+                } catch (parseError) {
+                  console.error('JSON parse error:', parseError);
+                  setError('AIの応答を解析できませんでした。');
+                }
+                setIsStreaming(false);
+                setLoading(false);
+                return;
+              }
+
+              if (data.content) {
+                accumulatedText += data.content;
+                setStreamingText(accumulatedText);
+              }
+            } catch {
+              // Ignore JSON parse errors for incomplete chunks
+            }
+          }
+        }
+      }
     } catch (e) {
       console.error(e);
       setError('エラーが発生しました。APIキーとネットワーク接続を確認してください。');
     } finally {
+      setIsStreaming(false);
       setLoading(false);
     }
   };
@@ -1751,14 +1813,24 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Loading state */}
+                  {/* Loading/Streaming state */}
                   {loading && (
-                    <div className="empty-state">
-                      <div className="loading-spinner animate-spin" style={{ width: '3rem', height: '3rem', borderWidth: '3px' }} />
-                      <p className="empty-state-text mt-4">
-                        会話を解析中...<br />
-                        <span className="text-xs">GPT-4o-miniを使用</span>
-                      </p>
+                    <div className="p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="loading-spinner animate-spin" style={{ width: '1.5rem', height: '1.5rem', borderWidth: '2px' }} />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {isStreaming ? 'リアルタイム生成中...' : '解析準備中...'}
+                        </span>
+                        <span className="text-xs text-gray-500">GPT-4o-mini</span>
+                      </div>
+                      {isStreaming && streamingText && (
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                          <pre className="text-xs font-mono text-gray-600 dark:text-gray-400 whitespace-pre-wrap break-all max-h-96 overflow-y-auto">
+                            {streamingText}
+                            <span className="inline-block w-2 h-4 bg-teal-500 animate-pulse ml-0.5" />
+                          </pre>
+                        </div>
+                      )}
                     </div>
                   )}
 
