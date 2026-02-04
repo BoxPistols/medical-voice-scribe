@@ -1827,24 +1827,24 @@ export default function Home() {
                           {result.soap.objective?.vitalSigns && (
                             <div>
                               <div className="font-bold text-xs text-theme-secondary mb-2">バイタルサイン</div>
-                              <div className="bg-white rounded border border-gray-300 overflow-hidden">
+                              <div className="bg-theme-surface rounded border border-theme-border overflow-hidden">
                                 <table className="w-full text-xs">
-                                  <tbody className="divide-y divide-gray-200">
+                                  <tbody className="divide-y divide-theme-border">
                                     <tr>
-                                      <td className="px-3 py-2 bg-gray-50 font-semibold text-gray-700">血圧</td>
-                                      <td className="px-3 py-2">{result.soap.objective.vitalSigns.bloodPressure}</td>
+                                      <td className="px-3 py-2 bg-theme-card font-semibold text-theme-secondary">血圧</td>
+                                      <td className="px-3 py-2 text-theme-primary">{result.soap.objective.vitalSigns.bloodPressure}</td>
                                     </tr>
                                     <tr>
-                                      <td className="px-3 py-2 bg-gray-50 font-semibold text-gray-700">脈拍</td>
-                                      <td className="px-3 py-2">{result.soap.objective.vitalSigns.pulse}</td>
+                                      <td className="px-3 py-2 bg-theme-card font-semibold text-theme-secondary">脈拍</td>
+                                      <td className="px-3 py-2 text-theme-primary">{result.soap.objective.vitalSigns.pulse}</td>
                                     </tr>
                                     <tr>
-                                      <td className="px-3 py-2 bg-gray-50 font-semibold text-gray-700">体温</td>
-                                      <td className="px-3 py-2">{result.soap.objective.vitalSigns.temperature}</td>
+                                      <td className="px-3 py-2 bg-theme-card font-semibold text-theme-secondary">体温</td>
+                                      <td className="px-3 py-2 text-theme-primary">{result.soap.objective.vitalSigns.temperature}</td>
                                     </tr>
                                     <tr>
-                                      <td className="px-3 py-2 bg-gray-50 font-semibold text-gray-700">呼吸数</td>
-                                      <td className="px-3 py-2">{result.soap.objective.vitalSigns.respiratoryRate}</td>
+                                      <td className="px-3 py-2 bg-theme-card font-semibold text-theme-secondary">呼吸数</td>
+                                      <td className="px-3 py-2 text-theme-primary">{result.soap.objective.vitalSigns.respiratoryRate}</td>
                                     </tr>
                                   </tbody>
                                 </table>
