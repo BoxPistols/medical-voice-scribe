@@ -1706,7 +1706,7 @@ export default function Home() {
                     <MicrophoneIcon className="w-4 h-4" aria-hidden="true" />
                   )}
                   {isRecording ? "停止" : "録音"}
-                  <span className="text-xs opacity-70 ml-1">
+                  <span className="hidden sm:inline text-xs opacity-70 ml-1">
                     [{formatShortcut(shortcuts.toggleRecording, true)}]
                   </span>
                 </button>
@@ -1726,35 +1726,35 @@ export default function Home() {
                     <>
                       <SparklesIcon className="w-4 h-4" aria-hidden="true" />
                       カルテ生成
-                      <span className="text-xs opacity-70 ml-1">
+                      <span className="hidden sm:inline text-xs opacity-70 ml-1">
                         [{formatShortcut(shortcuts.analyze, true)}]
                       </span>
                     </>
                   )}
                 </button>
 
-                {/* Character count */}
+                {/* Clear button - モバイルでは横並び */}
+                <button
+                  onClick={handleClear}
+                  disabled={!transcript && !result}
+                  className="btn btn-secondary"
+                  aria-label="すべてクリア"
+                  data-tooltip="入力とカルテをすべて削除"
+                >
+                  <TrashIcon className="w-4 h-4" aria-hidden="true" />
+                  クリア
+                  <span className="hidden sm:inline text-xs opacity-70 ml-1">
+                    [{formatShortcut(shortcuts.clear, true)}]
+                  </span>
+                </button>
+
+                {/* Character count - デスクトップのみ */}
                 {transcript && (
-                  <div className="text-sm text-theme-tertiary font-mono ml-2">
+                  <div className="hidden sm:block text-sm text-theme-tertiary font-mono ml-2">
                     {transcript.length} 文字
                   </div>
                 )}
               </div>
-
-              {/* Clear button - Right side */}
-              <button
-                onClick={handleClear}
-                disabled={!transcript && !result}
-                className="btn btn-secondary"
-                aria-label="すべてクリア"
-                data-tooltip="入力とカルテをすべて削除"
-              >
-                <TrashIcon className="w-4 h-4" aria-hidden="true" />
-                クリア
-                <span className="text-xs opacity-70 ml-1">
-                  [{formatShortcut(shortcuts.clear, true)}]
-                </span>
-              </button>
             </div>
           </div>
 
@@ -1785,8 +1785,8 @@ export default function Home() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <h2 className="panel-title">会話テキスト</h2>
-                      {/* Shortcut mode toggle */}
-                      <div className="flex items-center gap-1.5 text-xs text-theme-secondary">
+                      {/* Shortcut mode toggle - デスクトップのみ */}
+                      <div className="hidden sm:flex items-center gap-1.5 text-xs text-theme-secondary">
                         <button
                           onClick={() =>
                             handleUseModifiersChange(!useModifiers)
@@ -2089,8 +2089,8 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="w-full flex items-center justify-between">
-                        {/* 左: 見出し */}
-                        <h2 className="panel-title whitespace-nowrap text-sm">カルテ</h2>
+                        {/* 左: 見出し - デスクトップのみ表示 */}
+                        <h2 className="hidden sm:block panel-title whitespace-nowrap text-sm">カルテ</h2>
 
                         {/* 中央: Voice */}
                         <div className="flex items-center gap-1">
@@ -2107,7 +2107,7 @@ export default function Home() {
                               <SpeakerWaveIcon className="w-3.5 h-3.5" aria-hidden="true" />
                             )}
                             <span className="text-xs">Voice</span>
-                            <span className="text-[10px] opacity-70 ml-0.5">
+                            <span className="hidden sm:inline text-xs opacity-70 ml-0.5">
                               [{formatShortcut(shortcuts.toggleSpeech, true)}]
                             </span>
                           </button>
