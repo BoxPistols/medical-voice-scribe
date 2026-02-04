@@ -914,8 +914,10 @@ export default function Home() {
                         </div>
                       </>
                     ) : (
-                      <>
+                      <div className="w-full space-y-3">
+                        {/* 上段: 見出し */}
                         <h2 className="panel-title">AI生成SOAPカルテ</h2>
+                        {/* 下段: アクションボタン群 */}
                         <div className="flex items-center gap-2">
                           {/* Import button */}
                           <button
@@ -1009,7 +1011,7 @@ export default function Home() {
                             </svg>
                           </button>
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
 
