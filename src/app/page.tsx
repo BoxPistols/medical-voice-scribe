@@ -790,24 +790,24 @@ export default function Home() {
                           className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
                           title="ライトモード"
                         >
-                          <SunIcon className="w-4 h-4 inline mr-1" />
-                          ライト
+                          <SunIcon className="w-5 h-5" aria-hidden="true" />
+                          <span className="sr-only">ライト</span>
                         </button>
                         <button
                           onClick={() => handleThemeChange('dark')}
                           className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
                           title="ダークモード"
                         >
-                          <MoonIcon className="w-4 h-4 inline mr-1" />
-                          ダーク
+                          <MoonIcon className="w-5 h-5" aria-hidden="true" />
+                          <span className="sr-only">ダーク</span>
                         </button>
                         <button
                           onClick={() => handleThemeChange('system')}
                           className={`theme-toggle-btn ${theme === 'system' ? 'active' : ''}`}
                           title="システム設定に従う"
                         >
-                          <ComputerDesktopIcon className="w-4 h-4 inline mr-1" />
-                          自動
+                          <ComputerDesktopIcon className="w-5 h-5" aria-hidden="true" />
+                          <span className="sr-only">自動</span>
                         </button>
                       </div>
                     </div>
@@ -816,10 +816,10 @@ export default function Home() {
                     <div className="settings-section">
                       <button
                         onClick={handleResetSettings}
-                        className="settings-reset-btn"
+                        className="settings-reset-btn whitespace-nowrap"
                       >
                         <TrashIcon className="w-4 h-4 inline mr-2" />
-                        設定をリセット
+                        リセット
                       </button>
                     </div>
                   </div>
@@ -863,24 +863,24 @@ export default function Home() {
                           className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
                           title="ライトモード"
                         >
-                          <SunIcon className="w-4 h-4 inline mr-1" />
-                          ライト
+                          <SunIcon className="w-5 h-5" aria-hidden="true" />
+                          <span className="sr-only">ライト</span>
                         </button>
                         <button
                           onClick={() => handleThemeChange('dark')}
                           className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
                           title="ダークモード"
                         >
-                          <MoonIcon className="w-4 h-4 inline mr-1" />
-                          ダーク
+                          <MoonIcon className="w-5 h-5" aria-hidden="true" />
+                          <span className="sr-only">ダーク</span>
                         </button>
                         <button
                           onClick={() => handleThemeChange('system')}
                           className={`theme-toggle-btn ${theme === 'system' ? 'active' : ''}`}
                           title="システム設定に従う"
                         >
-                          <ComputerDesktopIcon className="w-4 h-4 inline mr-1" />
-                          自動
+                          <ComputerDesktopIcon className="w-5 h-5" aria-hidden="true" />
+                          <span className="sr-only">自動</span>
                         </button>
                       </div>
                     </div>
@@ -889,10 +889,10 @@ export default function Home() {
                     <div className="settings-section">
                       <button
                         onClick={handleResetSettings}
-                        className="settings-reset-btn"
+                        className="settings-reset-btn whitespace-nowrap"
                       >
                         <TrashIcon className="w-4 h-4 inline mr-2" />
-                        設定をリセット
+                        リセット
                       </button>
                     </div>
                   </div>
@@ -1029,7 +1029,7 @@ export default function Home() {
             {/* Resizer handle - Desktop only */}
             {isLargeScreen && (
               <div
-                className="relative flex-shrink-0 bg-gray-50"
+                className="relative flex-shrink-0"
                 style={{ width: '48px' }}
                 role="separator"
                 aria-label="レイアウト調整"
