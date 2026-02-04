@@ -323,8 +323,9 @@ export default function Home() {
     // Clear old legacy shortcuts
     localStorage.removeItem('medical-scribe-shortcuts');
     localStorage.removeItem('medical-scribe-shortcuts-v2');
+    localStorage.removeItem('medical-scribe-shortcuts-v3');
 
-    const savedShortcuts = localStorage.getItem('medical-scribe-shortcuts-v3');
+    const savedShortcuts = localStorage.getItem('medical-scribe-shortcuts-v4');
     const defaults = getPlatformDefaultShortcuts(useModifiers);
 
     if (savedShortcuts) {
@@ -1464,7 +1465,8 @@ export default function Home() {
                     <div className="flex items-center gap-3">
                       <h2 className="panel-title">会話テキスト</h2>
                       {/* Shortcut mode toggle */}
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 text-xs text-theme-secondary">
+                        <span className="hidden sm:inline">ショートカット</span>
                         <button
                           onClick={() => handleUseModifiersChange(!useModifiers)}
                           className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 ${
@@ -1473,7 +1475,6 @@ export default function Home() {
                           role="switch"
                           aria-checked={useModifiers}
                           aria-label="入力中もショートカット有効"
-                          data-tooltip={useModifiers ? 'ショートカット: Cmd/Ctrl+キー (入力中も有効)' : 'ショートカット: 単キー (入力中は無効)'}
                         >
                           <span
                             aria-hidden="true"
@@ -1482,8 +1483,11 @@ export default function Home() {
                             }`}
                           />
                         </button>
-                        <span className="text-xs text-theme-secondary hidden sm:inline">
+                        <span className="font-mono bg-theme-highlight px-1 rounded">
                           {useModifiers ? 'Cmd+R' : 'R'}
+                        </span>
+                        <span className="hidden md:inline text-theme-tertiary">
+                          {useModifiers ? '入力中も有効' : '入力中は無効'}
                         </span>
                       </div>
                     </div>
