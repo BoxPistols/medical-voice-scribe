@@ -36,6 +36,7 @@ import {
   DocumentChartBarIcon,
 } from "@heroicons/react/24/outline";
 import { StopIcon as StopIconSolid } from "@heroicons/react/24/solid";
+import ChatSupportWidget from "./components/ChatSupportWidget";
 
 // Custom Keyboard Icon Component
 const KeyboardIcon = ({ className }: { className?: string }) => (
@@ -3448,6 +3449,15 @@ export default function Home() {
         onChange={handleFileImport}
         className="hidden"
         aria-label="JSONファイルを選択"
+      />
+
+      {/* Chat Support Widget */}
+      <ChatSupportWidget
+        soapNote={result}
+        transcript={transcript}
+        selectedModel={selectedModel}
+        isRecording={isRecording}
+        isAnalyzing={loading || isStreaming}
       />
     </div>
   );

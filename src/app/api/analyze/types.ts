@@ -67,3 +67,12 @@ export interface SoapNote {
     };
   };
 }
+
+// チャットメッセージの型
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  timestamp: Date;
+  type?: "recommendation" | "warning" | "help" | "normal";
+}
