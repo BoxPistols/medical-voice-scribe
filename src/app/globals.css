@@ -67,7 +67,7 @@
   /* Enhanced glassmorphism - Light Mode */
   --glass-bg: rgba(255, 255, 255, 0.65);
   --glass-bg-strong: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-border: rgba(148, 163, 184, 0.35);
   --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08);
   --glass-highlight: rgba(255, 255, 255, 0.5);
 
@@ -297,22 +297,7 @@ body::after {
   overflow: hidden;
 }
 
-.btn::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--glass-highlight);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.btn:hover::after {
-  opacity: 1;
-}
+/* Removed excessive ::after hover effect */
 
 .btn:focus-visible {
   outline: 2px solid var(--accent-primary);
@@ -333,9 +318,8 @@ body::after {
 }
 
 .btn-primary:hover:not(:disabled) {
-  filter: brightness(1.1);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(20, 184, 166, 0.2);
+  filter: brightness(1.05);
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(20, 184, 166, 0.2);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -352,9 +336,8 @@ body::after {
 }
 
 .btn-record:hover:not(:disabled) {
-  filter: brightness(1.1);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(245, 158, 11, 0.2);
+  filter: brightness(1.05);
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(245, 158, 11, 0.2);
 }
 
 .btn-record.recording {
@@ -375,8 +358,7 @@ body::after {
 .btn-secondary:hover:not(:disabled) {
   background: var(--glass-bg-strong);
   border-color: var(--accent-primary);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Enhanced glassmorphic panels */
@@ -404,9 +386,8 @@ body::after {
 }
 
 .panel:hover {
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
   border-color: var(--accent-primary);
-  transform: translateY(-2px);
 }
 
 .panel-header {
@@ -509,8 +490,7 @@ body::after {
 }
 
 .soap-section:hover {
-  transform: translateX(4px) translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .soap-section:hover::after {
@@ -760,8 +740,8 @@ body::after {
   border-color: var(--accent-primary);
   color: var(--accent-primary);
   opacity: 1;
-  transform: scale(1.08) translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .layout-btn:active {
@@ -1062,7 +1042,7 @@ body::after {
 }
 
 [data-theme="dark"] .group:hover .resize-handle-line {
-  opacity: 0.5 !important;
+  opacity: 0.2 !important;
   background: var(--accent-primary) !important;
 }
 
@@ -1082,13 +1062,13 @@ body::after {
 
 .group:hover .resize-handle-dot {
   background: var(--accent-primary);
-  opacity: 0.8;
-  box-shadow: 0 0 6px rgba(20, 184, 166, 0.4);
-  transform: scale(1.2);
+  opacity: 0.5;
+  box-shadow: 0 0 4px rgba(20, 184, 166, 0.2);
+  transform: scale(1.1);
 }
 
 [data-theme="dark"] .group:hover .resize-handle-dot {
-  opacity: 0.7 !important;
+  opacity: 0.3 !important;
   background: var(--accent-primary) !important;
 }
 

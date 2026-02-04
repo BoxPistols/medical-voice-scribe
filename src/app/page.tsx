@@ -33,9 +33,23 @@ import {
   ComputerDesktopIcon,
   DocumentIcon,
   DocumentChartBarIcon,
-  CommandLineIcon,
 } from '@heroicons/react/24/outline';
 import { StopIcon as StopIconSolid } from '@heroicons/react/24/solid';
+
+// Custom Keyboard Icon Component
+const KeyboardIcon = ({ className }: { className?: string }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    stroke="currentColor" 
+    strokeWidth="2"
+    aria-hidden="true"
+  >
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M18 12h.01M10 12h.01M14 12h.01M8 15h8" />
+  </svg>
+);
 
 // Types for Shortcuts
 type ActionId = 
@@ -70,21 +84,21 @@ interface ShortcutDef {
 }
 
 const SHORTCUT_DEFS: ShortcutDef[] = [
-  { id: 'toggleRecording', label: '録音開始/停止', default: { key: 'r', ctrl: true } },
-  { id: 'analyze', label: 'カルテ生成', default: { key: 'enter', ctrl: true } },
-  { id: 'clear', label: 'すべてクリア', default: { key: 'backspace', ctrl: true, shift: true } },
-  { id: 'toggleSpeech', label: '読み上げ開始/停止', default: { key: 's', ctrl: true } },
-  { id: 'import', label: 'インポート', default: { key: 'i', ctrl: true } },
-  { id: 'exportJson', label: 'JSONエクスポート', default: { key: 'j', ctrl: true } },
-  { id: 'exportCsv', label: 'CSVエクスポート', default: { key: 'e', ctrl: true } },
-  { id: 'themeLight', label: 'テーマ: ライト', default: { key: 'l', alt: true } },
-  { id: 'themeDark', label: 'テーマ: ダーク', default: { key: 'd', alt: true } },
-  { id: 'themeSystem', label: 'テーマ: 自動', default: { key: 'a', alt: true } },
-  { id: 'layoutLeft', label: 'レイアウト: 左重視', default: { key: '1', alt: true } },
-  { id: 'layoutEqual', label: 'レイアウト: 均等', default: { key: '2', alt: true } },
-  { id: 'layoutRight', label: 'レイアウト: 右重視', default: { key: '3', alt: true } },
-  { id: 'toggleSettings', label: 'ショートカット設定', default: { key: ',', ctrl: true } },
-  { id: 'toggleHelp', label: 'ヘルプ', default: { key: '/', ctrl: true } },
+  { id: 'toggleRecording', label: '録音開始/停止', default: { key: 'r' } },
+  { id: 'analyze', label: 'カルテ生成', default: { key: 'a' } },
+  { id: 'clear', label: 'すべてクリア', default: { key: 'c' } },
+  { id: 'toggleSpeech', label: '読み上げ開始/停止', default: { key: 's' } },
+  { id: 'import', label: 'インポート', default: { key: 'i' } },
+  { id: 'exportJson', label: 'JSONエクスポート', default: { key: 'j' } },
+  { id: 'exportCsv', label: 'CSVエクスポート', default: { key: 'e' } },
+  { id: 'themeLight', label: 'テーマ: ライト', default: { key: 'l' } },
+  { id: 'themeDark', label: 'テーマ: ダーク', default: { key: 'd' } },
+  { id: 'themeSystem', label: 'テーマ: 自動', default: { key: 'm' } },
+  { id: 'layoutLeft', label: 'レイアウト: 左重視', default: { key: '1' } },
+  { id: 'layoutEqual', label: 'レイアウト: 均等', default: { key: '2' } },
+  { id: 'layoutRight', label: 'レイアウト: 右重視', default: { key: '3' } },
+  { id: 'toggleSettings', label: 'ショートカット設定', default: { key: 'k' } },
+  { id: 'toggleHelp', label: 'ヘルプ', default: { key: 'h' } },
 ];
 
 // Constants
@@ -258,9 +272,13 @@ export default function Home() {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
 
-  // Shortcuts management - Load/Save
+  // Shortcuts management - Load/Save (v3: simple single-key shortcuts only)
   useEffect(() => {
-    const savedShortcuts = localStorage.getItem('medical-scribe-shortcuts');
+    // Clear old legacy shortcuts to force simple defaults
+    localStorage.removeItem('medical-scribe-shortcuts');
+    localStorage.removeItem('medical-scribe-shortcuts-v2');
+
+    const savedShortcuts = localStorage.getItem('medical-scribe-shortcuts-v3');
     if (savedShortcuts) {
       try {
         setShortcuts(JSON.parse(savedShortcuts));
@@ -268,14 +286,56 @@ export default function Home() {
         console.error('Failed to parse shortcuts:', e);
       }
     } else {
-      // Apply platform-specific defaults if no saved settings
-      setShortcuts(getPlatformDefaultShortcuts());
+      // Apply simple defaults (no modifiers, just single keys)
+      const simpleDefaults = SHORTCUT_DEFS.reduce((acc, def) => {
+        return {
+          ...acc,
+          [def.id]: {
+            ...def.default,
+            // Explicitly set all modifiers to false for simple single-key shortcuts
+            ctrl: false,
+            alt: false,
+            shift: false,
+            meta: false
+          }
+        };
+      }, {} as Record<ActionId, ShortcutKey>);
+      setShortcuts(simpleDefaults);
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('medical-scribe-shortcuts', JSON.stringify(shortcuts));
+    localStorage.setItem('medical-scribe-shortcuts-v3', JSON.stringify(shortcuts));
   }, [shortcuts]);
+
+  // Close shortcuts modal with Escape key
+  useEffect(() => {
+    if (!showShortcutsModal) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowShortcutsModal(false);
+        setEditingShortcutId(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [showShortcutsModal]);
+
+  // Close help modal with Escape key
+  useEffect(() => {
+    if (!showHelp) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowHelp(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [showHelp]);
 
   useEffect(() => {
     setMounted(true);
@@ -461,7 +521,7 @@ export default function Home() {
       // Reset shortcuts with platform defaults
       const defaults = getPlatformDefaultShortcuts();
       setShortcuts(defaults);
-      localStorage.removeItem('medical-scribe-shortcuts');
+      localStorage.removeItem('medical-scribe-shortcuts-v2');
 
       setSpeechRate(1.0);
       setSelectedVoiceIndex(0);
@@ -1052,7 +1112,7 @@ export default function Home() {
                 onClick={() => setShowShortcutsModal(true)}
                 className="p-1.5 rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="キーボード設定"
-                data-tooltip="キーボードショートカット設定"
+                title="キーボードショートカット設定"
               >
                 <CommandLineIcon className="w-5 h-5" aria-hidden="true" />
               </button>
@@ -1062,20 +1122,18 @@ export default function Home() {
                 onClick={handleThemeCycle}
                 className="p-1.5 rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="テーマ切り替え"
-                data-tooltip="テーマ切り替え"
+                title={`テーマを切り替え: 現在 ${theme === 'system' ? '自動' : theme === 'light' ? 'ライト' : 'ダーク'}`}
               >
                 {theme === 'light' && <SunIcon className="w-5 h-5" aria-hidden="true" />}
                 {theme === 'dark' && <MoonIcon className="w-5 h-5" aria-hidden="true" />}
                 {theme === 'system' && <ComputerDesktopIcon className="w-5 h-5" aria-hidden="true" />}
               </button>
 
-
               <button
                 onClick={() => setShowHelp(true)}
                 className="p-1.5 rounded-lg text-theme-tertiary btn-theme-hover"
-                data-tooltip="使い方ガイド"
                 aria-label="ヘルプを表示"
-                title="使い方を見る"
+                title="使い方ガイド"
               >
                 <QuestionMarkCircleIcon className="w-5 h-5" aria-hidden="true" />
               </button>
@@ -1098,6 +1156,7 @@ export default function Home() {
                   aria-label={isRecording ? '録音を停止' : '録音を開始'}
                   aria-pressed={isRecording}
                   data-tooltip={isRecording ? '録音を停止' : '音声入力を開始'}
+                  title={`録音を開始/停止 (R)`}
                 >
                   {isRecording ? (
                     <StopIcon className="w-4 h-4" aria-hidden="true" />
@@ -1112,6 +1171,7 @@ export default function Home() {
                   className="btn btn-primary"
                   aria-label="SOAPカルテを生成"
                   data-tooltip="AIでSOAP形式カルテを生成"
+                  title="AIでカルテを生成 (A)"
                 >
                   {loading ? (
                     <>
@@ -1141,6 +1201,7 @@ export default function Home() {
                 className="btn btn-secondary"
                 aria-label="すべてクリア"
                 data-tooltip="入力とカルテをすべて削除"
+                title="入力内容と結果をクリア (C)"
               >
                 <TrashIcon className="w-4 h-4" aria-hidden="true" />
                 クリア
@@ -1602,13 +1663,13 @@ export default function Home() {
                         <div className="space-y-3 text-sm">
                           {result.soap.subjective?.presentIllness && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">現病歴</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">現病歴</div>
                               <div className="soap-content">{result.soap.subjective.presentIllness}</div>
                             </div>
                           )}
                           {result.soap.subjective?.symptoms && result.soap.subjective.symptoms.length > 0 && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">症状</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">症状</div>
                               <ul className="list-disc list-inside soap-content space-y-1">
                                 {result.soap.subjective.symptoms.map((s: string, i: number) => (
                                   <li key={i}>{s}</li>
@@ -1618,13 +1679,13 @@ export default function Home() {
                           )}
                           {result.soap.subjective?.severity && (
                             <div>
-                              <span className="font-bold text-xs text-gray-600">重症度: </span>
+                              <span className="font-bold text-xs text-theme-secondary">重症度: </span>
                               <span className="soap-content">{result.soap.subjective.severity}</span>
                             </div>
                           )}
                           {result.soap.subjective?.pastMedicalHistory && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">既往歴</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">既往歴</div>
                               <div className="soap-content">{result.soap.subjective.pastMedicalHistory}</div>
                             </div>
                           )}
@@ -1639,7 +1700,7 @@ export default function Home() {
                         <div className="space-y-3 text-sm">
                           {result.soap.objective?.vitalSigns && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-2">バイタルサイン</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-2">バイタルサイン</div>
                               <div className="bg-white rounded border border-gray-300 overflow-hidden">
                                 <table className="w-full text-xs">
                                   <tbody className="divide-y divide-gray-200">
@@ -1666,7 +1727,7 @@ export default function Home() {
                           )}
                           {result.soap.objective?.physicalExam && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">身体所見</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">身体所見</div>
                               <div className="soap-content">{result.soap.objective.physicalExam}</div>
                             </div>
                           )}
@@ -1681,7 +1742,7 @@ export default function Home() {
                         <div className="space-y-3 text-sm">
                           {result.soap.assessment?.diagnosis && (
                             <div className="flex flex-wrap gap-2 items-center">
-                              <span className="font-bold text-xs text-gray-600">診断名:</span>
+                              <span className="font-bold text-xs text-theme-secondary">診断名:</span>
                               <span className="soap-content font-bold">{result.soap.assessment.diagnosis}</span>
                               {result.soap.assessment?.icd10 && (
                                 <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded font-mono">{result.soap.assessment.icd10}</span>
@@ -1690,7 +1751,7 @@ export default function Home() {
                           )}
                           {result.soap.assessment?.differentialDiagnosis && result.soap.assessment.differentialDiagnosis.length > 0 && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">鑑別診断</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">鑑別診断</div>
                               <ul className="list-disc list-inside soap-content space-y-1">
                                 {result.soap.assessment.differentialDiagnosis.map((d: string, i: number) => (
                                   <li key={i}>{d}</li>
@@ -1700,7 +1761,7 @@ export default function Home() {
                           )}
                           {result.soap.assessment?.clinicalImpression && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">臨床的評価</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">臨床的評価</div>
                               <div className="soap-content">{result.soap.assessment.clinicalImpression}</div>
                             </div>
                           )}
@@ -1715,13 +1776,13 @@ export default function Home() {
                         <div className="space-y-3 text-sm">
                           {result.soap.plan?.treatment && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">治療方針</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">治療方針</div>
                               <div className="soap-content">{result.soap.plan.treatment}</div>
                             </div>
                           )}
                           {result.soap.plan?.medications && result.soap.plan.medications.length > 0 && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-2">処方</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-2">処方</div>
                               <div className="space-y-2">
                                 {result.soap.plan.medications.map((med, i: number) => (
                                   <div key={i} className="bg-white rounded border border-gray-300 p-3">
@@ -1738,7 +1799,7 @@ export default function Home() {
                           )}
                           {result.soap.plan?.tests && result.soap.plan.tests.length > 0 && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">追加検査</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">追加検査</div>
                               <ul className="list-disc list-inside soap-content space-y-1">
                                 {result.soap.plan.tests.map((t: string, i: number) => (
                                   <li key={i}>{t}</li>
@@ -1748,13 +1809,13 @@ export default function Home() {
                           )}
                           {result.soap.plan?.followUp && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">フォローアップ</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">フォローアップ</div>
                               <div className="soap-content">{result.soap.plan.followUp}</div>
                             </div>
                           )}
                           {result.soap.plan?.patientEducation && (
                             <div>
-                              <div className="font-bold text-xs text-gray-600 mb-1">患者指導</div>
+                              <div className="font-bold text-xs text-theme-secondary mb-1">患者指導</div>
                               <div className="soap-content">{result.soap.plan.patientEducation}</div>
                             </div>
                           )}
@@ -2015,10 +2076,10 @@ export default function Home() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
               <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-gray-200/50 dark:border-gray-700/50">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-t-2xl">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                      <CommandLineIcon className="w-6 h-6 text-theme-primary" />
+                      <KeyboardIcon className="w-6 h-6 text-theme-primary" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-theme-primary">ショートカット設定</h3>
