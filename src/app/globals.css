@@ -1001,11 +1001,19 @@ body::after {
 
 /* Modal Containers */
 .bg-theme-modal {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-secondary);
 }
 
 [data-theme="dark"] .bg-theme-modal {
-  background: rgba(15, 23, 42, 0.95);
+  background: var(--bg-secondary);
+}
+
+.bg-theme-modal-content {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .bg-theme-modal-content {
+  background: var(--bg-secondary);
 }
 
 .border-theme-modal {

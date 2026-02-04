@@ -2004,7 +2004,7 @@ export default function Home() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border bg-theme-modal-header rounded-t-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-soft bg-theme-modal-header rounded-t-2xl">
                   <h3 className="text-lg font-semibold text-theme-primary">
                     エクスポートプレビュー ({exportPreviewData.type.toUpperCase()})
                   </h3>
@@ -2021,7 +2021,7 @@ export default function Home() {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto px-6 py-4">
+                <div className="flex-1 overflow-y-auto px-6 py-4 bg-theme-modal-content">
                   <div className="mb-4 flex items-center gap-2 text-sm text-theme-secondary">
                     <DocumentIcon className="w-4 h-4" />
                     <span className="font-mono">{exportPreviewData.filename}</span>
@@ -2032,7 +2032,7 @@ export default function Home() {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-theme-border bg-theme-modal-footer rounded-b-2xl">
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-theme-soft bg-theme-modal-footer rounded-b-2xl">
                   <button
                     onClick={() => {
                       setShowExportPreview(false);
@@ -2077,7 +2077,7 @@ export default function Home() {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto px-6 py-6">
+                <div className="flex-1 overflow-y-auto px-6 py-6 bg-theme-modal-content">
                   <div className="space-y-6">
                     {/* Overview */}
                     <div>
@@ -2224,7 +2224,7 @@ export default function Home() {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-theme-border bg-theme-modal-footer flex justify-end rounded-b-2xl">
+                <div className="px-6 py-4 border-t border-theme-soft bg-theme-modal-footer flex justify-end rounded-b-2xl">
                   <button
                     onClick={() => setShowHelp(false)}
                     className="px-5 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors whitespace-nowrap"
@@ -2264,7 +2264,7 @@ export default function Home() {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-0">
+                <div className="flex-1 overflow-y-auto p-0 bg-theme-modal-content">
                   <div className="divide-y divide-theme-soft">
                     {SHORTCUT_DEFS.map((def) => {
                       const isEditing = editingShortcutId === def.id;

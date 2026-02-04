@@ -81,9 +81,12 @@
 
 ### モーダル専用
 ```css
+.bg-theme-modal            /* モーダルコンテナ背景 */
+.bg-theme-modal-content    /* モーダルコンテンツエリア背景 */
 .bg-theme-modal-header     /* モーダルヘッダー背景 */
 .bg-theme-modal-footer     /* モーダルフッター背景 */
-.bg-theme-modal-card       /* モーダルカード背景 */
+.bg-theme-modal-card       /* モーダル内カード背景 */
+.border-theme-modal        /* モーダルボーダー */
 ```
 
 ### 警告
@@ -142,22 +145,44 @@
 </div>
 ```
 
-### モーダル
+### モーダル（推奨構造）
 ```tsx
-<div className="fixed inset-0 bg-theme-overlay backdrop-blur-sm">
-  <div className="bg-theme-modal backdrop-blur-xl rounded-2xl border border-theme-modal">
-    <div className="bg-theme-modal-header rounded-t-2xl border-b border-theme-border">
-      ヘッダー
+{/* オーバーレイ */}
+<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
+  {/* モーダルコンテナ */}
+  <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
+    {/* ヘッダー */}
+    <div className="flex items-center justify-between px-6 py-4 border-b border-theme-soft bg-theme-modal-header rounded-t-2xl">
+      <h3 className="text-xl font-bold text-theme-primary">タイトル</h3>
+      <button className="text-theme-tertiary hover:text-theme-primary transition-colors">
+        ×
+      </button>
     </div>
-    <div className="flex-1">
-      コンテンツ
+
+    {/* コンテンツ（重要：bg-theme-modal-contentを必ず指定） */}
+    <div className="flex-1 overflow-y-auto px-6 py-6 bg-theme-modal-content">
+      <div className="space-y-4">
+        {/* コンテンツ内のカード */}
+        <div className="bg-theme-modal-card rounded-lg p-4 border border-theme-soft">
+          カード内容
+        </div>
+      </div>
     </div>
-    <div className="bg-theme-modal-footer rounded-b-2xl border-t border-theme-border">
-      フッター
+
+    {/* フッター */}
+    <div className="px-6 py-4 border-t border-theme-soft bg-theme-modal-footer flex justify-end rounded-b-2xl">
+      <button className="btn btn-primary">閉じる</button>
     </div>
   </div>
 </div>
 ```
+
+**重要な注意点**:
+- モーダルコンテンツエリアには必ず `bg-theme-modal-content` を指定
+- ヘッダー/フッターのボーダーは `border-theme-soft` を使用（コントラストを抑える）
+- モーダル内のカードには `bg-theme-modal-card` を使用
+- すべてのテキストは適切な `text-theme-*` クラスを使用
+
 
 ### アクティブボタン
 ```tsx
