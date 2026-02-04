@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { SoapNote, ModelId } from "./api/analyze/types";
+import type { SoapNote, ModelId, TokenUsage } from "./api/analyze/types";
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from "./api/analyze/types";
 import {
   MicrophoneIcon,
@@ -266,6 +266,9 @@ export default function Home() {
   // Streaming state
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState("");
+
+  // Token usage state
+  const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
 
   // Resizable layout state (PC)
   const [leftWidth, setLeftWidth] = useState(50); // percentage
@@ -582,6 +585,7 @@ export default function Home() {
     setStreamingText("");
     setError(null);
     setResult(null);
+    setTokenUsage(null);
 
     try {
       const res = await fetch("/api/analyze", {
@@ -646,6 +650,10 @@ export default function Home() {
                 } catch (parseError) {
                   console.error("JSON parse error:", parseError);
                   setError("AIの応答を解析できませんでした。");
+                }
+                // Save token usage if available
+                if (data.usage) {
+                  setTokenUsage(data.usage);
                 }
                 setIsStreaming(false);
                 setLoading(false);
@@ -1453,9 +1461,9 @@ export default function Home() {
   }, [isResizing]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Minimal header - sticky on scroll */}
-      <header className="app-header">
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Minimal header - sticky */}
+      <header className="app-header flex-shrink-0">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-12">
             {/* Branding */}
@@ -1493,17 +1501,20 @@ export default function Home() {
               </div>
 
               {/* AI Model selector */}
-              <div className="relative">
+              <div className="relative group">
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value as ModelId)}
                   className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-3 pr-8 py-1.5 text-xs text-theme-primary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-blue-500"
                   aria-label="AIモデル選択"
-                  title="使用するAIモデルを選択"
+                  title={(() => {
+                    const m = AVAILABLE_MODELS.find(m => m.id === selectedModel);
+                    return m ? `${m.name}\n${m.description}\n速度: ${'⚡'.repeat(m.speed)} 品質: ${'★'.repeat(m.quality)}` : '';
+                  })()}
                 >
                   {AVAILABLE_MODELS.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.name}
+                    <option key={model.id} value={model.id} title={`${model.description} | 速度:${model.speed}/5 品質:${model.quality}/5`}>
+                      {model.name} ({model.description})
                     </option>
                   ))}
                 </select>
@@ -1511,6 +1522,28 @@ export default function Home() {
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-tertiary pointer-events-none"
                   aria-hidden="true"
                 />
+                {/* Model info tooltip */}
+                <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-50 w-64 p-3 bg-theme-card border border-theme-border rounded-lg shadow-lg text-xs">
+                  <div className="font-semibold text-theme-primary mb-2">モデル比較</div>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-theme-tertiary">
+                        <th className="text-left pb-1">モデル</th>
+                        <th className="text-center pb-1">速度</th>
+                        <th className="text-center pb-1">品質</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-theme-secondary">
+                      {AVAILABLE_MODELS.map((m) => (
+                        <tr key={m.id} className={m.id === selectedModel ? 'text-theme-primary font-medium' : ''}>
+                          <td className="py-0.5">{m.name.replace('GPT-', '')}</td>
+                          <td className="text-center">{'⚡'.repeat(m.speed)}</td>
+                          <td className="text-center">{'★'.repeat(m.quality)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Icon buttons - unified grid */}
@@ -1585,7 +1618,7 @@ export default function Home() {
                 >
                   {AVAILABLE_MODELS.map((model) => (
                     <option key={model.id} value={model.id}>
-                      {model.name}
+                      {model.name} ({model.description})
                     </option>
                   ))}
                 </select>
@@ -1646,8 +1679,8 @@ export default function Home() {
       </header>
 
       {/* Main content area */}
-      <main className="flex-1 relative">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <main className="flex-1 relative overflow-hidden flex flex-col">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-col flex-1 overflow-hidden w-full">
           {/* Control panel */}
           <div className={`mb-2 ${mounted ? "animate-fade-in" : "opacity-0"}`}>
             <div className="flex flex-wrap gap-3 items-center justify-between">
@@ -1720,17 +1753,16 @@ export default function Home() {
           {/* Two-column layout - Desktop: Resizable, Mobile: Accordion */}
           <div
             ref={containerRef}
-            className="relative flex flex-col lg:flex-row gap-0"
-            style={{ minHeight: "calc(100vh - 160px)" }}
+            className="relative flex flex-col lg:flex-row gap-0 flex-1 overflow-hidden"
           >
             {/* Left: Transcript input */}
             <section
               className={`${
                 mounted ? "animate-fade-in delay-100" : "opacity-0"
-              } flex-shrink-0 ${
+              } flex-shrink-0 overflow-hidden flex flex-col ${
                 !isLargeScreen && activePanel !== "transcript"
                   ? "hidden"
-                  : "block"
+                  : "flex"
               }`}
               style={{
                 width: isLargeScreen ? `${leftWidth}%` : "100%",
@@ -1740,7 +1772,7 @@ export default function Home() {
               }}
               aria-label="会話入力"
             >
-              <div className="panel h-full flex flex-col lg:mr-0">
+              <div className="panel h-full flex flex-col lg:mr-0 overflow-hidden">
                 <div className="panel-header">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -1790,7 +1822,7 @@ export default function Home() {
                     )}
                   </div>
                 </div>
-                <div className="flex-1 p-0 relative">
+                <div className="flex-1 p-0 relative overflow-hidden">
                   <label htmlFor="transcript-input" className="sr-only">
                     音声文字起こし - 音声入力または直接入力
                   </label>
@@ -1934,8 +1966,8 @@ export default function Home() {
             <section
               className={`${
                 mounted ? "animate-fade-in delay-200" : "opacity-0"
-              } flex-1 ${
-                !isLargeScreen && activePanel !== "result" ? "hidden" : "block"
+              } flex-1 overflow-hidden flex flex-col ${
+                !isLargeScreen && activePanel !== "result" ? "hidden" : "flex"
               }`}
               style={{
                 transition: isTransitioning
@@ -1944,7 +1976,7 @@ export default function Home() {
               }}
               aria-label="SOAPカルテ結果"
             >
-              <div className="panel h-full flex flex-col lg:ml-0">
+              <div className="panel h-full flex flex-col lg:ml-0 overflow-hidden">
                 <div className="panel-header">
                   <div className="flex items-center justify-between">
                     {/* Mobile layout */}
@@ -2048,26 +2080,10 @@ export default function Home() {
                         </div>
                       </div>
                     ) : (
-                      <div className="w-full space-y-3">
-                        {/* 上段: 見出しとCopyボタン */}
-                        <div className="flex items-center justify-between">
-                          <h2 className="panel-title">AI生成SOAPカルテ</h2>
-                          {/* Copy full chart button */}
-                          <button
-                            onClick={copyFullChart}
-                            disabled={!result}
-                            className="flex items-center gap-1.5 text-xs text-theme-secondary hover:text-theme-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            aria-label="カルテ全体をコピー"
-                          >
-                            <ClipboardDocumentIcon
-                              className="w-4 h-4"
-                              aria-hidden="true"
-                            />
-                            <span>全体コピー</span>
-                          </button>
-                        </div>
-                        {/* 下段: アクションボタン群 */}
-                        <div className="flex items-center flex-wrap gap-1.5">
+                      <div className="w-full flex items-center justify-between gap-2">
+                        <h2 className="panel-title whitespace-nowrap">SOAPカルテ</h2>
+                        {/* アクションボタン群 */}
+                        <div className="flex items-center flex-wrap gap-1">
                           {/* Import button */}
                           <button
                             onClick={handleImportClick}
@@ -2183,6 +2199,19 @@ export default function Home() {
                               }`}
                               aria-hidden="true"
                             />
+                          </button>
+                          {/* 区切り */}
+                          <div className="w-px h-4 bg-theme-border mx-1" />
+                          {/* Copy full chart button */}
+                          <button
+                            onClick={copyFullChart}
+                            disabled={!result}
+                            className="btn btn-secondary text-xs py-1 px-2"
+                            aria-label="カルテ全体をコピー"
+                            data-tooltip="カルテ全体をクリップボードにコピー"
+                          >
+                            <ClipboardDocumentIcon className="w-4 h-4" aria-hidden="true" />
+                            <span className="hidden sm:inline">コピー</span>
                           </button>
                         </div>
                       </div>
@@ -2330,7 +2359,7 @@ export default function Home() {
                           className="text-xs"
                           style={{ color: "var(--text-tertiary)" }}
                         >
-                          GPT-4o-mini
+                          {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name || selectedModel}
                         </span>
                       </div>
                       {isStreaming && streamingText && (
@@ -2766,9 +2795,14 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* Generated timestamp */}
-                      <div className="px-6 py-3 bg-theme-card text-xs text-theme-tertiary font-mono border-t border-theme-border">
-                        生成時刻: {new Date().toLocaleTimeString("ja-JP")}
+                      {/* Generated timestamp and token usage */}
+                      <div className="px-6 py-3 bg-theme-card text-xs text-theme-tertiary font-mono border-t border-theme-border flex items-center justify-between">
+                        <span>生成時刻: {new Date().toLocaleTimeString("ja-JP")}</span>
+                        {tokenUsage && (
+                          <span className="opacity-60" title={`入力: ${tokenUsage.promptTokens} / 出力: ${tokenUsage.completionTokens}`}>
+                            {tokenUsage.totalTokens.toLocaleString()} tokens ≈ ¥{tokenUsage.estimatedCostJPY.toFixed(3)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
