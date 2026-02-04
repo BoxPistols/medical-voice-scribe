@@ -305,6 +305,12 @@ export default function Home() {
   // Theme and settings state
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
 
+  // Clock and timer state
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [showClock, setShowClock] = useState(true);
+  const [recordingStartTime, setRecordingStartTime] = useState<Date | null>(null);
+  const [recordingElapsed, setRecordingElapsed] = useState(0);
+
   // AI Model selection state
   const [selectedModel, setSelectedModel] = useState<ModelId>(DEFAULT_MODEL);
 
@@ -368,6 +374,40 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
+
+  // Clock update - every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Recording elapsed time update
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (isRecording && recordingStartTime) {
+      timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - recordingStartTime.getTime()) / 1000);
+        setRecordingElapsed(elapsed);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isRecording, recordingStartTime]);
+
+  // Load/Save clock visibility setting
+  useEffect(() => {
+    const savedShowClock = localStorage.getItem("medical-scribe-show-clock");
+    if (savedShowClock !== null) {
+      setShowClock(savedShowClock === "true");
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("medical-scribe-show-clock", String(showClock));
+  }, [showClock]);
 
   // Theme management - Apply theme
   useEffect(() => {
@@ -572,10 +612,40 @@ export default function Home() {
   const toggleRecording = () => {
     if (isRecording) {
       recognitionRef.current?.stop();
+      setRecordingStartTime(null);
+      setRecordingElapsed(0);
     } else {
       recognitionRef.current?.start();
+      setRecordingStartTime(new Date());
+      setRecordingElapsed(0);
     }
     setIsRecording(!isRecording);
+  };
+
+  // Format time as HH:MM:SS
+  const formatTime = (date: Date): string => {
+    return date.toLocaleTimeString("ja-JP", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
+
+  // Format elapsed time as MM:SS or HH:MM:SS
+  const formatElapsedTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+    return `${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   const handleAnalyze = async () => {
@@ -1490,9 +1560,9 @@ export default function Home() {
       {/* Minimal header - sticky */}
       <header className="app-header flex-shrink-0">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-12">
-            {/* Branding */}
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="relative flex items-center justify-between h-12 sm:h-14">
+            {/* Branding + Clock */}
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-shrink-0">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm flex-shrink-0">
                   <MicrophoneIcon
@@ -1501,16 +1571,37 @@ export default function Home() {
                     aria-hidden="true"
                   />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 hidden sm:block">
                   <h1 className="text-sm sm:text-lg font-bold text-theme-primary leading-none truncate">
-                    <span className="sm:hidden">Voice Scribe</span>
-                    <span className="hidden sm:inline">Medical Voice Scribe</span>
+                    Medical Voice Scribe
                   </h1>
-                  <p className="hidden sm:block text-xs text-theme-secondary font-medium mt-0.5">
+                  <p className="text-xs text-theme-secondary font-medium mt-0.5">
                     AI音声問診・カルテ自動生成
                   </p>
                 </div>
               </div>
+
+              {/* Clock and Recording Timer - next to logo */}
+              {mounted && showClock && (
+                <div className="flex flex-col items-center">
+                  <time
+                    className="text-lg sm:text-xl md:text-2xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
+                    dateTime={currentTime.toISOString()}
+                    aria-label="現在時刻"
+                    suppressHydrationWarning
+                  >
+                    {formatTime(currentTime)}
+                  </time>
+                  {isRecording && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                      <span className="text-xs font-mono text-orange-500 tabular-nums">
+                        {formatElapsedTime(recordingElapsed)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Status indicator */}
@@ -3180,6 +3271,38 @@ export default function Home() {
                           aria-hidden="true"
                           className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                             useModifiers ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Clock Toggle */}
+                  <div className="px-6 py-4 border-b border-theme-soft bg-theme-modal-content-alt">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-theme-primary">
+                          時計を表示
+                        </div>
+                        <div className="text-xs text-theme-secondary mt-0.5">
+                          ヘッダーに現在時刻と録音経過時間を表示します
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowClock(!showClock)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
+                          showClock
+                            ? "bg-teal-600"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                        role="switch"
+                        aria-checked={showClock}
+                        aria-label="時計を表示"
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            showClock ? "translate-x-5" : "translate-x-0"
                           }`}
                         />
                       </button>
