@@ -625,6 +625,100 @@ export default function Home() {
     setShowExportMenu(false);
   };
 
+  // Copy functions
+  const copyToClipboard = async (text: string, label: string = 'カルテ') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert(`${label}をクリップボードにコピーしました`);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      alert('コピーに失敗しました');
+    }
+  };
+
+  const copyFullChart = () => {
+    if (!result) return;
+    const fullText = extractTextFromSoap(result);
+    copyToClipboard(fullText, '全体カルテ');
+  };
+
+  const copySectionS = () => {
+    if (!result) return;
+    let text = '【主観的情報 (Subjective)】\n\n';
+    if (result.soap.subjective?.presentIllness) {
+      text += `現病歴:\n${result.soap.subjective.presentIllness}\n\n`;
+    }
+    if (result.soap.subjective?.symptoms && result.soap.subjective.symptoms.length > 0) {
+      text += `症状:\n${result.soap.subjective.symptoms.map(s => `• ${s}`).join('\n')}\n\n`;
+    }
+    if (result.soap.subjective?.severity) {
+      text += `重症度: ${result.soap.subjective.severity}\n\n`;
+    }
+    if (result.soap.subjective?.pastMedicalHistory) {
+      text += `既往歴:\n${result.soap.subjective.pastMedicalHistory}\n`;
+    }
+    copyToClipboard(text, 'Sセクション');
+  };
+
+  const copySectionO = () => {
+    if (!result) return;
+    let text = '【客観的情報 (Objective)】\n\n';
+    if (result.soap.objective?.vitalSigns) {
+      text += 'バイタルサイン:\n';
+      const vs = result.soap.objective.vitalSigns;
+      if (vs.bloodPressure) text += `• 血圧: ${vs.bloodPressure}\n`;
+      if (vs.pulse) text += `• 脈拍: ${vs.pulse}\n`;
+      if (vs.temperature) text += `• 体温: ${vs.temperature}\n`;
+      if (vs.respiratoryRate) text += `• 呼吸数: ${vs.respiratoryRate}\n`;
+      text += '\n';
+    }
+    if (result.soap.objective?.physicalExam) {
+      text += `身体所見:\n${result.soap.objective.physicalExam}\n`;
+    }
+    copyToClipboard(text, 'Oセクション');
+  };
+
+  const copySectionA = () => {
+    if (!result) return;
+    let text = '【評価・診断 (Assessment)】\n\n';
+    if (result.soap.assessment?.diagnosis) {
+      text += `診断名: ${result.soap.assessment.diagnosis}\n`;
+      if (result.soap.assessment.icd10) {
+        text += `ICD-10: ${result.soap.assessment.icd10}\n`;
+      }
+      text += '\n';
+    }
+    if (result.soap.assessment?.differentialDiagnosis && result.soap.assessment.differentialDiagnosis.length > 0) {
+      text += `鑑別診断:\n${result.soap.assessment.differentialDiagnosis.map(d => `• ${d}`).join('\n')}\n\n`;
+    }
+    if (result.soap.assessment?.clinicalImpression) {
+      text += `臨床的評価:\n${result.soap.assessment.clinicalImpression}\n`;
+    }
+    copyToClipboard(text, 'Aセクション');
+  };
+
+  const copySectionP = () => {
+    if (!result) return;
+    let text = '【計画 (Plan)】\n\n';
+    if (result.soap.plan?.treatment) {
+      text += `治療方針:\n${result.soap.plan.treatment}\n\n`;
+    }
+    if (result.soap.plan?.medications && result.soap.plan.medications.length > 0) {
+      text += '処方:\n';
+      result.soap.plan.medications.forEach((med, i) => {
+        text += `${i + 1}. ${med.name || ''}\n`;
+        if (med.dosage) text += `   用量: ${med.dosage}\n`;
+        if (med.frequency) text += `   頻度: ${med.frequency}\n`;
+        if (med.duration) text += `   期間: ${med.duration}\n`;
+      });
+      text += '\n';
+    }
+    if (result.soap.plan?.followUp) {
+      text += `フォローアップ:\n${result.soap.plan.followUp}\n`;
+    }
+    copyToClipboard(text, 'Pセクション');
+  };
+
   const handleImportClick = () => {
     fileInputRef.current?.click();
   };
@@ -1052,8 +1146,8 @@ export default function Home() {
             {/* Branding */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
-                  <DocumentTextIcon className="w-5 h-5 text-white" strokeWidth={2.5} aria-hidden="true" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
+                  <MicrophoneIcon className="w-5 h-5 text-white" strokeWidth={2.5} aria-hidden="true" />
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-theme-primary leading-none">
@@ -1317,10 +1411,10 @@ export default function Home() {
                   style={{ pointerEvents: isTransitioning ? 'none' : 'auto' }}
                 >
                   {/* Visual line */}
-                  <div className="w-1 h-full bg-gray-200 group-hover:bg-teal-400 transition-colors duration-200">
+                  <div className="w-1 h-full bg-gray-200 dark:bg-gray-600 group-hover:bg-teal-400 dark:group-hover:bg-teal-500 transition-colors duration-200">
                     {/* Grip dots in center */}
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-1 pointer-events-none">
-                      <div className="w-1 h-1 rounded-full bg-gray-400 group-hover:bg-teal-600" />
+                      <div className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-500 group-hover:bg-teal-600 dark:group-hover:bg-teal-400" />
                       <div className="w-1 h-1 rounded-full bg-gray-400 group-hover:bg-teal-600" />
                       <div className="w-1 h-1 rounded-full bg-gray-400 group-hover:bg-teal-600" />
                     </div>
@@ -1480,6 +1574,18 @@ export default function Home() {
                             )}
                           </div>
 
+                          {/* Copy full chart button */}
+                          <button
+                            onClick={copyFullChart}
+                            disabled={!result}
+                            className="btn btn-secondary"
+                            aria-label="カルテ全体をコピー"
+                            data-tooltip="カルテ全体をクリップボードにコピー"
+                          >
+                            <ClipboardDocumentIcon className="w-4 h-4" aria-hidden="true" />
+                            <span className="hidden sm:inline">コピー</span>
+                          </button>
+
                           <button
                             onClick={toggleSpeech}
                             disabled={!result}
@@ -1617,7 +1723,7 @@ export default function Home() {
                     <div className="space-y-3 p-6">
                       {/* Summary */}
                       {result.summary && (
-                        <div className="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-lg shadow-sm border-l-4 border-amber-600 dark:border-amber-500">
+                        <div className="p-6 rounded-lg shadow-sm border-l-4 border-amber-600 dark:border-amber-500 border border-amber-200 dark:border-amber-800/30">
                           <div className="flex items-center gap-2 mb-2">
                             <svg className="w-5 h-5 text-amber-600 dark:text-amber-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -1630,7 +1736,7 @@ export default function Home() {
 
                       {/* Patient Info */}
                       {result.patientInfo && (
-                        <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm border-l-4 border-blue-600 dark:border-blue-500">
+                        <div className="p-6 rounded-lg shadow-sm border-l-4 border-blue-600 dark:border-blue-500 border border-blue-200 dark:border-blue-800/30">
                           <div className="flex items-center gap-2 mb-3">
                             <svg className="w-5 h-5 text-blue-600 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -1657,8 +1763,18 @@ export default function Home() {
                       {/* SOAP sections */}
                       <div className="soap-section subjective">
                         <div className="soap-label">
-                          <div className="soap-badge" style={{ background: 'var(--soap-s)' }}>S</div>
-                          主観的情報
+                          <div className="flex items-center gap-2">
+                            <div className="soap-badge" style={{ background: 'var(--soap-s)' }}>S</div>
+                            主観的情報
+                          </div>
+                          <button
+                            onClick={copySectionS}
+                            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+                            aria-label="Sセクションをコピー"
+                            title="このセクションをコピー"
+                          >
+                            <ClipboardDocumentIcon className="w-4 h-4 text-current opacity-60 hover:opacity-100" />
+                          </button>
                         </div>
                         <div className="space-y-3 text-sm">
                           {result.soap.subjective?.presentIllness && (
@@ -1694,8 +1810,18 @@ export default function Home() {
 
                       <div className="soap-section objective">
                         <div className="soap-label">
-                          <div className="soap-badge" style={{ background: 'var(--soap-o)' }}>O</div>
-                          客観的情報
+                          <div className="flex items-center gap-2">
+                            <div className="soap-badge" style={{ background: 'var(--soap-o)' }}>O</div>
+                            客観的情報
+                          </div>
+                          <button
+                            onClick={copySectionO}
+                            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+                            aria-label="Oセクションをコピー"
+                            title="このセクションをコピー"
+                          >
+                            <ClipboardDocumentIcon className="w-4 h-4 text-current opacity-60 hover:opacity-100" />
+                          </button>
                         </div>
                         <div className="space-y-3 text-sm">
                           {result.soap.objective?.vitalSigns && (
@@ -1736,8 +1862,18 @@ export default function Home() {
 
                       <div className="soap-section assessment">
                         <div className="soap-label">
-                          <div className="soap-badge" style={{ background: 'var(--soap-a)' }}>A</div>
-                          評価・診断
+                          <div className="flex items-center gap-2">
+                            <div className="soap-badge" style={{ background: 'var(--soap-a)' }}>A</div>
+                            評価・診断
+                          </div>
+                          <button
+                            onClick={copySectionA}
+                            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+                            aria-label="Aセクションをコピー"
+                            title="このセクションをコピー"
+                          >
+                            <ClipboardDocumentIcon className="w-4 h-4 text-current opacity-60 hover:opacity-100" />
+                          </button>
                         </div>
                         <div className="space-y-3 text-sm">
                           {result.soap.assessment?.diagnosis && (
@@ -1770,8 +1906,18 @@ export default function Home() {
 
                       <div className="soap-section plan">
                         <div className="soap-label">
-                          <div className="soap-badge" style={{ background: 'var(--soap-p)' }}>P</div>
-                          治療計画
+                          <div className="flex items-center gap-2">
+                            <div className="soap-badge" style={{ background: 'var(--soap-p)' }}>P</div>
+                            治療計画
+                          </div>
+                          <button
+                            onClick={copySectionP}
+                            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+                            aria-label="Pセクションをコピー"
+                            title="このセクションをコピー"
+                          >
+                            <ClipboardDocumentIcon className="w-4 h-4 text-current opacity-60 hover:opacity-100" />
+                          </button>
                         </div>
                         <div className="space-y-3 text-sm">
                           {result.soap.plan?.treatment && (

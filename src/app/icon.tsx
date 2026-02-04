@@ -19,7 +19,7 @@ export default function Icon() {
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
-          borderRadius: '20%',
+          borderRadius: '6px',
         }}
       >
         <svg
