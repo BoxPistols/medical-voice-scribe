@@ -1706,7 +1706,7 @@ export default function Home() {
                     <MicrophoneIcon className="w-4 h-4" aria-hidden="true" />
                   )}
                   {isRecording ? "停止" : "録音"}
-                  <span className="text-xs opacity-70 ml-1">
+                  <span className="hidden sm:inline text-xs opacity-70 ml-1">
                     [{formatShortcut(shortcuts.toggleRecording, true)}]
                   </span>
                 </button>
@@ -1726,35 +1726,35 @@ export default function Home() {
                     <>
                       <SparklesIcon className="w-4 h-4" aria-hidden="true" />
                       カルテ生成
-                      <span className="text-xs opacity-70 ml-1">
+                      <span className="hidden sm:inline text-xs opacity-70 ml-1">
                         [{formatShortcut(shortcuts.analyze, true)}]
                       </span>
                     </>
                   )}
                 </button>
 
-                {/* Character count */}
+                {/* Clear button - モバイルでは横並び */}
+                <button
+                  onClick={handleClear}
+                  disabled={!transcript && !result}
+                  className="btn btn-secondary"
+                  aria-label="すべてクリア"
+                  data-tooltip="入力とカルテをすべて削除"
+                >
+                  <TrashIcon className="w-4 h-4" aria-hidden="true" />
+                  クリア
+                  <span className="hidden sm:inline text-xs opacity-70 ml-1">
+                    [{formatShortcut(shortcuts.clear, true)}]
+                  </span>
+                </button>
+
+                {/* Character count - デスクトップのみ */}
                 {transcript && (
-                  <div className="text-sm text-theme-tertiary font-mono ml-2">
+                  <div className="hidden sm:block text-sm text-theme-tertiary font-mono ml-2">
                     {transcript.length} 文字
                   </div>
                 )}
               </div>
-
-              {/* Clear button - Right side */}
-              <button
-                onClick={handleClear}
-                disabled={!transcript && !result}
-                className="btn btn-secondary"
-                aria-label="すべてクリア"
-                data-tooltip="入力とカルテをすべて削除"
-              >
-                <TrashIcon className="w-4 h-4" aria-hidden="true" />
-                クリア
-                <span className="text-xs opacity-70 ml-1">
-                  [{formatShortcut(shortcuts.clear, true)}]
-                </span>
-              </button>
             </div>
           </div>
 
@@ -1785,8 +1785,8 @@ export default function Home() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <h2 className="panel-title">会話テキスト</h2>
-                      {/* Shortcut mode toggle */}
-                      <div className="flex items-center gap-1.5 text-xs text-theme-secondary">
+                      {/* Shortcut mode toggle - デスクトップのみ */}
+                      <div className="hidden sm:flex items-center gap-1.5 text-xs text-theme-secondary">
                         <button
                           onClick={() =>
                             handleUseModifiersChange(!useModifiers)
@@ -1987,26 +1987,21 @@ export default function Home() {
               <div className="panel h-full flex flex-col lg:ml-0 overflow-hidden">
                 <div className="panel-header">
                   <div className="flex items-center justify-between">
-                    {/* Mobile layout */}
+                    {/* Mobile layout - 1行に横並び */}
                     {!isLargeScreen ? (
-                      <div className="w-full space-y-2">
-                        {/* 1段目: 戻るボタンと見出し */}
-                        <div className="flex items-center justify-between">
-                          <button
-                            onClick={() => setActivePanel("transcript")}
-                            className="btn btn-secondary py-1 px-2 text-xs flex items-center gap-1"
-                            aria-label="会話テキストに戻る"
-                            data-tooltip="会話テキストに戻る"
-                          >
-                            <ArrowLeftIcon className="w-4 h-4" />
-                            <span>会話</span>
-                          </button>
-                          <h2 className="panel-title text-sm whitespace-nowrap">
-                            カルテ
-                          </h2>
-                        </div>
-                        {/* 2段目: アクションボタン群 */}
-                        <div className="flex items-center justify-end gap-1">
+                      <div className="w-full flex items-center justify-between gap-2">
+                        {/* 左: 戻るボタン */}
+                        <button
+                          onClick={() => setActivePanel("transcript")}
+                          className="btn btn-secondary py-1 px-2 text-xs flex items-center gap-1 shrink-0"
+                          aria-label="会話テキストに戻る"
+                          data-tooltip="会話テキストに戻る"
+                        >
+                          <ArrowLeftIcon className="w-4 h-4" />
+                          <span>会話</span>
+                        </button>
+                        {/* 右: アクションボタン群 */}
+                        <div className="flex items-center gap-1">
                           {/* Import button */}
                           <button
                             onClick={handleImportClick}
@@ -2089,8 +2084,8 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="w-full flex items-center justify-between">
-                        {/* 左: 見出し */}
-                        <h2 className="panel-title whitespace-nowrap text-sm">カルテ</h2>
+                        {/* 左: 見出し - デスクトップのみ表示 */}
+                        <h2 className="hidden sm:block panel-title whitespace-nowrap text-sm">カルテ</h2>
 
                         {/* 中央: Voice */}
                         <div className="flex items-center gap-1">
@@ -2107,6 +2102,9 @@ export default function Home() {
                               <SpeakerWaveIcon className="w-3.5 h-3.5" aria-hidden="true" />
                             )}
                             <span className="text-xs">Voice</span>
+                            <span className="hidden sm:inline text-xs opacity-70 ml-0.5">
+                              [{formatShortcut(shortcuts.toggleSpeech, true)}]
+                            </span>
                           </button>
                           <button
                             onClick={() => setShowSpeechSettings(!showSpeechSettings)}
