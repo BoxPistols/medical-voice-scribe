@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const dmSans = DM_Sans({
+const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const jetBrainsMono = JetBrains_Mono({
@@ -44,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body
-        className={`${dmSans.variable} ${jetBrainsMono.variable} antialiased`}
+        className={`${plusJakartaSans.variable} ${jetBrainsMono.variable} antialiased`}
       >
         {children}
       </body>
