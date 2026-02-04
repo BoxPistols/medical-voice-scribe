@@ -71,8 +71,6 @@ export default function Home() {
   const [speechRate, setSpeechRate] = useState(1.0);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState<number>(0);
-  const [ttsService, setTtsService] = useState<'system' | 'openai'>('system');
-  const [selectedOpenAIVoice, setSelectedOpenAIVoice] = useState<string>('alloy');
 
   // Export/Import state
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -527,85 +525,19 @@ export default function Home() {
     setIsSpeaking(true);
   };
 
-  // Helper to play OpenAI TTS
-  const playOpenAITTS = async (text: string) => {
-    // If we have an existing audio object and just want to replay or it was paused, 
-    // we might want to reuse it, but for voice changes we need to fetch new audio.
-    // For simplicity, we always fetch new audio when this is called explicitly.
-    // Cleanup previous
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
-    setLoading(true);
-    try {
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice: selectedOpenAIVoice }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error('TTS Error Details:', errorData);
-        throw new Error(errorData.error || `音声の生成に失敗しました (${res.status})`);
-      }
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      
-      // Apply current speed
-      audio.playbackRate = speechRate;
-      
-      audioRef.current = audio;
-
-      audio.onended = () => {
-        setIsSpeaking(false);
-        audioRef.current = null;
-        URL.revokeObjectURL(url);
-      };
-
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        audioRef.current = null;
-        URL.revokeObjectURL(url);
-        setError('音声の再生中にエラーが発生しました');
-      };
-
-      await audio.play();
-      setIsSpeaking(true);
-    } catch (e) {
-      console.error(e);
-      setError('AI音声の生成に失敗しました');
-      setIsSpeaking(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleSpeech = async () => {
+  const toggleSpeech = () => {
     if (!result) return;
 
     if (isSpeaking) {
       // Stop speaking
       window.speechSynthesis.cancel();
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
       setIsSpeaking(false);
       speechSynthesisRef.current = null;
+      speechCurrentIndexRef.current = 0;
     } else {
       const text = extractTextFromSoap(result);
-      speechCurrentIndexRef.current = 0; // Reset position
-
-      if (ttsService === 'system') {
-        playSystemTTS(text, 0);
-      } else {
-        playOpenAITTS(text);
-      }
+      speechCurrentIndexRef.current = 0;
+      playSystemTTS(text, 0);
     }
   };
 
@@ -613,67 +545,19 @@ export default function Home() {
   useEffect(() => {
     if (!isSpeaking || !result) return;
 
-    if (ttsService === 'system') {
-      // Restart System TTS from current position with new rate
-      const text = extractTextFromSoap(result);
-      playSystemTTS(text, speechCurrentIndexRef.current);
-    } else {
-      // Update OpenAI TTS rate directly (no API call needed)
-      if (audioRef.current) {
-        audioRef.current.playbackRate = speechRate;
-      }
-    }
+    // Restart System TTS from current position with new rate
+    const text = extractTextFromSoap(result);
+    playSystemTTS(text, speechCurrentIndexRef.current);
   }, [speechRate]);
 
-  // Effect: Handle real-time Voice changes (System)
+  // Effect: Handle real-time Voice changes
   useEffect(() => {
-    if (!isSpeaking || !result || ttsService !== 'system') return;
-    
+    if (!isSpeaking || !result) return;
+
     // Restart System TTS from current position with new voice
     const text = extractTextFromSoap(result);
     playSystemTTS(text, speechCurrentIndexRef.current);
   }, [selectedVoiceIndex]);
-
-  // Effect: Handle real-time Voice changes (OpenAI)
-  useEffect(() => {
-    if (!isSpeaking || !result || ttsService !== 'openai') return;
-
-    // OpenAI Voice change requires fetching new audio.
-    // We restart from beginning as we can't map text position to audio time easily.
-    const text = extractTextFromSoap(result);
-    playOpenAITTS(text);
-  }, [selectedOpenAIVoice]);
-
-  // Effect: Handle real-time Service switching
-  useEffect(() => {
-    // Only trigger if we are already speaking
-    // This allows switching service while playing
-    // Note: We need a ref to track if we were speaking before the service change caused a re-render
-    // But here we rely on isSpeaking state. 
-    // However, changing service usually doesn't stop isSpeaking, but we need to switch the engine.
-    // Since this effect runs when ttsService changes, we check if we ARE speaking.
-    if (!isSpeaking || !result) return;
-
-    const text = extractTextFromSoap(result);
-    
-    // Stop previous engine
-    window.speechSynthesis.cancel();
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
-    // Start new engine
-    if (ttsService === 'system') {
-      // Attempt to approximate position? 
-      // OpenAI -> System: Hard to map audio time to text index. Start from 0.
-      // System -> OpenAI: Hard to map text index to audio time. Start from 0.
-      speechCurrentIndexRef.current = 0; 
-      playSystemTTS(text, 0);
-    } else {
-      playOpenAITTS(text);
-    }
-  }, [ttsService]);
 
   // Layout presets
   const setLayoutPreset = (preset: 'equal' | 'left' | 'right') => {
@@ -1182,35 +1066,7 @@ export default function Home() {
                     <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
                       <div className="space-y-4">
                         {/* Service Selection */}
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-2">
-                            音声サービス
-                          </label>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => setTtsService('system')}
-                              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                                ttsService === 'system'
-                                  ? 'bg-teal-600 text-white'
-                                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              システム音声 (無料)
-                            </button>
-                            <button
-                              onClick={() => setTtsService('openai')}
-                              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                                ttsService === 'openai'
-                                  ? 'bg-teal-600 text-white'
-                                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              AI音声 (高音質)
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Speed selection (Common for both System and OpenAI) */}
+                        {/* Speed selection */}
                         <div>
                           <label className="block text-xs font-semibold text-gray-700 mb-2">
                             読み上げスピード
@@ -1232,8 +1088,8 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* Voice selection (System) */}
-                        {ttsService === 'system' && availableVoices.length > 0 && (
+                        {/* Voice selection */}
+                        {availableVoices.length > 0 && (
                           <div>
                             <label htmlFor="voice-select" className="block text-xs font-semibold text-gray-700 mb-2">
                               システム音声の選択
@@ -1250,40 +1106,6 @@ export default function Home() {
                                 </option>
                               ))}
                             </select>
-                          </div>
-                        )}
-
-                        {/* Voice selection (OpenAI) */}
-                        {ttsService === 'openai' && (
-                          <div>
-                            <label htmlFor="openai-voice-select" className="block text-xs font-semibold text-gray-700 mb-2">
-                              AIボイスの選択 (OpenAI)
-                            </label>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                              {[
-                                { id: 'alloy', label: 'Alloy (中性的)' },
-                                { id: 'echo', label: 'Echo (男性的)' },
-                                { id: 'fable', label: 'Fable (叙述的)' },
-                                { id: 'onyx', label: 'Onyx (力強い)' },
-                                { id: 'nova', label: 'Nova (女性的)' },
-                                { id: 'shimmer', label: 'Shimmer (穏やか)' },
-                              ].map((v) => (
-                                <button
-                                  key={v.id}
-                                  onClick={() => setSelectedOpenAIVoice(v.id)}
-                                  className={`px-3 py-2 text-xs font-medium rounded-md transition-colors border ${
-                                    selectedOpenAIVoice === v.id
-                                      ? 'bg-teal-50 border-teal-500 text-teal-700'
-                                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                                  }`}
-                                >
-                                  {v.label}
-                                </button>
-                              ))}
-                            </div>
-                            <p className="mt-2 text-[10px] text-gray-500">
-                              ※ OpenAI TTS APIを使用するため、API利用料が発生します。
-                            </p>
                           </div>
                         )}
                       </div>
