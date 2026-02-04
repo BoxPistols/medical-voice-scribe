@@ -6,14 +6,29 @@
   --bg-secondary: #ffffff;
   --bg-tertiary: #f1f5f9;
 
-  /* Sophisticated accent colors */
-  --accent-primary: #6366f1;
-  --accent-primary-dark: #4f46e5;
-  --accent-primary-light: #818cf8;
+  /* Tiffany Blue / Teal accent colors - refined and cohesive */
+  --accent-primary: #14b8a6;
+  --accent-primary-dark: #0d9488;
+  --accent-primary-light: #5eead4;
 
-  --accent-secondary: #ec4899;
-  --accent-warm: #f97316;
-  --accent-success: #10b981;
+  /* Warm accent for important actions (recording, generation) */
+  --accent-warm: #f59e0b;
+  --accent-warm-dark: #d97706;
+  --accent-success: #14b8a6;
+
+  /* Modal and Help screen colors */
+  --modal-header-bg: linear-gradient(to right, rgba(240, 253, 250, 0.8), rgba(204, 251, 241, 0.8));
+  --modal-footer-bg: rgba(249, 250, 251, 0.5);
+  --modal-card-bg: #f9fafb;
+  --help-number-bg: #14b8a6;
+  --help-icon-color: #0d9488;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #92400e;
+
+  /* Subtle gradients for buttons */
+  --gradient-primary: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  --gradient-warm: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 
   /* Elevated text colors */
   --text-primary: #0f172a;
@@ -25,22 +40,22 @@
   --border-light: #e2e8f0;
   --border-medium: #cbd5e0;
 
-  /* SOAP colors - Modern medical palette */
-  --soap-s: #ef4444;
-  --soap-s-light: #fef2f2;
-  --soap-s-subtle: rgba(239, 68, 68, 0.08);
+  /* SOAP colors - Tiffany Blue variations for cohesive design */
+  --soap-s: #0891b2;
+  --soap-s-light: #ecfeff;
+  --soap-s-subtle: rgba(8, 145, 178, 0.08);
 
-  --soap-o: #3b82f6;
-  --soap-o-light: #eff6ff;
-  --soap-o-subtle: rgba(59, 130, 246, 0.08);
+  --soap-o: #14b8a6;
+  --soap-o-light: #f0fdfa;
+  --soap-o-subtle: rgba(20, 184, 166, 0.08);
 
-  --soap-a: #10b981;
-  --soap-a-light: #f0fdf4;
-  --soap-a-subtle: rgba(16, 185, 129, 0.08);
+  --soap-a: #06b6d4;
+  --soap-a-light: #cffafe;
+  --soap-a-subtle: rgba(6, 182, 212, 0.08);
 
-  --soap-p: #8b5cf6;
-  --soap-p-light: #faf5ff;
-  --soap-p-subtle: rgba(139, 92, 246, 0.08);
+  --soap-p: #0d9488;
+  --soap-p-light: #ccfbf1;
+  --soap-p-subtle: rgba(13, 148, 136, 0.08);
 
   /* Refined shadows */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
@@ -56,9 +71,9 @@
   --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08);
   --glass-highlight: rgba(255, 255, 255, 0.5);
 
-  /* Ambient light effects */
-  --ambient-glow-1: rgba(99, 102, 241, 0.04);
-  --ambient-glow-2: rgba(236, 72, 153, 0.04);
+  /* Ambient light effects - Tiffany Blue palette */
+  --ambient-glow-1: rgba(20, 184, 166, 0.04);
+  --ambient-glow-2: rgba(13, 148, 136, 0.04);
 }
 
 [data-theme="dark"] {
@@ -68,13 +83,26 @@
   --bg-tertiary: #334155;
 
   /* Accent colors remain vibrant in dark mode */
-  --accent-primary: #818cf8;
-  --accent-primary-dark: #6366f1;
-  --accent-primary-light: #a5b4fc;
+  --accent-primary: #5eead4;
+  --accent-primary-dark: #14b8a6;
+  --accent-primary-light: #99f6e4;
 
-  --accent-secondary: #f472b6;
   --accent-warm: #fb923c;
   --accent-success: #34d399;
+
+  /* Modal and Help screen colors - Dark Mode */
+  --modal-header-bg: linear-gradient(to right, rgba(20, 184, 166, 0.15), rgba(13, 148, 136, 0.15));
+  --modal-footer-bg: rgba(30, 41, 59, 0.3);
+  --modal-card-bg: rgba(51, 65, 85, 0.5);
+  --help-number-bg: #14b8a6;
+  --help-icon-color: #5eead4;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --warning-border: rgba(245, 158, 11, 0.3);
+  --warning-text: #fbbf24;
+
+  /* Subtle gradients for buttons - Dark Mode */
+  --gradient-primary: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  --gradient-warm: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
 
   /* Dark mode text colors */
   --text-primary: #f1f5f9;
@@ -86,22 +114,22 @@
   --border-light: #334155;
   --border-medium: #475569;
 
-  /* SOAP colors - adjusted for dark mode */
-  --soap-s: #f87171;
-  --soap-s-light: #7f1d1d;
-  --soap-s-subtle: rgba(248, 113, 113, 0.12);
+  /* SOAP colors - Tiffany Blue variations for dark mode */
+  --soap-s: #67e8f9;
+  --soap-s-light: #164e63;
+  --soap-s-subtle: rgba(103, 232, 249, 0.12);
 
-  --soap-o: #60a5fa;
-  --soap-o-light: #1e3a8a;
-  --soap-o-subtle: rgba(96, 165, 250, 0.12);
+  --soap-o: #5eead4;
+  --soap-o-light: #134e4a;
+  --soap-o-subtle: rgba(94, 234, 212, 0.12);
 
-  --soap-a: #34d399;
-  --soap-a-light: #064e3b;
-  --soap-a-subtle: rgba(52, 211, 153, 0.12);
+  --soap-a: #22d3ee;
+  --soap-a-light: #155e75;
+  --soap-a-subtle: rgba(34, 211, 238, 0.12);
 
-  --soap-p: #a78bfa;
-  --soap-p-light: #4c1d95;
-  --soap-p-subtle: rgba(167, 139, 250, 0.12);
+  --soap-p: #2dd4bf;
+  --soap-p-light: #115e59;
+  --soap-p-subtle: rgba(45, 212, 191, 0.12);
 
   /* Dark mode shadows with color tints */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
@@ -117,9 +145,9 @@
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   --glass-highlight: rgba(255, 255, 255, 0.05);
 
-  /* Ambient glow effects for dark mode */
-  --ambient-glow-1: rgba(129, 140, 248, 0.08);
-  --ambient-glow-2: rgba(244, 114, 182, 0.08);
+  /* Ambient glow effects for dark mode - Tiffany Blue palette */
+  --ambient-glow-1: rgba(94, 234, 212, 0.08);
+  --ambient-glow-2: rgba(45, 212, 191, 0.08);
 }
 
 @layer base {
@@ -297,39 +325,40 @@ body::after {
   pointer-events: none;
 }
 
-/* Primary button */
+/* Primary button with gradient */
 .btn-primary {
-  background: var(--accent-primary);
+  background: var(--gradient-primary);
   color: white;
-  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(99, 102, 241, 0.1);
+  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(20, 184, 166, 0.1);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-primary-dark);
+  filter: brightness(1.1);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(99, 102, 241, 0.2);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(20, 184, 166, 0.2);
 }
 
 .btn-primary:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: var(--shadow-sm);
+  filter: brightness(1);
 }
 
-/* Recording button */
+/* Recording button with gradient */
 .btn-record {
-  background: var(--accent-warm);
+  background: var(--gradient-warm);
   color: white;
-  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(249, 115, 22, 0.1);
+  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(245, 158, 11, 0.1);
 }
 
 .btn-record:hover:not(:disabled) {
-  background: #ea580c;
+  filter: brightness(1.1);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(249, 115, 22, 0.2);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(245, 158, 11, 0.2);
 }
 
 .btn-record.recording {
-  background: #dc2626;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   animation: recordPulse 2s ease-in-out infinite;
 }
 
@@ -789,7 +818,10 @@ body::after {
 
 .theme-toggle-btn {
   flex: 1;
-  padding: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
   font-size: 0.8125rem;
   font-weight: 600;
   border-radius: 0.625rem;
@@ -800,12 +832,14 @@ body::after {
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
+  aspect-ratio: 1;
 }
 
 .theme-toggle-btn:hover {
   background: var(--glass-bg-strong);
   border-color: var(--accent-primary);
   color: var(--text-primary);
+  transform: scale(1.05);
 }
 
 .theme-toggle-btn.active {
@@ -813,6 +847,11 @@ body::after {
   border-color: var(--accent-primary);
   color: white;
   box-shadow: var(--shadow-sm);
+}
+
+.theme-toggle-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .settings-reset-btn {
@@ -867,6 +906,44 @@ body::after {
   color: var(--text-tertiary);
 }
 
+/* Theme-aware background colors */
+.bg-theme-modal-header {
+  background: var(--modal-header-bg);
+}
+
+.bg-theme-modal-footer {
+  background: var(--modal-footer-bg);
+}
+
+.bg-theme-modal-card {
+  background: var(--modal-card-bg);
+}
+
+.bg-theme-help-number {
+  background: var(--help-number-bg);
+}
+
+.text-theme-help-icon {
+  color: var(--help-icon-color);
+}
+
+.bg-theme-warning {
+  background: var(--warning-bg);
+}
+
+.border-theme-warning {
+  border-color: var(--warning-border);
+}
+
+.text-theme-warning {
+  color: var(--warning-text);
+}
+
+/* Theme-aware borders */
+.border-theme-border {
+  border-color: var(--border-light);
+}
+
 /* Theme-aware button hover */
 .btn-theme-hover {
   transition: all 0.2s ease;
@@ -877,37 +954,142 @@ body::after {
   background: var(--glass-bg);
 }
 
+/* Tooltip styles */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::before,
+[data-tooltip]::after {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+
+[data-tooltip]::before {
+  content: attr(data-tooltip);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+}
+
+[data-tooltip]::after {
+  content: '';
+  border: 6px solid transparent;
+  border-top-color: var(--text-primary);
+  bottom: calc(100% + 0.125rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+}
+
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Bottom tooltip variant */
+[data-tooltip-bottom]::before {
+  content: attr(data-tooltip-bottom);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+  position: absolute;
+}
+
+[data-tooltip-bottom]::after {
+  content: '';
+  border: 6px solid transparent;
+  border-bottom-color: var(--text-primary);
+  top: calc(100% + 0.125rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+  position: absolute;
+}
+
+[data-tooltip-bottom]:hover::before,
+[data-tooltip-bottom]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* Resize handle styles with theme support */
 .resize-handle-line {
   width: 0.125rem;
   height: 100%;
-  background: var(--border-light);
+  background: var(--text-muted);
   transition: all 0.3s ease;
   border-radius: 9999px;
-  opacity: 0.3;
+  opacity: 0.15;
+}
+
+[data-theme="dark"] .resize-handle-line {
+  opacity: 0.06 !important;
+  background: #334155 !important;
 }
 
 .group:hover .resize-handle-line {
   background: var(--accent-primary);
   width: 0.25rem;
-  opacity: 0.8;
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+  opacity: 0.6;
+  box-shadow: 0 0 8px rgba(20, 184, 166, 0.3);
+}
+
+[data-theme="dark"] .group:hover .resize-handle-line {
+  opacity: 0.5 !important;
+  background: var(--accent-primary) !important;
 }
 
 .resize-handle-dot {
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 9999px;
-  background: var(--border-medium);
+  background: var(--text-muted);
   transition: all 0.3s ease;
-  opacity: 0.4;
+  opacity: 0.2;
+}
+
+[data-theme="dark"] .resize-handle-dot {
+  opacity: 0.08 !important;
+  background: #334155 !important;
 }
 
 .group:hover .resize-handle-dot {
   background: var(--accent-primary);
-  opacity: 1;
-  box-shadow: 0 0 6px rgba(99, 102, 241, 0.5);
+  opacity: 0.8;
+  box-shadow: 0 0 6px rgba(20, 184, 166, 0.4);
   transform: scale(1.2);
+}
+
+[data-theme="dark"] .group:hover .resize-handle-dot {
+  opacity: 0.7 !important;
+  background: var(--accent-primary) !important;
 }
 
 /* Responsive utilities */
