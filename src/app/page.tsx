@@ -616,58 +616,83 @@ export default function Home() {
 
       const decoder = new TextDecoder();
       let accumulatedText = "";
+      let buffer = ""; // Buffer for incomplete SSE lines
+      let streamCompleted = false;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        buffer += chunk;
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.slice(6));
+        // Split by double newline (SSE message delimiter)
+        const messages = buffer.split("\n\n");
+        // Keep the last incomplete message in the buffer
+        buffer = messages.pop() || "";
 
-              if (data.error) {
-                setError(data.error);
-                setIsStreaming(false);
-                setLoading(false);
-                return;
-              }
+        for (const message of messages) {
+          const lines = message.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
 
-              if (data.done) {
-                // Parse the accumulated JSON
-                try {
-                  const parsedResult = JSON.parse(accumulatedText);
-                  if (!parsedResult.soap) {
-                    setError(
-                      "AIの応答形式が不正です。もう一度お試しください。"
-                    );
-                  } else {
-                    setResult(parsedResult);
+                if (data.error) {
+                  setError(data.error);
+                  setIsStreaming(false);
+                  setLoading(false);
+                  return;
+                }
+
+                if (data.done) {
+                  streamCompleted = true;
+                  // Parse the accumulated JSON
+                  try {
+                    const parsedResult = JSON.parse(accumulatedText);
+                    if (!parsedResult.soap) {
+                      setError(
+                        "AIの応答形式が不正です。もう一度お試しください。"
+                      );
+                    } else {
+                      setResult(parsedResult);
+                    }
+                  } catch (parseError) {
+                    console.error("JSON parse error:", parseError);
+                    setError("AIの応答を解析できませんでした。");
                   }
-                } catch (parseError) {
-                  console.error("JSON parse error:", parseError);
-                  setError("AIの応答を解析できませんでした。");
+                  // Save token usage if available
+                  if (data.usage) {
+                    setTokenUsage(data.usage);
+                  }
+                  setIsStreaming(false);
+                  setLoading(false);
+                  return;
                 }
-                // Save token usage if available
-                if (data.usage) {
-                  setTokenUsage(data.usage);
-                }
-                setIsStreaming(false);
-                setLoading(false);
-                return;
-              }
 
-              if (data.content) {
-                accumulatedText += data.content;
-                setStreamingText(accumulatedText);
+                if (data.content) {
+                  accumulatedText += data.content;
+                  setStreamingText(accumulatedText);
+                }
+              } catch {
+                // Ignore JSON parse errors for incomplete chunks
               }
-            } catch {
-              // Ignore JSON parse errors for incomplete chunks
             }
           }
+        }
+      }
+
+      // Handle stream termination without explicit data.done
+      if (!streamCompleted && accumulatedText) {
+        try {
+          const parsedResult = JSON.parse(accumulatedText);
+          if (parsedResult.soap) {
+            setResult(parsedResult);
+          } else {
+            setError("ストリームが予期せず終了しました。");
+          }
+        } catch {
+          setError("ストリームが予期せず終了しました。");
         }
       }
     } catch (e) {
@@ -1467,20 +1492,21 @@ export default function Home() {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-12">
             {/* Branding */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm flex-shrink-0">
                   <MicrophoneIcon
-                    className="w-5 h-5 text-white"
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-white"
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />
                 </div>
-                <div>
-                  <h1 className="text-lg font-bold text-theme-primary leading-none">
-                    Medical Voice Scribe
+                <div className="min-w-0">
+                  <h1 className="text-sm sm:text-lg font-bold text-theme-primary leading-none truncate">
+                    <span className="sm:hidden">Voice Scribe</span>
+                    <span className="hidden sm:inline">Medical Voice Scribe</span>
                   </h1>
-                  <p className="text-xs text-theme-secondary font-medium mt-0.5">
+                  <p className="hidden sm:block text-xs text-theme-secondary font-medium mt-0.5">
                     AI音声問診・カルテ自動生成
                   </p>
                 </div>
@@ -1601,75 +1627,57 @@ export default function Home() {
             </div>
 
             {/* Mobile menu */}
-            <div className="sm:hidden flex items-center gap-2">
+            <div className="sm:hidden flex items-center gap-1">
               <div
-                className={`status-indicator ${
+                className={`status-indicator flex-shrink-0 ${
                   isRecording ? "recording recording-pulse" : "idle"
                 }`}
               />
 
-              {/* AI Model selector (Mobile) */}
+              {/* AI Model selector (Mobile) - compact */}
               <div className="relative">
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-6 py-1 text-xs text-theme-primary cursor-pointer"
+                  className="appearance-none bg-theme-card border border-theme-border rounded pl-1.5 pr-5 py-0.5 text-[10px] text-theme-primary cursor-pointer max-w-[90px]"
                   aria-label="AIモデル選択"
                 >
                   {AVAILABLE_MODELS.map((model) => (
                     <option key={model.id} value={model.id}>
-                      {model.name} ({model.description})
+                      {model.name.replace('GPT-', '')}
                     </option>
                   ))}
                 </select>
                 <ChevronDownIcon
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-theme-tertiary pointer-events-none"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-theme-tertiary pointer-events-none"
                   aria-hidden="true"
                 />
               </div>
 
-              {/* Shortcut settings button (Mobile) */}
-              <button
-                onClick={() => setShowShortcutsModal(true)}
-                className="p-1.5 rounded-lg text-theme-tertiary btn-theme-hover"
-                aria-label="キーボード設定"
-                title="キーボードショートカット設定"
-              >
-                <KeyboardIcon className="w-5 h-5" aria-hidden="true" />
-              </button>
-
               {/* Theme toggle button (Mobile) */}
               <button
                 onClick={handleThemeCycle}
-                className="p-1.5 rounded-lg text-theme-tertiary btn-theme-hover"
+                className="p-1 rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="テーマ切り替え"
-                title={`テーマを切り替え: 現在 ${
-                  theme === "system"
-                    ? "自動"
-                    : theme === "light"
-                    ? "ライト"
-                    : "ダーク"
-                }`}
               >
                 {theme === "light" && (
-                  <SunIcon className="w-5 h-5" aria-hidden="true" />
+                  <SunIcon className="w-4 h-4" aria-hidden="true" />
                 )}
                 {theme === "dark" && (
-                  <MoonIcon className="w-5 h-5" aria-hidden="true" />
+                  <MoonIcon className="w-4 h-4" aria-hidden="true" />
                 )}
                 {theme === "system" && (
-                  <ComputerDesktopIcon className="w-5 h-5" aria-hidden="true" />
+                  <ComputerDesktopIcon className="w-4 h-4" aria-hidden="true" />
                 )}
               </button>
 
               <button
                 onClick={() => setShowHelp(true)}
-                className="p-1.5 rounded-lg text-theme-tertiary btn-theme-hover"
-                aria-label="ヘルプを表示"
-                title="使い方ガイド"
+                className="p-1 rounded-lg text-theme-tertiary btn-theme-hover"
+                aria-label="ヘルプ"
               >
                 <QuestionMarkCircleIcon
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   aria-hidden="true"
                 />
               </button>
