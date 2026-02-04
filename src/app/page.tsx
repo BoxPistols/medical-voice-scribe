@@ -258,6 +258,25 @@ export default function Home() {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
 
+  // Shortcuts management - Load/Save
+  useEffect(() => {
+    const savedShortcuts = localStorage.getItem('medical-scribe-shortcuts');
+    if (savedShortcuts) {
+      try {
+        setShortcuts(JSON.parse(savedShortcuts));
+      } catch (e) {
+        console.error('Failed to parse shortcuts:', e);
+      }
+    } else {
+      // Apply platform-specific defaults if no saved settings
+      setShortcuts(getPlatformDefaultShortcuts());
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('medical-scribe-shortcuts', JSON.stringify(shortcuts));
+  }, [shortcuts]);
+
   useEffect(() => {
     setMounted(true);
 
