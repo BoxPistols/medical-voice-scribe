@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import type { SoapNote, ModelId, TokenUsage } from "./api/analyze/types";
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from "./api/analyze/types";
 import {
@@ -226,29 +227,32 @@ const isMacPlatform = (): boolean => {
 
 // Helper to get platform-specific defaults
 const getPlatformDefaultShortcuts = (
-  useModifiers: boolean = false
+  useModifiers: boolean = false,
 ): Record<ActionId, ShortcutKey> => {
   const isMac = isMacPlatform();
 
-  return SHORTCUT_DEFS.reduce((acc, def) => {
-    // If useModifiers is true and a modifierDefault exists, use it. Otherwise use default.
-    const sourceKey =
-      useModifiers && def.modifierDefault ? def.modifierDefault : def.default;
-    const key = { ...sourceKey };
+  return SHORTCUT_DEFS.reduce(
+    (acc, def) => {
+      // If useModifiers is true and a modifierDefault exists, use it. Otherwise use default.
+      const sourceKey =
+        useModifiers && def.modifierDefault ? def.modifierDefault : def.default;
+      const key = { ...sourceKey };
 
-    // Swap Ctrl for Meta on Mac for actions defined with Ctrl
-    if (isMac && key.ctrl) {
-      key.ctrl = false;
-      key.meta = true;
-    }
-    return { ...acc, [def.id]: key };
-  }, {} as Record<ActionId, ShortcutKey>);
+      // Swap Ctrl for Meta on Mac for actions defined with Ctrl
+      if (isMac && key.ctrl) {
+        key.ctrl = false;
+        key.meta = true;
+      }
+      return { ...acc, [def.id]: key };
+    },
+    {} as Record<ActionId, ShortcutKey>,
+  );
 };
 
 // Shortcut helper
 const formatShortcut = (
   shortcut: ShortcutKey | undefined,
-  compact: boolean = false
+  compact: boolean = false,
 ): string => {
   if (!shortcut) return "-";
 
@@ -291,7 +295,7 @@ export default function Home() {
 
   // Accordion state (Mobile)
   const [activePanel, setActivePanel] = useState<"transcript" | "result">(
-    "transcript"
+    "transcript",
   );
 
   // Text-to-speech state
@@ -321,7 +325,9 @@ export default function Home() {
   // Clock and timer state
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showClock, setShowClock] = useState(true);
-  const [recordingStartTime, setRecordingStartTime] = useState<Date | null>(null);
+  const [recordingStartTime, setRecordingStartTime] = useState<Date | null>(
+    null,
+  );
   const [recordingElapsed, setRecordingElapsed] = useState(0);
 
   // AI Model selection state
@@ -330,6 +336,15 @@ export default function Home() {
   const [highlightedModelIndex, setHighlightedModelIndex] = useState(-1);
   const modelMenuRef = useRef<HTMLDivElement>(null);
 
+  // Portal tooltip state (escapes overflow:hidden ancestors)
+  const [tooltip, setTooltip] = useState<{
+    text: string;
+    x: number;
+    y: number;
+    position: "top" | "bottom";
+  } | null>(null);
+  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Shortcuts state
   const [useModifiers, setUseModifiers] = useState(true); // Default to true (Command+R etc)
   const [shortcuts, setShortcuts] = useState<Record<ActionId, ShortcutKey>>(
@@ -337,13 +352,13 @@ export default function Home() {
       // Initial state will be updated in useEffect
       return SHORTCUT_DEFS.reduce(
         (acc, def) => ({ ...acc, [def.id]: def.default }),
-        {} as Record<ActionId, ShortcutKey>
+        {} as Record<ActionId, ShortcutKey>,
       );
-    }
+    },
   );
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [editingShortcutId, setEditingShortcutId] = useState<ActionId | null>(
-    null
+    null,
   );
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -366,7 +381,7 @@ export default function Home() {
 
     // Load modifier setting
     const savedUseModifiers = localStorage.getItem(
-      "medical-scribe-use-modifiers"
+      "medical-scribe-use-modifiers",
     );
     if (savedUseModifiers !== null) {
       setUseModifiers(savedUseModifiers === "true");
@@ -374,7 +389,7 @@ export default function Home() {
 
     // Load AI model setting
     const savedModel = localStorage.getItem(
-      "medical-scribe-model"
+      "medical-scribe-model",
     ) as ModelId | null;
     if (savedModel && AVAILABLE_MODELS.some((m) => m.id === savedModel)) {
       setSelectedModel(savedModel);
@@ -404,7 +419,9 @@ export default function Home() {
     let timer: NodeJS.Timeout | null = null;
     if (isRecording && recordingStartTime) {
       timer = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - recordingStartTime.getTime()) / 1000);
+        const elapsed = Math.floor(
+          (Date.now() - recordingStartTime.getTime()) / 1000,
+        );
         setRecordingElapsed(elapsed);
       }, 1000);
     }
@@ -432,7 +449,7 @@ export default function Home() {
 
       if (theme === "system") {
         const prefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)"
+          "(prefers-color-scheme: dark)",
         ).matches;
         if (prefersDark) {
           root.setAttribute("data-theme", "dark");
@@ -490,7 +507,7 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(
       "medical-scribe-shortcuts-v4",
-      JSON.stringify(shortcuts)
+      JSON.stringify(shortcuts),
     );
   }, [shortcuts]);
 
@@ -563,7 +580,7 @@ export default function Home() {
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
       const japaneseVoices = voices.filter((voice) =>
-        voice.lang.startsWith("ja")
+        voice.lang.startsWith("ja"),
       );
       setAvailableVoices(japaneseVoices);
       if (japaneseVoices.length > 0 && selectedVoiceIndex === 0) {
@@ -629,13 +646,64 @@ export default function Home() {
   useEffect(() => {
     if (!isModelMenuOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
-      if (modelMenuRef.current && !modelMenuRef.current.contains(event.target as Node)) {
+      if (
+        modelMenuRef.current &&
+        !modelMenuRef.current.contains(event.target as Node)
+      ) {
         setIsModelMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isModelMenuOpen]);
+
+  // Portal tooltip - global event delegation to escape overflow:hidden ancestors
+  const hideTooltip = useCallback(() => {
+    tooltipTimeoutRef.current = setTimeout(() => setTooltip(null), 50);
+  }, []);
+
+  useEffect(() => {
+    const SELECTOR = "[data-tooltip], [data-tooltip-bottom]";
+
+    const showTooltip = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest?.(SELECTOR) as HTMLElement | null;
+      if (!target) return;
+
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+        tooltipTimeoutRef.current = null;
+      }
+
+      const isBottom = target.hasAttribute("data-tooltip-bottom");
+      const text = target.getAttribute(isBottom ? "data-tooltip-bottom" : "data-tooltip");
+      if (!text) return;
+
+      const rect = target.getBoundingClientRect();
+      const x = Math.max(60, Math.min(window.innerWidth - 60, rect.left + rect.width / 2));
+      const y = isBottom ? rect.bottom + 8 : rect.top - 8;
+
+      setTooltip({ text, x, y, position: isBottom ? "bottom" : "top" });
+    };
+
+    const handleOut = (e: MouseEvent) => {
+      const related = e.relatedTarget as HTMLElement | null;
+      if (related?.closest?.(SELECTOR)) return;
+      hideTooltip();
+    };
+
+    const handleScroll = () => setTooltip(null);
+
+    document.addEventListener("mouseover", showTooltip, true);
+    document.addEventListener("mouseout", handleOut, true);
+    document.addEventListener("scroll", handleScroll, true);
+
+    return () => {
+      document.removeEventListener("mouseover", showTooltip, true);
+      document.removeEventListener("mouseout", handleOut, true);
+      document.removeEventListener("scroll", handleScroll, true);
+      if (tooltipTimeoutRef.current) clearTimeout(tooltipTimeoutRef.current);
+    };
+  }, [hideTooltip]);
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -761,7 +829,7 @@ export default function Home() {
                     const parsedResult = JSON.parse(accumulatedText);
                     if (!parsedResult.soap) {
                       setError(
-                        "AIの応答形式が不正です。もう一度お試しください。"
+                        "AIの応答形式が不正です。もう一度お試しください。",
                       );
                       setAnalysisProgress(0);
                     } else {
@@ -785,7 +853,13 @@ export default function Home() {
                   accumulatedText += data.content;
                   setStreamingText(accumulatedText);
                   // Update progress based on received data (10-95%)
-                  const progress = Math.min(95, 10 + Math.floor((accumulatedText.length / ESTIMATED_RESPONSE_SIZE) * 85));
+                  const progress = Math.min(
+                    95,
+                    10 +
+                      Math.floor(
+                        (accumulatedText.length / ESTIMATED_RESPONSE_SIZE) * 85,
+                      ),
+                  );
                   setAnalysisProgress(progress);
                 }
               } catch {
@@ -813,7 +887,7 @@ export default function Home() {
     } catch (e) {
       console.error(e);
       setError(
-        "エラーが発生しました。APIキーとネットワーク接続を確認してください。"
+        "エラーが発生しました。APIキーとネットワーク接続を確認してください。",
       );
       setAnalysisProgress(0);
     } finally {
@@ -828,7 +902,7 @@ export default function Home() {
     const hasContent = transcript.length > 0 || result !== null;
     if (hasContent) {
       const confirmed = window.confirm(
-        "入力内容と生成結果をすべて削除しますか？\nこの操作は取り消せません。"
+        "入力内容と生成結果をすべて削除しますか？\nこの操作は取り消せません。",
       );
       if (!confirmed) return;
     }
@@ -859,7 +933,7 @@ export default function Home() {
 
   const handleResetSettings = () => {
     const confirmed = window.confirm(
-      "すべての設定（テーマ・ショートカット）をリセットしますか？"
+      "すべての設定（テーマ・ショートカット）をリセットしますか？",
     );
     if (confirmed) {
       setTheme("system");
@@ -1125,7 +1199,7 @@ export default function Home() {
     // File size limit
     if (file.size > MAX_FILE_SIZE_BYTES) {
       setError(
-        "ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。"
+        "ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。",
       );
       return;
     }
@@ -1154,7 +1228,7 @@ export default function Home() {
         // Schema validation
         if (!imported.soap || !imported.patientInfo) {
           throw new Error(
-            "SOAPノート形式が正しくありません。soapまたはpatientInfoが見つかりません。"
+            "SOAPノート形式が正しくありません。soapまたはpatientInfoが見つかりません。",
           );
         }
 
@@ -1195,7 +1269,7 @@ export default function Home() {
         // Handle JSON syntax errors specifically
         if (err instanceof SyntaxError) {
           setError(
-            "ファイルの読み込みに失敗しました。正しいJSON形式のSOAPカルテファイルか確認してください。"
+            "ファイルの読み込みに失敗しました。正しいJSON形式のSOAPカルテファイルか確認してください。",
           );
         } else {
           setError(errorMessage);
@@ -1265,7 +1339,7 @@ export default function Home() {
     }
     if (soapNote.soap.assessment?.differentialDiagnosis?.length > 0) {
       text += `鑑別診断、${soapNote.soap.assessment.differentialDiagnosis.join(
-        "、"
+        "、",
       )}。`;
     }
     text += "\n\n";
@@ -1670,17 +1744,25 @@ export default function Home() {
                     const opening = !isModelMenuOpen;
                     setIsModelMenuOpen(opening);
                     if (opening) {
-                      setHighlightedModelIndex(AVAILABLE_MODELS.findIndex(m => m.id === selectedModel));
+                      setHighlightedModelIndex(
+                        AVAILABLE_MODELS.findIndex(
+                          (m) => m.id === selectedModel,
+                        ),
+                      );
                     }
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                       e.preventDefault();
                       if (!isModelMenuOpen) {
                         setIsModelMenuOpen(true);
-                        setHighlightedModelIndex(AVAILABLE_MODELS.findIndex(m => m.id === selectedModel));
+                        setHighlightedModelIndex(
+                          AVAILABLE_MODELS.findIndex(
+                            (m) => m.id === selectedModel,
+                          ),
+                        );
                       }
-                    } else if (e.key === 'Escape' && isModelMenuOpen) {
+                    } else if (e.key === "Escape" && isModelMenuOpen) {
                       setIsModelMenuOpen(false);
                     }
                   }}
@@ -1691,12 +1773,16 @@ export default function Home() {
                 >
                   <span className="truncate mr-2">
                     {(() => {
-                      const m = AVAILABLE_MODELS.find(m => m.id === selectedModel);
-                      return m ? `${m.name} (${m.description})` : 'モデルを選択';
+                      const m = AVAILABLE_MODELS.find(
+                        (m) => m.id === selectedModel,
+                      );
+                      return m
+                        ? `${m.name} (${m.description})`
+                        : "モデルを選択";
                     })()}
                   </span>
                   <ChevronDownIcon
-                    className={`w-4 h-4 text-theme-muted transition-transform duration-200 ${isModelMenuOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-theme-muted transition-transform duration-200 ${isModelMenuOpen ? "rotate-180" : ""}`}
                     aria-hidden="true"
                   />
                 </button>
@@ -1707,28 +1793,40 @@ export default function Home() {
                     className="absolute left-0 top-full mt-2 z-50 w-72 p-3 bg-theme-card border border-theme-border rounded-lg shadow-lg text-xs animate-fade-in"
                     role="listbox"
                     aria-label="AIモデル一覧"
-                    aria-activedescendant={highlightedModelIndex >= 0 ? `model-option-${AVAILABLE_MODELS[highlightedModelIndex]?.id}` : undefined}
+                    aria-activedescendant={
+                      highlightedModelIndex >= 0
+                        ? `model-option-${AVAILABLE_MODELS[highlightedModelIndex]?.id}`
+                        : undefined
+                    }
                     onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
+                      if (e.key === "Escape") {
                         setIsModelMenuOpen(false);
-                        modelMenuRef.current?.querySelector('button')?.focus();
-                      } else if (e.key === 'ArrowDown') {
+                        modelMenuRef.current?.querySelector("button")?.focus();
+                      } else if (e.key === "ArrowDown") {
                         e.preventDefault();
-                        setHighlightedModelIndex(prev => Math.min(prev + 1, AVAILABLE_MODELS.length - 1));
-                      } else if (e.key === 'ArrowUp') {
+                        setHighlightedModelIndex((prev) =>
+                          Math.min(prev + 1, AVAILABLE_MODELS.length - 1),
+                        );
+                      } else if (e.key === "ArrowUp") {
                         e.preventDefault();
-                        setHighlightedModelIndex(prev => Math.max(prev - 1, 0));
-                      } else if (e.key === 'Enter') {
+                        setHighlightedModelIndex((prev) =>
+                          Math.max(prev - 1, 0),
+                        );
+                      } else if (e.key === "Enter") {
                         if (highlightedModelIndex >= 0) {
-                          setSelectedModel(AVAILABLE_MODELS[highlightedModelIndex].id);
+                          setSelectedModel(
+                            AVAILABLE_MODELS[highlightedModelIndex].id,
+                          );
                         }
                         setIsModelMenuOpen(false);
-                        modelMenuRef.current?.querySelector('button')?.focus();
+                        modelMenuRef.current?.querySelector("button")?.focus();
                       }
                     }}
                   >
-                    <div className="font-medium text-theme-secondary text-[11px] mb-2 px-2">モデル選択</div>
-                    <div className="grid grid-cols-[1fr_40px_60px] gap-2 px-2 py-1.5 text-[10px] text-theme-tertiary border-b border-theme-border mb-1">
+                    <div className="font-medium text-theme-secondary text-[11px] mb-2 px-2">
+                      モデル選択
+                    </div>
+                    <div className="grid grid-cols-[60px_80px_60px] gap-2 px-2 py-1.5 text-[10px] text-theme-tertiary border-b border-theme-border mb-1">
                       <div>モデル</div>
                       <div>速度</div>
                       <div>品質</div>
@@ -1745,20 +1843,25 @@ export default function Home() {
                             setIsModelMenuOpen(false);
                           }}
                           onMouseEnter={() => setHighlightedModelIndex(index)}
-                          className={`w-full grid grid-cols-[1fr_40px_60px] gap-2 px-2 py-1.5 rounded text-left transition-colors items-center ${
+                          className={`w-full grid grid-cols-[60px_80px_60px] gap-2 px-2 py-1.5 rounded text-left transition-colors items-center ${
                             m.id === selectedModel
-                              ? 'bg-theme-highlight text-theme-primary font-medium'
+                              ? "bg-theme-highlight text-theme-primary font-medium"
                               : index === highlightedModelIndex
-                                ? 'bg-theme-bg-secondary text-theme-primary'
-                                : 'text-theme-secondary hover:bg-theme-bg-secondary hover:text-theme-primary'
+                                ? "bg-theme-bg-secondary text-theme-primary"
+                                : "text-theme-secondary hover:bg-theme-bg-secondary hover:text-theme-primary"
                           }`}
                         >
-                          <div className="truncate">{m.name.replace('GPT-', '')}</div>
-                          <div className="text-amber-500 text-[10px]">
-                            {'⚡'.repeat(m.speed)}
+                          <div className="truncate">
+                            {m.name.replace("GPT-", "")}
                           </div>
-                          <div className={`text-[10px] ${m.id === selectedModel ? 'text-amber-500' : 'text-theme-tertiary'}`}>
-                            {'★'.repeat(m.quality)}{'☆'.repeat(5 - m.quality)}
+                          <div className="text-amber-500 text-[10px]">
+                            {"⚡".repeat(m.speed)}
+                          </div>
+                          <div
+                            className={`text-[10px] ${m.id === selectedModel ? "text-amber-500" : "text-theme-tertiary"}`}
+                          >
+                            {"★".repeat(m.quality)}
+                            {"☆".repeat(5 - m.quality)}
                           </div>
                         </button>
                       ))}
@@ -1788,8 +1891,8 @@ export default function Home() {
                     theme === "system"
                       ? "自動"
                       : theme === "light"
-                      ? "ライト"
-                      : "ダーク"
+                        ? "ライト"
+                        : "ダーク"
                   }`}
                 >
                   {theme === "light" && (
@@ -1813,10 +1916,7 @@ export default function Home() {
                   aria-label="ヘルプを表示"
                   data-tooltip-bottom="ヘルプ"
                 >
-                  <HelpOutlineIcon
-                    className="w-6 h-6"
-                    aria-hidden="true"
-                  />
+                  <HelpOutlineIcon className="w-6 h-6" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -1839,7 +1939,7 @@ export default function Home() {
                 >
                   {AVAILABLE_MODELS.map((model) => (
                     <option key={model.id} value={model.id}>
-                      {model.name.replace('GPT-', '')}
+                      {model.name.replace("GPT-", "")}
                     </option>
                   ))}
                 </select>
@@ -1858,8 +1958,8 @@ export default function Home() {
                   theme === "system"
                     ? "自動"
                     : theme === "light"
-                    ? "ライト"
-                    : "ダーク"
+                      ? "ライト"
+                      : "ダーク"
                 }`}
               >
                 {theme === "light" && (
@@ -1879,10 +1979,7 @@ export default function Home() {
                 aria-label="ヘルプ"
                 data-tooltip-bottom="ヘルプ"
               >
-                <HelpOutlineIcon
-                  className="w-4 h-4"
-                  aria-hidden="true"
-                />
+                <HelpOutlineIcon className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -2288,7 +2385,9 @@ export default function Home() {
                     ) : (
                       <div className="w-full flex items-center justify-between">
                         {/* 左: 見出し - デスクトップのみ表示 */}
-                        <h2 className="hidden sm:block panel-title whitespace-nowrap text-sm">カルテ</h2>
+                        <h2 className="hidden sm:block panel-title whitespace-nowrap text-sm">
+                          カルテ
+                        </h2>
 
                         {/* 中央: Voice */}
                         <div className="flex items-center gap-1">
@@ -2296,13 +2395,21 @@ export default function Home() {
                             onClick={toggleSpeech}
                             disabled={!result}
                             className="btn btn-secondary text-xs py-0.5 px-2"
-                            aria-label={isSpeaking ? "読み上げを停止" : "カルテを読み上げ"}
+                            aria-label={
+                              isSpeaking ? "読み上げを停止" : "カルテを読み上げ"
+                            }
                             data-tooltip={`読み上げ [${formatShortcut(shortcuts.toggleSpeech, true)}]`}
                           >
                             {isSpeaking ? (
-                              <StopIconSolid className="w-3.5 h-3.5" aria-hidden="true" />
+                              <StopIconSolid
+                                className="w-3.5 h-3.5"
+                                aria-hidden="true"
+                              />
                             ) : (
-                              <SpeakerWaveIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                              <SpeakerWaveIcon
+                                className="w-3.5 h-3.5"
+                                aria-hidden="true"
+                              />
                             )}
                             <span className="text-xs">Voice</span>
                             <span className="hidden sm:inline text-xs opacity-70 ml-0.5">
@@ -2310,7 +2417,9 @@ export default function Home() {
                             </span>
                           </button>
                           <button
-                            onClick={() => setShowSpeechSettings(!showSpeechSettings)}
+                            onClick={() =>
+                              setShowSpeechSettings(!showSpeechSettings)
+                            }
                             disabled={!result}
                             className="btn btn-secondary text-xs p-1"
                             aria-label="音声設定"
@@ -2332,7 +2441,10 @@ export default function Home() {
                             aria-label="カルテをインポート"
                             data-tooltip="インポート"
                           >
-                            <ArrowUpTrayIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                            <ArrowUpTrayIcon
+                              className="w-3.5 h-3.5"
+                              aria-hidden="true"
+                            />
                           </button>
 
                           {/* Export dropdown */}
@@ -2344,7 +2456,10 @@ export default function Home() {
                               aria-label="カルテをエクスポート"
                               data-tooltip="エクスポート"
                             >
-                              <ArrowDownTrayIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                              <ArrowDownTrayIcon
+                                className="w-3.5 h-3.5"
+                                aria-hidden="true"
+                              />
                               <ChevronDownIcon
                                 className={`w-3 h-3 transition-transform ${showExportMenu ? "rotate-180" : ""}`}
                                 aria-hidden="true"
@@ -2382,7 +2497,10 @@ export default function Home() {
                             aria-label="カルテ全体をコピー"
                             data-tooltip="コピー"
                           >
-                            <ClipboardDocumentIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                            <ClipboardDocumentIcon
+                              className="w-3.5 h-3.5"
+                              aria-hidden="true"
+                            />
                           </button>
                         </div>
                       </div>
@@ -2495,15 +2613,54 @@ export default function Home() {
                   {/* Empty state */}
                   {!result && !loading && !error && (
                     <div className="empty-state">
-                      <DocumentTextIcon
-                        className="empty-state-icon"
-                        aria-hidden="true"
-                      />
-                      <p className="empty-state-text">
-                        まだ解析されていません
-                        <br />
-                        会話を録音してSOAPカルテを生成してください
+                      <div className="w-20 h-20 mb-6 rounded-full bg-theme-tertiary flex items-center justify-center">
+                        <DocumentTextIcon
+                          className="w-10 h-10 text-theme-secondary opacity-50"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <h3 className="text-lg font-bold text-theme-primary mb-2">SOAPカルテ生成へようこそ</h3>
+                      <p className="text-sm text-theme-secondary mb-8 max-w-sm mx-auto leading-relaxed">
+                        AIが医師と患者の会話を分析し、
+                        <br className="hidden sm:block" />
+                        標準的な医療記録形式（SOAP）でカルテを作成します。
                       </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg text-left">
+                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
+                          <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold mb-3">
+                            1
+                          </div>
+                          <div className="font-bold text-sm text-theme-primary mb-1">
+                            録音
+                          </div>
+                          <div className="text-xs text-theme-secondary">
+                            「録音」ボタンを押して会話を開始
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-bold mb-3">
+                            2
+                          </div>
+                          <div className="font-bold text-sm text-theme-primary mb-1">
+                            停止
+                          </div>
+                          <div className="text-xs text-theme-secondary">
+                            会話が終わったら録音を停止
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
+                          <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm font-bold mb-3">
+                            3
+                          </div>
+                          <div className="font-bold text-sm text-theme-primary mb-1">
+                            生成
+                          </div>
+                          <div className="text-xs text-theme-secondary">
+                            「カルテ生成」でAIが分析開始
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -2539,7 +2696,8 @@ export default function Home() {
                           className="text-xs ml-auto"
                           style={{ color: "var(--text-tertiary)" }}
                         >
-                          {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name || selectedModel}
+                          {AVAILABLE_MODELS.find((m) => m.id === selectedModel)
+                            ?.name || selectedModel}
                         </span>
                       </div>
                       {/* Progress bar */}
@@ -2666,10 +2824,7 @@ export default function Home() {
                         </button>
                         <div className="soap-label">
                           <div className="flex items-center gap-2">
-                            <div
-                              className="soap-badge"
-                              style={{ background: "var(--soap-s)" }}
-                            >
+                            <div className="soap-badge">
                               S
                             </div>
                             主観的情報
@@ -2696,7 +2851,7 @@ export default function Home() {
                                   {result.soap.subjective.symptoms.map(
                                     (s: string, i: number) => (
                                       <li key={i}>{s}</li>
-                                    )
+                                    ),
                                   )}
                                 </ul>
                               </div>
@@ -2735,10 +2890,7 @@ export default function Home() {
                         </button>
                         <div className="soap-label">
                           <div className="flex items-center gap-2">
-                            <div
-                              className="soap-badge"
-                              style={{ background: "var(--soap-o)" }}
-                            >
+                            <div className="soap-badge">
                               O
                             </div>
                             客観的情報
@@ -2823,10 +2975,7 @@ export default function Home() {
                         </button>
                         <div className="soap-label">
                           <div className="flex items-center gap-2">
-                            <div
-                              className="soap-badge"
-                              style={{ background: "var(--soap-a)" }}
-                            >
+                            <div className="soap-badge">
                               A
                             </div>
                             評価・診断
@@ -2848,7 +2997,9 @@ export default function Home() {
                               )}
                             </div>
                           )}
-                          {Array.isArray(result.soap.assessment?.differentialDiagnosis) &&
+                          {Array.isArray(
+                            result.soap.assessment?.differentialDiagnosis,
+                          ) &&
                             result.soap.assessment.differentialDiagnosis
                               .length > 0 && (
                               <div>
@@ -2859,7 +3010,7 @@ export default function Home() {
                                   {result.soap.assessment.differentialDiagnosis.map(
                                     (d: string, i: number) => (
                                       <li key={i}>{d}</li>
-                                    )
+                                    ),
                                   )}
                                 </ul>
                               </div>
@@ -2888,10 +3039,7 @@ export default function Home() {
                         </button>
                         <div className="soap-label">
                           <div className="flex items-center gap-2">
-                            <div
-                              className="soap-badge"
-                              style={{ background: "var(--soap-p)" }}
-                            >
+                            <div className="soap-badge">
                               P
                             </div>
                             治療計画
@@ -2945,7 +3093,7 @@ export default function Home() {
                                           </div>
                                         </div>
                                       </div>
-                                    )
+                                    ),
                                   )}
                                 </div>
                               </div>
@@ -2960,7 +3108,7 @@ export default function Home() {
                                   {result.soap.plan.tests.map(
                                     (t: string, i: number) => (
                                       <li key={i}>{t}</li>
-                                    )
+                                    ),
                                   )}
                                 </ul>
                               </div>
@@ -2990,10 +3138,16 @@ export default function Home() {
 
                       {/* Generated timestamp and token usage */}
                       <div className="px-6 py-3 bg-theme-card text-xs text-theme-tertiary font-mono border-t border-theme-border flex items-center justify-between">
-                        <span>生成時刻: {new Date().toLocaleTimeString("ja-JP")}</span>
+                        <span>
+                          生成時刻: {new Date().toLocaleTimeString("ja-JP")}
+                        </span>
                         {tokenUsage && (
-                          <span className="opacity-60" title={`入力: ${tokenUsage.promptTokens} / 出力: ${tokenUsage.completionTokens}`}>
-                            {tokenUsage.totalTokens.toLocaleString()} tokens ≈ ¥{tokenUsage.estimatedCostJPY.toFixed(3)}
+                          <span
+                            className="opacity-60"
+                            title={`入力: ${tokenUsage.promptTokens} / 出力: ${tokenUsage.completionTokens}`}
+                          >
+                            {tokenUsage.totalTokens.toLocaleString()} tokens ≈ ¥
+                            {tokenUsage.estimatedCostJPY.toFixed(3)}
                           </span>
                         )}
                       </div>
@@ -3450,7 +3604,7 @@ export default function Home() {
                   <div className="divide-y divide-theme-soft">
                     {SHORTCUT_GROUPS.map((group) => {
                       const groupShortcuts = SHORTCUT_DEFS.filter(
-                        (def) => def.group === group.id
+                        (def) => def.group === group.id,
                       );
                       if (groupShortcuts.length === 0) return null;
 
@@ -3506,7 +3660,7 @@ export default function Home() {
                                       onClick={() =>
                                         handleShortcutChange(
                                           def.id,
-                                          platformDefault
+                                          platformDefault,
                                         )
                                       }
                                       className="p-1.5 text-theme-tertiary hover:text-red-500 transition-colors"
@@ -3596,6 +3750,35 @@ export default function Home() {
         isRecording={isRecording}
         isAnalyzing={loading || isStreaming}
       />
+
+      {/* Portal tooltip - rendered at document.body to escape overflow:hidden */}
+      {typeof window !== "undefined" && tooltip &&
+        createPortal(
+          <div
+            className={`portal-tooltip ${tooltip.position === "bottom" ? "portal-tooltip-bottom" : ""}`}
+            style={{
+              position: "fixed",
+              left: tooltip.x,
+              top: tooltip.y,
+              transform:
+                tooltip.position === "top"
+                  ? "translateX(-50%) translateY(-100%)"
+                  : "translateX(-50%)",
+              zIndex: 99999,
+              pointerEvents: "none",
+            }}
+            role="tooltip"
+          >
+            {tooltip.position === "bottom" && (
+              <div className="portal-tooltip-arrow portal-tooltip-arrow-top" />
+            )}
+            <div className="portal-tooltip-content">{tooltip.text}</div>
+            {tooltip.position === "top" && (
+              <div className="portal-tooltip-arrow portal-tooltip-arrow-bottom" />
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
