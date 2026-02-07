@@ -1543,19 +1543,47 @@ body::after {
   transform: translateX(2px);
 }
 
-/* レコメンドカードのテキストコントラスト改善 */
-.chat-support-recommendation .font-medium {
-  color: var(--text-primary);
+/* Recommendation card priority variants */
+.chat-support-recommendation.recommendation-priority-high,
+.chat-support-recommendation.recommendation-priority-medium,
+.chat-support-recommendation.recommendation-priority-low {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.chat-support-recommendation .opacity-80 {
-  opacity: 1;
-  color: var(--text-secondary);
-}
+.chat-support-recommendation.recommendation-priority-high { border-left: 4px solid #ef4444; }
+.chat-support-recommendation.recommendation-priority-medium { border-left: 4px solid #f59e0b; }
+.chat-support-recommendation.recommendation-priority-low { border-left: 4px solid #10b981; }
 
-[data-theme="dark"] .chat-support-recommendation {
+[data-theme="dark"] .chat-support-recommendation.recommendation-priority-high,
+[data-theme="dark"] .chat-support-recommendation.recommendation-priority-medium,
+[data-theme="dark"] .chat-support-recommendation.recommendation-priority-low {
+  background: #1e293b;
   border-color: rgba(255, 255, 255, 0.1);
 }
+
+[data-theme="dark"] .chat-support-recommendation.recommendation-priority-high { border-left-color: #ef4444; }
+[data-theme="dark"] .chat-support-recommendation.recommendation-priority-medium { border-left-color: #f59e0b; }
+[data-theme="dark"] .chat-support-recommendation.recommendation-priority-low { border-left-color: #10b981; }
+
+/* Recommendation icon priority colors */
+.recommendation-icon-high { color: #ef4444; }
+.recommendation-icon-medium { color: #f59e0b; }
+.recommendation-icon-low { color: #10b981; }
+
+[data-theme="dark"] .recommendation-icon-high { color: #f87171; }
+[data-theme="dark"] .recommendation-icon-medium { color: #fbbf24; }
+[data-theme="dark"] .recommendation-icon-low { color: #34d399; }
+
+/* Recommendation text colors (data-theme aware) */
+.rec-text-primary { color: #1e293b; }
+.rec-text-secondary { color: #475569; }
+.rec-border-color { border-color: #e2e8f0; }
+
+[data-theme="dark"] .rec-text-primary { color: #f1f5f9; }
+[data-theme="dark"] .rec-text-secondary { color: #cbd5e1; }
+[data-theme="dark"] .rec-border-color { border-color: #334155; }
 
 /* Quick Actions */
 .chat-support-quick-action {

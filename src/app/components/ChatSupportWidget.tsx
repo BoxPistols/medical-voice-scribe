@@ -429,11 +429,11 @@ export default function ChatSupportWidget({
   const getCardStyle = (priority: Recommendation["priority"]) => {
     switch (priority) {
       case "high":
-        return "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 border-l-4 border-l-red-500 shadow-sm";
+        return "recommendation-priority-high";
       case "medium":
-        return "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 border-l-4 border-l-amber-500 shadow-sm";
+        return "recommendation-priority-medium";
       case "low":
-        return "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 border-l-4 border-l-emerald-500 shadow-sm";
+        return "recommendation-priority-low";
     }
   };
 
@@ -441,11 +441,11 @@ export default function ChatSupportWidget({
   const getIconColor = (priority: Recommendation["priority"]) => {
     switch (priority) {
       case "high":
-        return "text-red-500 dark:text-red-400";
+        return "recommendation-icon-high";
       case "medium":
-        return "text-amber-500 dark:text-amber-400";
+        return "recommendation-icon-medium";
       case "low":
-        return "text-emerald-500 dark:text-emerald-400";
+        return "recommendation-icon-low";
     }
   };
 
@@ -555,7 +555,7 @@ export default function ChatSupportWidget({
               <div className="chat-support-recommendations">
                 {recommendations.length > 0 ? (
                   <>
-                    <div className="text-xs text-slate-600 dark:text-slate-300 mb-3 px-1">
+                    <div className="text-xs rec-text-secondary mb-3 px-1">
                       問診結果に基づく推奨事項
                     </div>
                     <div className="space-y-2">
@@ -567,8 +567,8 @@ export default function ChatSupportWidget({
                           <div className="flex items-start gap-3">
                             <rec.icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${getIconColor(rec.priority)}`} />
                             <div className="flex-1 min-w-0">
-                              <div className="font-bold text-sm text-slate-800 dark:text-slate-100">{rec.title}</div>
-                              <div className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                              <div className="font-bold text-sm rec-text-primary">{rec.title}</div>
+                              <div className="text-xs rec-text-secondary mt-1 leading-relaxed">
                                 {rec.description}
                               </div>
                             </div>
@@ -577,8 +577,8 @@ export default function ChatSupportWidget({
                       ))}
                     </div>
                     {/* クイックアクション */}
-                    <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
-                      <div className="text-xs text-slate-600 dark:text-slate-300 mb-2">クイックアクション</div>
+                    <div className="mt-4 pt-3 border-t rec-border-color">
+                      <div className="text-xs rec-text-secondary mb-2">クイックアクション</div>
                       <div className="flex flex-wrap gap-2">
                         {quickActions.map((action) => (
                           <button
