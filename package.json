@@ -8,14 +8,19 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "remotion:studio": "npx remotion studio src/remotion/index.ts",
+    "remotion:render": "npx remotion render src/remotion/index.ts ProductVideo out/video.mp4"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@remotion/cli": "4.0.261",
+    "@remotion/player": "4.0.261",
     "next": "16.1.6",
     "openai": "^6.17.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "remotion": "4.0.261"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
