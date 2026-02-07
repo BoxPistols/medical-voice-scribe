@@ -56,7 +56,7 @@ export const formatShortcut = (
   const parts: string[] = [];
 
   if (shortcut.meta) parts.push(isMac ? "Cmd" : "Win");
-  if (shortcut.ctrl) parts.push(isMac ? "Cmd" : "Ctrl");
+  if (shortcut.ctrl) parts.push("Ctrl");
   if (shortcut.alt) parts.push(isMac ? "Opt" : "Alt");
   if (shortcut.shift) parts.push("Shift");
 

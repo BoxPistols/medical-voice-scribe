@@ -67,14 +67,11 @@ test.describe('Theme Toggle', () => {
     const themeButton = page.getByRole('button', { name: /テーマ/ })
     await themeButton.click()
 
-    // Wait for theme change
-    await page.waitForTimeout(100)
-
-    // Get new theme state
-    const newTheme = await html.getAttribute('data-theme')
-
-    // Theme should have changed
-    expect(initialTheme).not.toBe(newTheme)
+    // Wait for theme change by asserting DOM state (not timeout)
+    await expect(async () => {
+      const newTheme = await html.getAttribute('data-theme')
+      expect(newTheme).not.toBe(initialTheme)
+    }).toPass()
   })
 })
 
@@ -111,9 +108,8 @@ test.describe('Responsive Design', () => {
     // Header should be visible
     await expect(page.locator('header')).toBeVisible()
 
-    // Mobile-specific: Should show compact branding
-    // On mobile, the title might be shorter or hidden
-    await expect(page.locator('header')).toContainText(/Voice|Medical/)
+    // Mobile-specific: header should still contain interactive elements
+    await expect(page.getByRole('button', { name: /録音/ })).toBeVisible()
   })
 
   test('should display desktop layout on large screens', async ({ page }) => {

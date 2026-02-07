@@ -38,6 +38,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { StopIcon as StopIconSolid } from "@heroicons/react/24/solid";
 import ChatSupportWidget from "./components/ChatSupportWidget";
+import { formatElapsedTime as formatElapsedTimeHelper, buildSpeechText, getVoiceForLanguage } from "@/lib/audioHelpers";
+import { buildCsvContent, validateImportFile, validateImportData } from "@/lib/fileHelpers";
+import { cycleTheme, getLayoutPresetWidth, buildCopySectionS, buildCopySectionO, buildCopySectionA, buildCopySectionP } from "@/lib/uiHelpers";
 
 // Custom Keyboard Icon Component
 const KeyboardIcon = ({ className }: { className?: string }) => (
@@ -100,6 +103,14 @@ const SHORTCUT_GROUPS: { id: ShortcutGroup; label: string }[] = [
   { id: "layout", label: "レイアウト" },
   { id: "other", label: "その他" },
 ];
+
+// Tooltip positioning constants
+const TOOLTIP_EDGE_PADDING = 60;
+const TOOLTIP_VERTICAL_OFFSET = 8;
+const TOOLTIP_ESTIMATED_HEIGHT = 32;
+
+// Estimated JSON size for streaming progress calculation (typically 2000-4000 chars)
+const ESTIMATED_RESPONSE_SIZE = 3000;
 
 const SHORTCUT_DEFS: ShortcutDef[] = [
   {
@@ -245,8 +256,8 @@ const formatShortcut = (
   const isMac = isMacPlatform();
   const parts = [];
 
-  if (shortcut.meta) parts.push(isMac ? (compact ? "Cmd" : "Cmd") : "Win");
-  if (shortcut.ctrl) parts.push(isMac ? (compact ? "Cmd" : "Cmd") : "Ctrl");
+  if (shortcut.meta) parts.push(isMac ? "Cmd" : "Win");
+  if (shortcut.ctrl) parts.push("Ctrl");
   if (shortcut.alt) parts.push(isMac ? "Opt" : "Alt");
   if (shortcut.shift) parts.push("Shift");
 
@@ -256,6 +267,73 @@ const formatShortcut = (
 
   return compact ? parts.join("+") : parts.join(" + ");
 };
+
+// Sample medical interview texts for quick insertion
+const SAMPLE_INTERVIEWS = [
+  {
+    id: "naika",
+    label: "内科（頭痛・倦怠感）",
+    description: "一般的な頭痛の問診例",
+    text: `医師: 今日はどうされましたか？
+患者: ここ1週間くらい、頭痛がひどくて来ました。
+医師: 頭痛はどのあたりが痛みますか？
+患者: こめかみの両側がズキズキする感じです。
+医師: 痛みの程度はどのくらいですか？10段階で言うとどのくらいでしょう。
+患者: 6か7くらいです。ひどいときは仕事に集中できないくらいです。
+医師: 吐き気やめまいはありますか？
+患者: 吐き気は少しあります。めまいはないです。
+医師: 最近、生活で何か変わったことはありますか？
+患者: 仕事が忙しくて、睡眠時間が4〜5時間くらいになっています。デスクワークも増えました。
+医師: 肩こりや眼精疲労はありますか？
+患者: はい、肩こりがひどいです。目も疲れやすくなりました。
+医師: これまでに大きな病気をされたことはありますか？
+患者: 特にないです。
+医師: アレルギーや常用しているお薬はありますか？
+患者: ありません。市販の頭痛薬を飲むことはあります。`,
+  },
+  {
+    id: "seikei",
+    label: "整形外科（腰痛）",
+    description: "急性腰痛の問診例",
+    text: `医師: どうされましたか？
+患者: 3日前に重い荷物を持ち上げたときに腰をやってしまいまして。
+医師: 痛みはどのあたりですか？
+患者: 右側の腰から少しお尻の方にかけてです。
+医師: しびれはありますか？
+患者: 右のお尻から太ももの裏にかけて、少ししびれる感じがあります。
+医師: どういう姿勢で痛みが強くなりますか？
+患者: 前かがみになると特にひどいです。朝起き上がるのも辛いです。
+医師: お仕事は何をされていますか？
+患者: 倉庫で荷物の搬入作業をしています。
+医師: 以前にも腰を痛めたことはありますか？
+患者: 2年前にもぎっくり腰をやりました。そのときは1週間くらいで治りました。
+医師: 排尿や排便に問題はないですか？
+患者: それは大丈夫です。
+医師: 現在、何かお薬は飲んでいますか？
+患者: 特にないです。湿布は貼っています。`,
+  },
+  {
+    id: "shouni",
+    label: "小児科（発熱・咳）",
+    description: "保護者と医師の会話例",
+    text: `医師: 今日はどうされましたか？
+母親: 5歳の息子なんですが、昨日の夜から熱が出まして。
+医師: 今朝の体温はどのくらいでしたか？
+母親: 38度5分でした。昨晩は39度まで上がりました。
+医師: 咳や鼻水はありますか？
+母親: 咳が出ています。乾いた咳で、夜中に何度も咳き込んでいました。鼻水も少し出ています。
+医師: のどの痛みは訴えていますか？
+母親: はい、のどが痛いと言っています。食欲もあまりなくて、今朝はお粥を少し食べただけです。
+医師: 保育園や幼稚園では何か流行っていますか？
+母親: 保育園で風邪が流行っているみたいです。先週もお休みしている子が何人かいました。
+医師: 予防接種は受けていますか？
+母親: 定期接種は全部済んでいます。インフルエンザも先月受けました。
+医師: お薬のアレルギーはありますか？
+母親: 特にないです。
+医師: 水分は取れていますか？
+母親: お茶やスポーツドリンクは少しずつ飲んでいます。`,
+  },
+];
 
 export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
@@ -295,6 +373,7 @@ export default function Home() {
 
   // Export/Import state
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showSampleMenu, setShowSampleMenu] = useState(false);
   const [showExportPreview, setShowExportPreview] = useState(false);
   const [exportPreviewData, setExportPreviewData] = useState<{
     type: "json" | "csv";
@@ -350,7 +429,13 @@ export default function Home() {
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hideTooltip = useCallback(() => {
-    tooltipTimeoutRef.current = setTimeout(() => setTooltip(null), 50);
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+    }
+    tooltipTimeoutRef.current = setTimeout(() => {
+      setTooltip(null);
+      tooltipTimeoutRef.current = null;
+    }, 50);
   }, []);
 
   // Global tooltip event delegation (Portal-based to escape overflow:hidden)
@@ -364,13 +449,23 @@ export default function Home() {
         clearTimeout(tooltipTimeoutRef.current);
         tooltipTimeoutRef.current = null;
       }
-      const isBottom = target.hasAttribute("data-tooltip-bottom");
-      const text = target.getAttribute(isBottom ? "data-tooltip-bottom" : "data-tooltip");
+      const preferBottom = target.hasAttribute("data-tooltip-bottom");
+      const text = target.getAttribute(preferBottom ? "data-tooltip-bottom" : "data-tooltip");
       if (!text) return;
       const rect = target.getBoundingClientRect();
-      const x = Math.max(60, Math.min(window.innerWidth - 60, rect.left + rect.width / 2));
-      const y = isBottom ? rect.bottom + 8 : rect.top - 8;
-      setTooltip({ text, x, y, position: isBottom ? "bottom" : "top" });
+      const x = Math.max(TOOLTIP_EDGE_PADDING, Math.min(window.innerWidth - TOOLTIP_EDGE_PADDING, rect.left + rect.width / 2));
+
+      // Determine position with boundary clamping
+      let position: "top" | "bottom" = preferBottom ? "bottom" : "top";
+      let y: number;
+      if (position === "top" && rect.top - TOOLTIP_VERTICAL_OFFSET - TOOLTIP_ESTIMATED_HEIGHT < TOOLTIP_VERTICAL_OFFSET) {
+        position = "bottom";
+      } else if (position === "bottom" && rect.bottom + TOOLTIP_VERTICAL_OFFSET + TOOLTIP_ESTIMATED_HEIGHT > window.innerHeight - TOOLTIP_VERTICAL_OFFSET) {
+        position = "top";
+      }
+      y = position === "bottom" ? rect.bottom + TOOLTIP_VERTICAL_OFFSET : rect.top - TOOLTIP_VERTICAL_OFFSET;
+
+      setTooltip({ text, x, y, position });
     };
 
     const handleOut = (e: MouseEvent) => {
@@ -646,14 +741,18 @@ export default function Home() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [showHelp, showExportPreview]);
 
-  // Close export menu when clicking outside
+  // Close export menu / sample menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
       if (showExportMenu) {
-        const target = event.target as HTMLElement;
-        // Check if click is outside the export menu container
         if (!target.closest("[data-export-menu]")) {
           setShowExportMenu(false);
+        }
+      }
+      if (showSampleMenu) {
+        if (!target.closest("[data-sample-menu]")) {
+          setShowSampleMenu(false);
         }
       }
     };
@@ -662,7 +761,7 @@ export default function Home() {
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, [showExportMenu]);
+  }, [showExportMenu, showSampleMenu]);
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -688,20 +787,7 @@ export default function Home() {
   };
 
   // Format elapsed time as MM:SS or HH:MM:SS
-  const formatElapsedTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, "0")}:${minutes
-        .toString()
-        .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    }
-    return `${minutes.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
+  const formatElapsedTime = formatElapsedTimeHelper;
 
   const handleAnalyze = async () => {
     if (!transcript) return;
@@ -712,9 +798,6 @@ export default function Home() {
     setResult(null);
     setTokenUsage(null);
     setAnalysisProgress(0);
-
-    // Estimated JSON size for progress calculation (typically 2000-4000 chars)
-    const ESTIMATED_RESPONSE_SIZE = 3000;
 
     try {
       const res = await fetch("/api/analyze", {
@@ -877,11 +960,7 @@ export default function Home() {
   };
 
   const handleThemeCycle = () => {
-    setTheme((prev) => {
-      if (prev === "light") return "dark";
-      if (prev === "dark") return "system";
-      return "light";
-    });
+    setTheme((prev) => cycleTheme(prev));
   };
 
   const handleResetSettings = () => {
@@ -970,59 +1049,7 @@ export default function Home() {
   const exportAsCsv = () => {
     if (!result) return;
 
-    const csvRows = [
-      ["項目", "内容"],
-      ["要約", result.summary || ""],
-      ["主訴", result.patientInfo?.chiefComplaint || ""],
-      ["期間", result.patientInfo?.duration || ""],
-      ["現病歴", result.soap.subjective?.presentIllness || ""],
-      ["症状", result.soap.subjective?.symptoms?.join(", ") || ""],
-      ["重症度", result.soap.subjective?.severity || ""],
-      ["発症", result.soap.subjective?.onset || ""],
-      [
-        "随伴症状",
-        result.soap.subjective?.associatedSymptoms?.join(", ") || "",
-      ],
-      ["既往歴", result.soap.subjective?.pastMedicalHistory || ""],
-      ["内服薬", result.soap.subjective?.medications?.join(", ") || ""],
-      ["血圧", result.soap.objective?.vitalSigns?.bloodPressure || ""],
-      ["脈拍", result.soap.objective?.vitalSigns?.pulse || ""],
-      ["体温", result.soap.objective?.vitalSigns?.temperature || ""],
-      ["呼吸数", result.soap.objective?.vitalSigns?.respiratoryRate || ""],
-      ["身体所見", result.soap.objective?.physicalExam || ""],
-      ["検査所見", result.soap.objective?.laboratoryFindings || ""],
-      ["診断名", result.soap.assessment?.diagnosis || ""],
-      ["ICD-10", result.soap.assessment?.icd10 || ""],
-      [
-        "鑑別診断",
-        result.soap.assessment?.differentialDiagnosis?.join(", ") || "",
-      ],
-      ["臨床的印象", result.soap.assessment?.clinicalImpression || ""],
-      ["治療方針", result.soap.plan?.treatment || ""],
-      [
-        "処方薬",
-        result.soap.plan?.medications
-          ?.map((m) => {
-            const parts = [
-              m?.name,
-              m?.dosage,
-              m?.frequency,
-              m?.duration,
-            ].filter((p) => p !== undefined && p !== null && p !== "");
-            return parts.join(" ");
-          })
-          .join("; ") || "",
-      ],
-      ["検査", result.soap.plan?.tests?.join(", ") || ""],
-      ["紹介", result.soap.plan?.referral || ""],
-      ["フォローアップ", result.soap.plan?.followUp || ""],
-      ["患者教育", result.soap.plan?.patientEducation || ""],
-    ];
-
-    const csvContent = csvRows
-      .map((row) => row.map(escapeCsvCell).join(","))
-      .join("\n");
-
+    const csvContent = buildCsvContent(result);
     const filename = `soap_note_${getTimestampForFilename()}.csv`;
 
     setExportPreviewData({
@@ -1053,92 +1080,22 @@ export default function Home() {
 
   const copySectionS = () => {
     if (!result) return;
-    let text = "【主観的情報 (Subjective)】\n\n";
-    if (result.soap.subjective?.presentIllness) {
-      text += `現病歴:\n${result.soap.subjective.presentIllness}\n\n`;
-    }
-    if (
-      result.soap.subjective?.symptoms &&
-      result.soap.subjective.symptoms.length > 0
-    ) {
-      text += `症状:\n${result.soap.subjective.symptoms
-        .map((s) => `• ${s}`)
-        .join("\n")}\n\n`;
-    }
-    if (result.soap.subjective?.severity) {
-      text += `重症度: ${result.soap.subjective.severity}\n\n`;
-    }
-    if (result.soap.subjective?.pastMedicalHistory) {
-      text += `既往歴:\n${result.soap.subjective.pastMedicalHistory}\n`;
-    }
-    copyToClipboard(text, "Sセクション");
+    copyToClipboard(buildCopySectionS(result), "Sセクション");
   };
 
   const copySectionO = () => {
     if (!result) return;
-    let text = "【客観的情報 (Objective)】\n\n";
-    if (result.soap.objective?.vitalSigns) {
-      text += "バイタルサイン:\n";
-      const vs = result.soap.objective.vitalSigns;
-      if (vs.bloodPressure) text += `• 血圧: ${vs.bloodPressure}\n`;
-      if (vs.pulse) text += `• 脈拍: ${vs.pulse}\n`;
-      if (vs.temperature) text += `• 体温: ${vs.temperature}\n`;
-      if (vs.respiratoryRate) text += `• 呼吸数: ${vs.respiratoryRate}\n`;
-      text += "\n";
-    }
-    if (result.soap.objective?.physicalExam) {
-      text += `身体所見:\n${result.soap.objective.physicalExam}\n`;
-    }
-    copyToClipboard(text, "Oセクション");
+    copyToClipboard(buildCopySectionO(result), "Oセクション");
   };
 
   const copySectionA = () => {
     if (!result) return;
-    let text = "【評価・診断 (Assessment)】\n\n";
-    if (result.soap.assessment?.diagnosis) {
-      text += `診断名: ${result.soap.assessment.diagnosis}\n`;
-      if (result.soap.assessment.icd10) {
-        text += `ICD-10: ${result.soap.assessment.icd10}\n`;
-      }
-      text += "\n";
-    }
-    if (
-      result.soap.assessment?.differentialDiagnosis &&
-      result.soap.assessment.differentialDiagnosis.length > 0
-    ) {
-      text += `鑑別診断:\n${result.soap.assessment.differentialDiagnosis
-        .map((d) => `• ${d}`)
-        .join("\n")}\n\n`;
-    }
-    if (result.soap.assessment?.clinicalImpression) {
-      text += `臨床的評価:\n${result.soap.assessment.clinicalImpression}\n`;
-    }
-    copyToClipboard(text, "Aセクション");
+    copyToClipboard(buildCopySectionA(result), "Aセクション");
   };
 
   const copySectionP = () => {
     if (!result) return;
-    let text = "【計画 (Plan)】\n\n";
-    if (result.soap.plan?.treatment) {
-      text += `治療方針:\n${result.soap.plan.treatment}\n\n`;
-    }
-    if (
-      result.soap.plan?.medications &&
-      result.soap.plan.medications.length > 0
-    ) {
-      text += "処方:\n";
-      result.soap.plan.medications.forEach((med, i) => {
-        text += `${i + 1}. ${med.name || ""}\n`;
-        if (med.dosage) text += `   用量: ${med.dosage}\n`;
-        if (med.frequency) text += `   頻度: ${med.frequency}\n`;
-        if (med.duration) text += `   期間: ${med.duration}\n`;
-      });
-      text += "\n";
-    }
-    if (result.soap.plan?.followUp) {
-      text += `フォローアップ:\n${result.soap.plan.followUp}\n`;
-    }
-    copyToClipboard(text, "Pセクション");
+    copyToClipboard(buildCopySectionP(result), "Pセクション");
   };
 
   const handleImportClick = () => {
@@ -1149,17 +1106,10 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // File size limit
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      setError(
-        "ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。"
-      );
-      return;
-    }
-
-    // Only accept JSON files
-    if (!file.name.endsWith(".json")) {
-      setError("JSON形式のファイルのみインポート可能です。");
+    // Validate file (size and extension)
+    const fileValidation = validateImportFile(file);
+    if (!fileValidation.valid) {
+      setError(fileValidation.error!);
       return;
     }
 
@@ -1173,36 +1123,10 @@ export default function Home() {
 
         const imported = JSON.parse(content);
 
-        // Validate that imported is an object
-        if (typeof imported !== "object" || imported === null) {
-          throw new Error("無効なJSON形式です。");
-        }
-
-        // Schema validation
-        if (!imported.soap || !imported.patientInfo) {
-          throw new Error(
-            "SOAPノート形式が正しくありません。soapまたはpatientInfoが見つかりません。"
-          );
-        }
-
-        // Validate required SOAP sections
-        if (
-          !imported.soap.subjective ||
-          !imported.soap.objective ||
-          !imported.soap.assessment ||
-          !imported.soap.plan
-        ) {
-          throw new Error("必須のSOAPセクション（S/O/A/P）が不足しています。");
-        }
-
-        // Validate that SOAP sections have the correct structure
-        if (
-          typeof imported.soap.subjective !== "object" ||
-          typeof imported.soap.objective !== "object" ||
-          typeof imported.soap.assessment !== "object" ||
-          typeof imported.soap.plan !== "object"
-        ) {
-          throw new Error("SOAPセクションの構造が正しくありません。");
+        // Validate data structure
+        const dataValidation = validateImportData(imported);
+        if (!dataValidation.valid) {
+          throw new Error(dataValidation.error);
         }
 
         setResult(imported as SoapNote);
@@ -1241,81 +1165,7 @@ export default function Home() {
   };
 
   // Text-to-speech functions
-  const extractTextFromSoap = (soapNote: SoapNote): string => {
-    let text = "";
-
-    // Summary
-    if (soapNote.summary) {
-      text += `要約。${soapNote.summary}\n\n`;
-    }
-
-    // Patient Info
-    if (soapNote.patientInfo) {
-      text += "患者情報。";
-      if (soapNote.patientInfo.chiefComplaint) {
-        text += `主訴、${soapNote.patientInfo.chiefComplaint}。`;
-      }
-      if (soapNote.patientInfo.duration) {
-        text += `期間、${soapNote.patientInfo.duration}。`;
-      }
-      text += "\n\n";
-    }
-
-    // Subjective
-    text += "S、主観的情報。";
-    if (soapNote.soap.subjective?.presentIllness) {
-      text += `現病歴、${soapNote.soap.subjective.presentIllness}。`;
-    }
-    if (soapNote.soap.subjective?.symptoms?.length > 0) {
-      text += `症状、${soapNote.soap.subjective.symptoms.join("、")}。`;
-    }
-    if (soapNote.soap.subjective?.severity) {
-      text += `重症度、${soapNote.soap.subjective.severity}。`;
-    }
-    text += "\n\n";
-
-    // Objective
-    text += "O、客観的情報。";
-    if (soapNote.soap.objective?.vitalSigns) {
-      const vs = soapNote.soap.objective.vitalSigns;
-      text += `バイタルサイン、血圧${vs.bloodPressure}、脈拍${vs.pulse}、体温${vs.temperature}、呼吸数${vs.respiratoryRate}。`;
-    }
-    if (soapNote.soap.objective?.physicalExam) {
-      text += `身体所見、${soapNote.soap.objective.physicalExam}。`;
-    }
-    text += "\n\n";
-
-    // Assessment
-    text += "A、評価・診断。";
-    if (soapNote.soap.assessment?.diagnosis) {
-      text += `診断名、${soapNote.soap.assessment.diagnosis}。`;
-    }
-    if (soapNote.soap.assessment?.differentialDiagnosis?.length > 0) {
-      text += `鑑別診断、${soapNote.soap.assessment.differentialDiagnosis.join(
-        "、"
-      )}。`;
-    }
-    text += "\n\n";
-
-    // Plan
-    text += "P、治療計画。";
-    if (soapNote.soap.plan?.treatment) {
-      text += `治療方針、${soapNote.soap.plan.treatment}。`;
-    }
-    if (soapNote.soap.plan?.medications?.length > 0) {
-      text += "処方、";
-      soapNote.soap.plan.medications.forEach((med, i) => {
-        text += `${i + 1}、${med.name}、用量${med.dosage}、用法${
-          med.frequency
-        }、期間${med.duration}。`;
-      });
-    }
-    if (soapNote.soap.plan?.followUp) {
-      text += `フォローアップ、${soapNote.soap.plan.followUp}。`;
-    }
-
-    return text;
-  };
+  const extractTextFromSoap = buildSpeechText;
 
   // Helper to play System TTS from a specific index
   const playSystemTTS = (text: string, startIndex: number = 0) => {
@@ -1410,17 +1260,7 @@ export default function Home() {
   // Layout presets
   const setLayoutPreset = (preset: "equal" | "left" | "right") => {
     setIsTransitioning(true);
-    switch (preset) {
-      case "equal":
-        setLeftWidth(50);
-        break;
-      case "left":
-        setLeftWidth(65);
-        break;
-      case "right":
-        setLeftWidth(35);
-        break;
-    }
+    setLeftWidth(getLayoutPresetWidth(preset));
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
@@ -1918,12 +1758,6 @@ export default function Home() {
                   </span>
                 </button>
 
-                {/* Character count - デスクトップのみ */}
-                {transcript && (
-                  <div className="hidden sm:block text-sm text-theme-tertiary font-mono ml-2">
-                    {transcript.length} 文字
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -1986,18 +1820,74 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
-                    {/* Mobile accordion toggle */}
-                    {!isLargeScreen && (
+                    {/* Right side: char count, sample dropdown, copy, mobile toggle */}
+                    <div className="flex items-center gap-1.5">
+                      {/* Character count - デスクトップのみ */}
+                      {transcript && (
+                        <span className="hidden sm:block text-xs text-theme-tertiary font-mono whitespace-nowrap">
+                          {transcript.length}文字
+                        </span>
+                      )}
+
+                      {/* Sample interview dropdown */}
+                      <div className="relative" data-sample-menu>
+                        <button
+                          onClick={() => setShowSampleMenu(!showSampleMenu)}
+                          className="btn btn-secondary py-1 px-2 text-xs gap-1"
+                          aria-label="サンプル問診を挿入"
+                          data-tooltip="サンプル問診テキストを挿入"
+                        >
+                          <DocumentTextIcon className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">サンプル</span>
+                          <ChevronDownIcon className="w-3 h-3" />
+                        </button>
+                        {showSampleMenu && (
+                          <div className="sample-menu">
+                            {SAMPLE_INTERVIEWS.map((sample) => (
+                              <button
+                                key={sample.id}
+                                className="sample-menu-item"
+                                onClick={() => {
+                                  setTranscript(sample.text);
+                                  setShowSampleMenu(false);
+                                }}
+                              >
+                                <div className="font-semibold text-theme-primary text-xs">
+                                  {sample.label}
+                                </div>
+                                <div className="sample-menu-item-desc">
+                                  {sample.description}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Copy transcript button */}
                       <button
-                        onClick={() => setActivePanel("result")}
-                        className="btn btn-secondary py-1 px-3 text-xs"
-                        aria-label="SOAPカルテを表示"
-                        data-tooltip="カルテ表示に切り替え"
+                        onClick={() => copyToClipboard(transcript, "会話テキスト")}
+                        disabled={!transcript}
+                        className="btn btn-secondary py-1 px-2 text-xs"
+                        aria-label="会話テキストをコピー"
+                        data-tooltip="会話テキストをコピー"
                       >
-                        <ArrowRightIcon className="w-4 h-4" />
-                        カルテ表示
+                        <DocumentDuplicateIcon className="w-3.5 h-3.5" />
                       </button>
-                    )}
+
+                      {/* Mobile accordion toggle */}
+                      {!isLargeScreen && (
+                        <button
+                          onClick={() => setActivePanel("result")}
+                          className="btn btn-secondary py-1 px-2 text-xs"
+                          aria-label="SOAPカルテを表示"
+                          data-tooltip="カルテ表示に切り替え"
+                        >
+                          <ArrowRightIcon className="w-4 h-4" />
+                          <span className="hidden xs:inline">カルテ</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex-1 p-0 relative overflow-hidden">
@@ -2459,18 +2349,90 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Empty state */}
+                  {/* Empty state - onboarding */}
                   {!result && !loading && !error && (
                     <div className="empty-state">
-                      <DocumentTextIcon
-                        className="empty-state-icon"
-                        aria-hidden="true"
-                      />
-                      <p className="empty-state-text">
-                        まだ解析されていません
-                        <br />
-                        会話を録音してSOAPカルテを生成してください
+                      <div className="w-20 h-20 mb-6 rounded-full bg-theme-tertiary flex items-center justify-center">
+                        <DocumentTextIcon
+                          className="w-10 h-10 text-theme-secondary opacity-50"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <h3 className="text-lg font-bold text-theme-primary mb-2">SOAPカルテ生成へようこそ</h3>
+                      <p className="text-sm text-theme-secondary mb-8 max-w-sm mx-auto leading-relaxed">
+                        AIが医師と患者の会話を分析し、
+                        <br className="hidden sm:block" />
+                        標準的な医療記録形式（SOAP）でカルテを作成します。
                       </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg text-left">
+                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
+                          <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold mb-3">
+                            1
+                          </div>
+                          <div className="font-bold text-sm text-theme-primary mb-1">
+                            録音
+                          </div>
+                          <div className="text-xs text-theme-secondary">
+                            「録音」ボタンを押して会話を開始
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-bold mb-3">
+                            2
+                          </div>
+                          <div className="font-bold text-sm text-theme-primary mb-1">
+                            停止
+                          </div>
+                          <div className="text-xs text-theme-secondary">
+                            会話が終わったら録音を停止
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
+                          <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm font-bold mb-3">
+                            3
+                          </div>
+                          <div className="font-bold text-sm text-theme-primary mb-1">
+                            生成
+                          </div>
+                          <div className="text-xs text-theme-secondary">
+                            「カルテ生成」でAIが分析開始
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold mb-3">
+                            4
+                          </div>
+                          <div className="font-bold text-sm text-theme-primary mb-1">
+                            読み上げ
+                          </div>
+                          <div className="text-xs text-theme-secondary">
+                            生成カルテを音声で読み上げ確認
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
+                          <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold mb-3">
+                            5
+                          </div>
+                          <div className="font-bold text-sm text-theme-primary mb-1">
+                            保存・出力
+                          </div>
+                          <div className="text-xs text-theme-secondary">
+                            JSON・CSVでカルテをエクスポート
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
+                          <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-sm font-bold mb-3">
+                            6
+                          </div>
+                          <div className="font-bold text-sm text-theme-primary mb-1">
+                            カスタマイズ
+                          </div>
+                          <div className="text-xs text-theme-secondary">
+                            テーマ・ショートカットを自由に設定
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -3458,7 +3420,7 @@ export default function Home() {
                                       ${
                                         isEditing
                                           ? "bg-theme-surface border-teal-500 text-theme-accent ring-2 ring-teal-500/20"
-                                          : "bg-theme-card border-transparent text-theme-primary hover:border-theme-light"
+                                          : "bg-theme-surface border-theme-light text-theme-primary hover:border-theme-accent"
                                       }
                                     `}
                                   >

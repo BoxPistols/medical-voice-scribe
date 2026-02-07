@@ -14,7 +14,7 @@ vi.mock('openai', () => {
   }
 })
 
-describe('API Route: /api/analyze', () => {
+describe('Helpers used by /api/analyze', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
