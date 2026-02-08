@@ -419,6 +419,7 @@ export default function Home() {
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sampleMenuButtonRef = useRef<HTMLDivElement>(null);
 
   // Portal tooltip state
   const [tooltip, setTooltip] = useState<{
@@ -1781,7 +1782,7 @@ export default function Home() {
             <section
               className={`${
                 mounted ? "animate-fade-in delay-100" : "opacity-0"
-              } flex-shrink-0 overflow-hidden flex flex-col ${
+              } flex-1 lg:flex-none overflow-hidden flex flex-col ${
                 !isLargeScreen && activePanel !== "transcript"
                   ? "hidden"
                   : "flex"
@@ -1840,7 +1841,7 @@ export default function Home() {
                       )}
 
                       {/* Sample interview dropdown */}
-                      <div className="relative" data-sample-menu>
+                      <div className="relative" data-sample-menu ref={sampleMenuButtonRef}>
                         <button
                           onClick={() => setShowSampleMenu(!showSampleMenu)}
                           className="btn btn-secondary py-1 px-2 text-xs gap-1"
@@ -1851,27 +1852,6 @@ export default function Home() {
                           <span className="hidden sm:inline">サンプル</span>
                           <ChevronDownIcon className="w-3 h-3" />
                         </button>
-                        {showSampleMenu && (
-                          <div className="sample-menu">
-                            {SAMPLE_INTERVIEWS.map((sample) => (
-                              <button
-                                key={sample.id}
-                                className="sample-menu-item"
-                                onClick={() => {
-                                  setTranscript(sample.text);
-                                  setShowSampleMenu(false);
-                                }}
-                              >
-                                <div className="font-semibold text-theme-primary text-xs">
-                                  {sample.label}
-                                </div>
-                                <div className="sample-menu-item-desc">
-                                  {sample.description}
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
                       </div>
 
                       {/* Copy transcript button */}
@@ -3608,6 +3588,46 @@ export default function Home() {
         isRecording={isRecording}
         isAnalyzing={loading || isStreaming}
       />
+
+      {/* Portal Sample Menu (renders at document.body to escape overflow:hidden) */}
+      {typeof window !== "undefined" &&
+        showSampleMenu &&
+        sampleMenuButtonRef.current &&
+        createPortal(
+          (() => {
+            const rect = sampleMenuButtonRef.current!.getBoundingClientRect();
+            return (
+              <div
+                className="sample-menu"
+                data-sample-menu
+                style={{
+                  position: "fixed",
+                  top: rect.bottom + 6,
+                  right: window.innerWidth - rect.right,
+                }}
+              >
+                {SAMPLE_INTERVIEWS.map((sample) => (
+                  <button
+                    key={sample.id}
+                    className="sample-menu-item"
+                    onClick={() => {
+                      setTranscript(sample.text);
+                      setShowSampleMenu(false);
+                    }}
+                  >
+                    <div className="font-semibold text-theme-primary text-xs">
+                      {sample.label}
+                    </div>
+                    <div className="sample-menu-item-desc">
+                      {sample.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            );
+          })(),
+          document.body,
+        )}
 
       {/* Portal Tooltip (renders at document.body to escape overflow:hidden) */}
       {typeof window !== "undefined" &&
