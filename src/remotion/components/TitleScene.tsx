@@ -7,9 +7,11 @@ import {
   useVideoConfig,
 } from "remotion";
 
-export const TitleScene: React.FC = () => {
+export const TitleScene: React.FC<{ sceneDuration: number }> = ({
+  sceneDuration,
+}) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   const logoScale = spring({
     frame,
@@ -39,13 +41,13 @@ export const TitleScene: React.FC = () => {
 
   const fadeOut = interpolate(
     frame,
-    [durationInFrames - 15, durationInFrames],
+    [sceneDuration - 15, sceneDuration],
     [1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
   // Animated gradient background
-  const gradientAngle = interpolate(frame, [0, durationInFrames], [135, 180]);
+  const gradientAngle = interpolate(frame, [0, sceneDuration], [135, 180]);
 
   return (
     <AbsoluteFill
@@ -67,7 +69,7 @@ export const TitleScene: React.FC = () => {
             "radial-gradient(circle, rgba(20,184,166,0.15) 0%, transparent 70%)",
           top: "10%",
           right: "15%",
-          transform: `scale(${interpolate(frame, [0, durationInFrames], [0.8, 1.2])})`,
+          transform: `scale(${interpolate(frame, [0, sceneDuration], [0.8, 1.2])})`,
         }}
       />
       <div
@@ -80,7 +82,7 @@ export const TitleScene: React.FC = () => {
             "radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%)",
           bottom: "15%",
           left: "10%",
-          transform: `scale(${interpolate(frame, [0, durationInFrames], [1.2, 0.8])})`,
+          transform: `scale(${interpolate(frame, [0, sceneDuration], [1.2, 0.8])})`,
         }}
       />
 

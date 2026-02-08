@@ -33,9 +33,11 @@ const problems = [
   },
 ];
 
-export const ProblemScene: React.FC = () => {
+export const ProblemScene: React.FC<{ sceneDuration: number }> = ({
+  sceneDuration,
+}) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   const headerOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -49,7 +51,7 @@ export const ProblemScene: React.FC = () => {
 
   const fadeOut = interpolate(
     frame,
-    [durationInFrames - 15, durationInFrames],
+    [sceneDuration - 15, sceneDuration],
     [1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
@@ -72,7 +74,7 @@ export const ProblemScene: React.FC = () => {
       >
         <p
           style={{
-            fontSize: 18,
+            fontSize: 24,
             color: "#f59e0b",
             textTransform: "uppercase",
             letterSpacing: "0.15em",
@@ -84,7 +86,7 @@ export const ProblemScene: React.FC = () => {
         </p>
         <h2
           style={{
-            fontSize: 52,
+            fontSize: 56,
             color: "white",
             fontWeight: 700,
             margin: "12px 0 0",
@@ -129,7 +131,7 @@ export const ProblemScene: React.FC = () => {
                 backdropFilter: "blur(10px)",
               }}
             >
-              <div style={{ width: 48, height: 48, marginBottom: 20 }}>
+              <div style={{ width: 56, height: 56, marginBottom: 24 }}>
                 <problem.Icon
                   style={{
                     width: "100%",
@@ -140,17 +142,17 @@ export const ProblemScene: React.FC = () => {
               </div>
               <h3
                 style={{
-                  fontSize: 24,
+                  fontSize: 30,
                   color: "white",
                   fontWeight: 600,
-                  margin: "0 0 12px",
+                  margin: "0 0 16px",
                 }}
               >
                 {problem.title}
               </h3>
               <p
                 style={{
-                  fontSize: 16,
+                  fontSize: 22,
                   color: "#94a3b8",
                   margin: 0,
                   lineHeight: 1.6,

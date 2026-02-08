@@ -24,9 +24,11 @@ const highlights = [
   { label: "PWA対応", Icon: DevicePhoneMobileIcon },
 ];
 
-export const CtaScene: React.FC = () => {
+export const CtaScene: React.FC<{ sceneDuration: number }> = ({
+  sceneDuration,
+}) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   const logoScale = spring({
     frame: frame - 5,
@@ -139,7 +141,7 @@ export const CtaScene: React.FC = () => {
           </h2>
           <p
             style={{
-              fontSize: 22,
+              fontSize: 26,
               color: "#94a3b8",
               margin: "12px 0 0",
             }}
@@ -184,10 +186,10 @@ export const CtaScene: React.FC = () => {
                   gap: 8,
                 }}
               >
-                <h.Icon style={{ width: 16, height: 16, color: "#e2e8f0" }} />
+                <h.Icon style={{ width: 20, height: 20, color: "#e2e8f0" }} />
                 <span
                   style={{
-                    fontSize: 14,
+                    fontSize: 18,
                     color: "#e2e8f0",
                   }}
                 >
@@ -198,37 +200,31 @@ export const CtaScene: React.FC = () => {
           })}
         </div>
 
-        {/* CTA Button */}
+        {/* CTA Text */}
         <div
           style={{
             transform: `scale(${ctaScale})`,
             marginTop: 16,
+            textAlign: "center",
           }}
         >
-          <div
+          <p
             style={{
-              background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-              borderRadius: 16,
-              padding: "18px 48px",
-              boxShadow: `0 12px 40px rgba(20,184,166,${ctaGlow * 0.4})`,
+              fontSize: 30,
+              fontWeight: 700,
+              color: "#14b8a6",
+              margin: 0,
+              textShadow: `0 0 ${ctaGlow * 20}px rgba(20,184,166,0.4)`,
             }}
           >
-            <span
-              style={{
-                fontSize: 22,
-                fontWeight: 700,
-                color: "white",
-              }}
-            >
-              今すぐ始める →
-            </span>
-          </div>
+            Medical Scribe Flow をお試しください
+          </p>
         </div>
 
         {/* Footer */}
         <p
           style={{
-            fontSize: 14,
+            fontSize: 18,
             color: "#475569",
             margin: "16px 0 0",
             opacity: interpolate(frame, [70, 85], [0, 1], {

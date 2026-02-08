@@ -406,15 +406,14 @@ export default function Home() {
     if (savedShowClock !== null) {
       setShowClock(savedShowClock === "true");
     }
+  }, []);
 
-    // Check for first-time user to show onboarding video
+  // Check for first-time user to show onboarding video
+  useEffect(() => {
     const onboardingSeen = localStorage.getItem("medical-scribe-onboarding-seen");
     if (!onboardingSeen) {
-      const timer = setTimeout(() => {
-        setShowOnboardingVideo(true);
-        localStorage.setItem("medical-scribe-onboarding-seen", "true");
-      }, 1000); // Small delay for better UX
-      return () => clearTimeout(timer);
+      localStorage.setItem("medical-scribe-onboarding-seen", "true");
+      setShowOnboardingVideo(true);
     }
   }, []);
 
@@ -3300,7 +3299,10 @@ export default function Home() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setShowOnboardingVideo(false)}
+                    onClick={() => {
+                      setShowOnboardingVideo(false);
+                      setShowHelp(true);
+                    }}
                     className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
                     aria-label="動画を閉じる"
                   >
@@ -3314,9 +3316,9 @@ export default function Home() {
                     src="/video.mp4"
                     className="w-full h-full"
                     controls
-                    autoPlay
                     onEnded={() => {
-                      // Optional: Do something when video ends
+                      setShowOnboardingVideo(false);
+                      setShowHelp(true);
                     }}
                   />
                 </div>
@@ -3327,7 +3329,10 @@ export default function Home() {
                     ※ 音声が流れますのでご注意ください
                   </p>
                   <button
-                    onClick={() => setShowOnboardingVideo(false)}
+                    onClick={() => {
+                      setShowOnboardingVideo(false);
+                      setShowHelp(true);
+                    }}
                     className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-teal-900/20"
                   >
                     はじめる

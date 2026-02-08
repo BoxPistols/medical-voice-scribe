@@ -33,9 +33,11 @@ const steps = [
   },
 ];
 
-export const HowItWorksScene: React.FC = () => {
+export const HowItWorksScene: React.FC<{ sceneDuration: number }> = ({
+  sceneDuration,
+}) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   const headerOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -44,7 +46,7 @@ export const HowItWorksScene: React.FC = () => {
 
   const fadeOut = interpolate(
     frame,
-    [durationInFrames - 15, durationInFrames],
+    [sceneDuration - 15, sceneDuration],
     [1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
@@ -61,7 +63,7 @@ export const HowItWorksScene: React.FC = () => {
       <div style={{ opacity: headerOpacity, marginBottom: 60 }}>
         <p
           style={{
-            fontSize: 18,
+            fontSize: 24,
             color: "#10b981",
             textTransform: "uppercase",
             letterSpacing: "0.15em",
@@ -73,7 +75,7 @@ export const HowItWorksScene: React.FC = () => {
         </p>
         <h2
           style={{
-            fontSize: 52,
+            fontSize: 56,
             color: "white",
             fontWeight: 700,
             margin: "12px 0 0",
@@ -166,7 +168,7 @@ export const HowItWorksScene: React.FC = () => {
                   >
                     <span
                       style={{
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: 700,
                         color: "white",
                       }}
@@ -179,10 +181,10 @@ export const HowItWorksScene: React.FC = () => {
                 {/* Title */}
                 <h3
                   style={{
-                    fontSize: 26,
+                    fontSize: 30,
                     color: "white",
                     fontWeight: 600,
-                    margin: "0 0 12px",
+                    margin: "0 0 16px",
                   }}
                 >
                   {step.title}
@@ -191,11 +193,11 @@ export const HowItWorksScene: React.FC = () => {
                 {/* Description */}
                 <p
                   style={{
-                    fontSize: 15,
+                    fontSize: 20,
                     color: "#94a3b8",
                     margin: 0,
                     lineHeight: 1.6,
-                    maxWidth: 280,
+                    maxWidth: 340,
                     marginLeft: "auto",
                     marginRight: "auto",
                   }}

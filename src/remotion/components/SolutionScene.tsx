@@ -8,9 +8,11 @@ import {
   useVideoConfig,
 } from "remotion";
 
-export const SolutionScene: React.FC = () => {
+export const SolutionScene: React.FC<{ sceneDuration: number }> = ({
+  sceneDuration,
+}) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   const headerOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -41,7 +43,7 @@ export const SolutionScene: React.FC = () => {
 
   const fadeOut = interpolate(
     frame,
-    [durationInFrames - 15, durationInFrames],
+    [sceneDuration - 15, sceneDuration],
     [1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
@@ -61,7 +63,7 @@ export const SolutionScene: React.FC = () => {
       <div style={{ opacity: headerOpacity, marginBottom: 40 }}>
         <p
           style={{
-            fontSize: 18,
+            fontSize: 24,
             color: "#14b8a6",
             textTransform: "uppercase",
             letterSpacing: "0.15em",
@@ -73,7 +75,7 @@ export const SolutionScene: React.FC = () => {
         </p>
         <h2
           style={{
-            fontSize: 52,
+            fontSize: 56,
             color: "white",
             fontWeight: 700,
             margin: "12px 0 0",
@@ -128,7 +130,7 @@ export const SolutionScene: React.FC = () => {
             <p
               style={{
                 color: "#f59e0b",
-                fontSize: 16,
+                fontSize: 20,
                 margin: "8px 0 0",
                 fontWeight: 600,
               }}
@@ -185,7 +187,7 @@ export const SolutionScene: React.FC = () => {
             <p
               style={{
                 color: "#14b8a6",
-                fontSize: 18,
+                fontSize: 22,
                 margin: "8px 0 0",
                 fontWeight: 700,
               }}
@@ -195,7 +197,7 @@ export const SolutionScene: React.FC = () => {
             <p
               style={{
                 color: "#5eead4",
-                fontSize: 12,
+                fontSize: 16,
                 margin: "4px 0 0",
               }}
             >
@@ -267,7 +269,7 @@ export const SolutionScene: React.FC = () => {
             <p
               style={{
                 color: "#10b981",
-                fontSize: 16,
+                fontSize: 20,
                 margin: "8px 0 0",
                 fontWeight: 600,
               }}

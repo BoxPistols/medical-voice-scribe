@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Player } from "@remotion/player";
 import { ProductVideo, TOTAL_DURATION } from "../../remotion/ProductVideo";
 
@@ -107,7 +108,7 @@ export const VideoPlayer: React.FC = () => {
       </div>
 
       {/* Back Link */}
-      <a
+      <Link
         href="/"
         style={{
           marginTop: 24,
@@ -117,7 +118,7 @@ export const VideoPlayer: React.FC = () => {
         }}
       >
         ← アプリに戻る
-      </a>
+      </Link>
     </div>
   );
 };

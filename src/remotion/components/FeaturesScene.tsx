@@ -46,9 +46,11 @@ const features = [
   },
 ];
 
-export const FeaturesScene: React.FC = () => {
+export const FeaturesScene: React.FC<{ sceneDuration: number }> = ({
+  sceneDuration,
+}) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   const headerOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -57,7 +59,7 @@ export const FeaturesScene: React.FC = () => {
 
   const fadeOut = interpolate(
     frame,
-    [durationInFrames - 15, durationInFrames],
+    [sceneDuration - 15, sceneDuration],
     [1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
@@ -74,7 +76,7 @@ export const FeaturesScene: React.FC = () => {
       <div style={{ opacity: headerOpacity, marginBottom: 48 }}>
         <p
           style={{
-            fontSize: 18,
+            fontSize: 24,
             color: "#ec4899",
             textTransform: "uppercase",
             letterSpacing: "0.15em",
@@ -86,7 +88,7 @@ export const FeaturesScene: React.FC = () => {
         </p>
         <h2
           style={{
-            fontSize: 48,
+            fontSize: 56,
             color: "white",
             fontWeight: 700,
             margin: "12px 0 0",
@@ -145,9 +147,9 @@ export const FeaturesScene: React.FC = () => {
               {/* Label Badge */}
               <div
                 style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 14,
+                  width: 64,
+                  height: 64,
+                  borderRadius: 16,
                   background: feature.color,
                   display: "flex",
                   justifyContent: "center",
@@ -159,7 +161,7 @@ export const FeaturesScene: React.FC = () => {
               >
                 <span
                   style={{
-                    fontSize: 28,
+                    fontSize: 32,
                     fontWeight: 800,
                     color: "white",
                   }}
@@ -171,10 +173,10 @@ export const FeaturesScene: React.FC = () => {
               {/* Title */}
               <h3
                 style={{
-                  fontSize: 20,
+                  fontSize: 26,
                   color: feature.color,
                   fontWeight: 600,
-                  margin: "0 0 8px",
+                  margin: "0 0 10px",
                 }}
               >
                 {feature.title}
@@ -183,9 +185,9 @@ export const FeaturesScene: React.FC = () => {
               {/* Description */}
               <p
                 style={{
-                  fontSize: 14,
+                  fontSize: 18,
                   color: "#94a3b8",
-                  margin: "0 0 20px",
+                  margin: "0 0 24px",
                   lineHeight: 1.5,
                 }}
               >
@@ -226,7 +228,7 @@ export const FeaturesScene: React.FC = () => {
                       />
                       <span
                         style={{
-                          fontSize: 14,
+                          fontSize: 20,
                           color: "#cbd5e1",
                         }}
                       >
