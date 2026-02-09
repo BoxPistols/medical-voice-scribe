@@ -27,7 +27,7 @@
 
 ### 開発期間
 
-基盤2-3時間、UIUXの設計反映は2-3日で実装可能なMVP（Minimum Viable Product）として設計されています。
+基盤2-3時間、UIUX実装は2-3日の範囲内で実装可能なMVP（Minimum Viable Product）として設計されています。
 
 ## 主要機能
 
@@ -40,7 +40,7 @@
 
 ### 2. AI駆動のSOAPカルテ生成
 
-OpenAI GPT-4o-miniを使用した、以下の情報を含む詳細な医療記録の自動生成：
+OpenAI GPT-4/5の軽量モデルを使用した、以下の情報を含む詳細な医療記録の自動生成：
 
 #### 患者情報
 - 主訴（Chief Complaint）
@@ -93,7 +93,7 @@ OpenAI GPT-4o-miniを使用した、以下の情報を含む詳細な医療記�
 - 長文カルテの内容把握がより容易に
 - アクセシビリティ向上（視覚障害のあるユーザー支援）
 
-### 4. モダンなUI/UX
+### 4. UI/UXデザイン
 
 - レスポンシブデザイン（PC/タブレット/スマートフォン対応）
 - リアルタイムステータス表示
@@ -112,15 +112,13 @@ OpenAI GPT-4o-miniを使用した、以下の情報を含む詳細な医療記�
 | React | 19.2.3 | UIライブラリ |
 | TypeScript | 5.x | 型安全性の確保 |
 | Tailwind CSS | 4.x | ユーティリティファーストCSS |
-| DM Sans | - | UI用サンセリフフォント |
-| JetBrains Mono | - | コード・データ表示用モノスペースフォント |
 
 ### バックエンド
 
 | 技術 | 用途 |
 |------|------|
 | Next.js API Routes | サーバーサイドAPI |
-| OpenAI API | GPT-4o-miniによるテキスト生成 |
+| OpenAI API | GPT-4/5によるテキスト生成 |
 
 ### ブラウザAPI
 
@@ -199,7 +197,7 @@ medical-scribe-demo/
 
 - Node.js 18.x 以上
 - npm または yarn
-- OpenAI APIキー
+- OpenAI APIキー(現在稼働テストとして設定中)
 - Chromeまたは最新のブラウザ（Web Speech API対応）
 
 ### インストール手順
@@ -654,7 +652,7 @@ JSONスキーマを明示的に指定し、以下を実現：
 
 OpenAI APIの使用料金が発生します：
 
-- **GPT-4o-mini**: $0.150 / 1M input tokens, $0.600 / 1M output tokens
+- **GPT-4o-mini事例**: $0.150 / 1M input tokens, $0.600 / 1M output tokens
 - 1回の解析あたり約$0.001-0.005（会話の長さによる）
 
 ### 法的考慮事項
@@ -667,9 +665,9 @@ OpenAI APIの使用料金が発生します：
 
 MIT License
 
-## 作成者
+## 作成者 @BoxPistols / Ito Atsushi
 
-開発期間: 2-3時間
+開発期間: メイン機能 2-3時間 / UIUXリファクタリング2-3日
 技術スタック: Next.js 14, TypeScript, OpenAI API, Web Speech API
 
 ## 参考資料
