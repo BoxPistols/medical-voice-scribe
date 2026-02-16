@@ -2596,8 +2596,8 @@ export default function Home() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-soft bg-theme-modal-header rounded-t-2xl">
-                  <h3 className="text-lg font-semibold text-theme-primary">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
+                  <h3 className="text-lg font-semibold text-white">
                     エクスポートプレビュー (
                     {exportPreviewData.type.toUpperCase()})
                   </h3>
@@ -2606,7 +2606,7 @@ export default function Home() {
                       setShowExportPreview(false);
                       setExportPreviewData(null);
                     }}
-                    className="text-theme-tertiary hover:text-theme-primary transition-colors"
+                    className="text-white/60 hover:text-white transition-colors"
                     aria-label="プレビューを閉じる"
                     data-tooltip-bottom="閉じる"
                   >
@@ -2656,21 +2656,20 @@ export default function Home() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border bg-theme-modal-header rounded-t-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg"
-                      style={{ background: "var(--gradient-primary)" }}
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg bg-white/20"
                     >
                       <QuestionMarkCircleIcon className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-theme-primary">
+                    <h3 className="text-xl font-bold text-white">
                       使い方ガイド
                     </h3>
                   </div>
                   <button
                     onClick={() => setShowHelp(false)}
-                    className="text-theme-tertiary hover:text-theme-primary transition-colors"
+                    className="text-white/60 hover:text-white transition-colors"
                     aria-label="ヘルプを閉じる"
                     data-tooltip-bottom="閉じる"
                   >
@@ -3010,16 +3009,16 @@ export default function Home() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-soft bg-theme-modal-header rounded-t-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-theme-card flex items-center justify-center">
-                      <KeyboardIcon className="w-6 h-6 text-theme-primary" />
+                    <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                      <KeyboardIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-theme-primary">
+                      <h3 className="text-xl font-bold text-white">
                         ショートカット設定
                       </h3>
-                      <p className="text-xs text-theme-secondary">
+                      <p className="text-xs text-white/70">
                         クリックしてキー割り当てを変更できます
                       </p>
                     </div>
@@ -3029,7 +3028,7 @@ export default function Home() {
                       setShowShortcutsModal(false);
                       setEditingShortcutId(null);
                     }}
-                    className="text-theme-tertiary hover:text-theme-primary transition-colors"
+                    className="text-white/60 hover:text-white transition-colors"
                     aria-label="閉じる"
                     data-tooltip-bottom="閉じる"
                   >
