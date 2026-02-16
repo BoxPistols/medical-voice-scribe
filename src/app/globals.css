@@ -18,9 +18,9 @@
 
   /* Modal and Help screen colors */
   --modal-header-bg: linear-gradient(
-    to right,
-    rgba(204, 251, 241, 0.95),
-    rgba(204, 251, 241, 0.8)
+    135deg,
+    rgba(15, 140, 125, 0.85) 0%,
+    rgba(12, 115, 105, 0.85) 100%
   );
   --modal-footer-bg: rgba(249, 250, 251, 0.5);
   --modal-card-bg: #f9fafb;
@@ -114,9 +114,9 @@
 
   /* Modal and Help screen colors - Dark Mode */
   --modal-header-bg: linear-gradient(
-    to right,
-    rgba(20, 184, 166, 0.25),
-    rgba(13, 148, 136, 0.15)
+    135deg,
+    rgba(20, 184, 166, 0.7) 0%,
+    rgba(13, 148, 136, 0.65) 100%
   );
   --modal-footer-bg: rgba(30, 41, 59, 0.3);
   --modal-card-bg: rgba(51, 65, 85, 0.5);
@@ -1562,8 +1562,8 @@ body::after {
   padding: 0.75rem 1rem;
   background: linear-gradient(
     135deg,
-    rgba(20, 173, 155, 0.7) 0%,
-    rgba(16, 135, 125, 0.7) 100%
+    rgba(15, 140, 125, 0.85) 0%,
+    rgba(12, 115, 105, 0.85) 100%
   );
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -1577,8 +1577,8 @@ body::after {
 [data-theme="dark"] .chat-support-header {
   background: linear-gradient(
     135deg,
-    rgba(16, 203, 181, 0.4) 0%,
-    rgba(9, 169, 156, 0.4) 100%
+    rgba(20, 184, 166, 0.7) 0%,
+    rgba(13, 148, 136, 0.65) 100%
   );
 }
 /* Tabs */
@@ -1589,8 +1589,8 @@ body::after {
 }
 
 [data-theme="dark"] .chat-support-tabs {
-  background: rgba(30, 41, 59, 0.2);
-  border-bottom-color: rgba(96, 165, 250, 0.15);
+  background: rgba(30, 41, 59, 0.35);
+  border-bottom-color: rgba(20, 184, 166, 0.15);
 }
 
 .chat-support-tab {
@@ -1867,13 +1867,14 @@ body::after {
 }
 
 .chat-support-message.user .chat-support-message-content {
-  background: #14b8a6;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
   color: white;
   border-bottom-right-radius: 0.25rem;
 }
 
 [data-theme="dark"] .chat-support-message.user .chat-support-message-content {
-  background: #14b8a6;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.7) 0%, rgba(13, 148, 136, 0.65) 100%);
+  border: 1px solid rgba(94, 234, 212, 0.15);
 }
 
 .chat-support-message.assistant .chat-support-message-content {
@@ -1888,9 +1889,9 @@ body::after {
 [data-theme="dark"]
   .chat-support-message.assistant
   .chat-support-message-content {
-  background: rgba(51, 65, 85, 0.3);
-  color: #f1f5f9;
-  border-color: rgba(100, 116, 139, 0.2);
+  background: rgba(51, 65, 85, 0.4);
+  color: #e2e8f0;
+  border-color: rgba(100, 116, 139, 0.25);
 }
 
 .chat-support-message-time {

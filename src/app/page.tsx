@@ -38,6 +38,13 @@ import {
 } from "@heroicons/react/24/outline";
 import { StopIcon as StopIconSolid } from "@heroicons/react/24/solid";
 import ChatSupportWidget from "./components/ChatSupportWidget";
+import StatusBadge from "./components/StatusBadge";
+import ErrorAlert from "./components/ErrorAlert";
+import EmptyState from "./components/EmptyState";
+import AnalysisProgress from "./components/AnalysisProgress";
+import SummaryCard from "./components/SummaryCard";
+import PatientInfoCard from "./components/PatientInfoCard";
+import SOAPSectionWrapper from "./components/SOAPSectionWrapper";
 import { formatElapsedTime as formatElapsedTimeHelper, buildSpeechText, getVoiceForLanguage } from "@/lib/audioHelpers";
 import { buildCsvContent, validateImportFile, validateImportData } from "@/lib/fileHelpers";
 import { cycleTheme, getLayoutPresetWidth, buildCopySectionS, buildCopySectionO, buildCopySectionA, buildCopySectionP } from "@/lib/uiHelpers";
@@ -1530,16 +1537,7 @@ export default function Home() {
 
             {/* Status indicator */}
             <div className="hidden sm:flex items-center gap-3">
-              <div
-                className={`status-badge ${isRecording ? "recording" : "idle"}`}
-              >
-                <div
-                  className={`status-indicator ${
-                    isRecording ? "recording" : "idle"
-                  } ${isRecording ? "recording-pulse" : ""}`}
-                />
-                {isRecording ? "録音中" : "待機中"}
-              </div>
+              <StatusBadge isRecording={isRecording} />
 
               {/* AI Model selector */}
               <div className="relative group">
@@ -2295,208 +2293,20 @@ export default function Home() {
                 <div className="flex-1 overflow-y-auto">
                   {/* Error state */}
                   {error && (
-                    <div className="m-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <svg
-                          className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          aria-hidden="true"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-bold text-red-900 mb-1">
-                            エラー
-                          </h4>
-                          <p className="text-sm text-red-800">{error}</p>
-                        </div>
-                        <button
-                          onClick={() => setError(null)}
-                          className="text-red-600 hover:text-red-800"
-                          aria-label="エラーメッセージを閉じる"
-                          data-tooltip="閉じる"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
+                    <ErrorAlert message={error} onClose={() => setError(null)} />
                   )}
 
                   {/* Empty state - onboarding */}
-                  {!result && !loading && !error && (
-                    <div className="empty-state">
-                      <div className="w-20 h-20 mb-6 rounded-full bg-theme-tertiary flex items-center justify-center">
-                        <DocumentTextIcon
-                          className="w-10 h-10 text-theme-secondary opacity-50"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <h3 className="text-lg font-bold text-theme-primary mb-2">SOAPカルテ生成へようこそ</h3>
-                      <p className="text-sm text-theme-secondary mb-8 max-w-sm mx-auto leading-relaxed">
-                        AIが医師と患者の会話を分析し、
-                        <br className="hidden sm:block" />
-                        標準的な医療記録形式（SOAP）でカルテを作成します。
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg text-left">
-                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
-                          <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold mb-3">
-                            1
-                          </div>
-                          <div className="font-bold text-sm text-theme-primary mb-1">
-                            録音
-                          </div>
-                          <div className="text-xs text-theme-secondary">
-                            「録音」ボタンを押して会話を開始
-                          </div>
-                        </div>
-                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-bold mb-3">
-                            2
-                          </div>
-                          <div className="font-bold text-sm text-theme-primary mb-1">
-                            停止
-                          </div>
-                          <div className="text-xs text-theme-secondary">
-                            会話が終わったら録音を停止
-                          </div>
-                        </div>
-                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
-                          <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm font-bold mb-3">
-                            3
-                          </div>
-                          <div className="font-bold text-sm text-theme-primary mb-1">
-                            生成
-                          </div>
-                          <div className="text-xs text-theme-secondary">
-                            「カルテ生成」でAIが分析開始
-                          </div>
-                        </div>
-                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold mb-3">
-                            4
-                          </div>
-                          <div className="font-bold text-sm text-theme-primary mb-1">
-                            読み上げ
-                          </div>
-                          <div className="text-xs text-theme-secondary">
-                            生成カルテを音声で読み上げ確認
-                          </div>
-                        </div>
-                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
-                          <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold mb-3">
-                            5
-                          </div>
-                          <div className="font-bold text-sm text-theme-primary mb-1">
-                            保存・出力
-                          </div>
-                          <div className="text-xs text-theme-secondary">
-                            JSON・CSVでカルテをエクスポート
-                          </div>
-                        </div>
-                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
-                          <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-sm font-bold mb-3">
-                            6
-                          </div>
-                          <div className="font-bold text-sm text-theme-primary mb-1">
-                            カスタマイズ
-                          </div>
-                          <div className="text-xs text-theme-secondary">
-                            テーマ・ショートカットを自由に設定
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {!result && !loading && !error && <EmptyState />}
 
                   {/* Loading/Streaming state */}
                   {loading && (
-                    <div className="p-6">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="relative">
-                          <div
-                            className="loading-spinner animate-spin"
-                            style={{
-                              width: "1.5rem",
-                              height: "1.5rem",
-                              borderWidth: "2px",
-                            }}
-                          />
-                        </div>
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          {isStreaming
-                            ? "リアルタイム生成中..."
-                            : "解析準備中..."}
-                        </span>
-                        <span
-                          className="text-xs font-mono tabular-nums"
-                          style={{ color: "var(--accent-primary)" }}
-                        >
-                          {analysisProgress}%
-                        </span>
-                        <span
-                          className="text-xs ml-auto"
-                          style={{ color: "var(--text-tertiary)" }}
-                        >
-                          {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name || selectedModel}
-                        </span>
-                      </div>
-                      {/* Progress bar */}
-                      <div
-                        className="h-1 rounded-full mb-4 overflow-hidden"
-                        style={{ backgroundColor: "var(--bg-tertiary)" }}
-                      >
-                        <div
-                          className="h-full rounded-full transition-all duration-300 ease-out"
-                          style={{
-                            width: `${analysisProgress}%`,
-                            backgroundColor: "var(--accent-primary)",
-                          }}
-                        />
-                      </div>
-                      {isStreaming && streamingText && (
-                        <div
-                          className="rounded-lg p-4 border"
-                          style={{
-                            backgroundColor: "var(--bg-tertiary)",
-                            borderColor: "var(--border-primary)",
-                          }}
-                        >
-                          <pre
-                            className="text-xs font-mono whitespace-pre-wrap break-all max-h-96 overflow-y-auto"
-                            style={{ color: "var(--text-secondary)" }}
-                          >
-                            {streamingText}
-                            <span
-                              className="inline-block w-2 h-4 animate-pulse ml-0.5"
-                              style={{
-                                backgroundColor: "var(--accent-primary)",
-                              }}
-                            />
-                          </pre>
-                        </div>
-                      )}
-                    </div>
+                    <AnalysisProgress
+                      isStreaming={isStreaming}
+                      streamingText={streamingText}
+                      progress={analysisProgress}
+                      modelName={AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name || selectedModel}
+                    />
                   )}
 
                   {/* Results */}
@@ -2504,97 +2314,19 @@ export default function Home() {
                     <div className="space-y-3 p-6">
                       {/* Summary */}
                       {result.summary && (
-                        <div className="p-6 rounded-lg shadow-sm border-l-4 border-amber-600 dark:border-amber-500 border border-amber-200 dark:border-amber-600/40">
-                          <div className="flex items-center gap-2 mb-2">
-                            <svg
-                              className="w-5 h-5 text-amber-600 dark:text-amber-500"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              aria-hidden="true"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">
-                              要約
-                            </h3>
-                          </div>
-                          <p className="text-sm text-theme-primary leading-relaxed">
-                            {result.summary}
-                          </p>
-                        </div>
+                        <SummaryCard summary={result.summary} />
                       )}
 
                       {/* Patient Info */}
                       {result.patientInfo && (
-                        <div className="p-6 rounded-lg shadow-sm border-l-4 border-blue-600 dark:border-blue-500 border border-blue-200 dark:border-blue-600/40">
-                          <div className="flex items-center gap-2 mb-3">
-                            <svg
-                              className="w-5 h-5 text-blue-600 dark:text-blue-500"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              aria-hidden="true"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">
-                              患者情報
-                            </h3>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            {result.patientInfo.chiefComplaint && (
-                              <>
-                                <div className="text-theme-secondary font-semibold">
-                                  主訴:
-                                </div>
-                                <div className="text-theme-primary">
-                                  {result.patientInfo.chiefComplaint}
-                                </div>
-                              </>
-                            )}
-                            {result.patientInfo.duration && (
-                              <>
-                                <div className="text-theme-secondary font-semibold">
-                                  期間:
-                                </div>
-                                <div className="text-theme-primary">
-                                  {result.patientInfo.duration}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        <PatientInfoCard
+                          chiefComplaint={result.patientInfo.chiefComplaint}
+                          duration={result.patientInfo.duration}
+                        />
                       )}
 
                       {/* SOAP sections */}
-                      <div className="soap-section subjective">
-                        <div className="soap-label">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="soap-badge"
-                              style={{ background: "var(--soap-s)" }}
-                            >
-                              S
-                            </div>
-                            主観的情報
-                          </div>
-                          <button
-                            onClick={copySectionS}
-                            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                            aria-label="Sセクションをコピー"
-                            data-tooltip="コピー"
-                          >
-                            <ClipboardDocumentIcon className="w-4 h-4 opacity-60 hover:opacity-100" />
-                          </button>
-                        </div>
-                        <div className="space-y-3 text-sm">
+                      <SOAPSectionWrapper type="subjective" badge="S" label="主観的情報" onCopy={copySectionS}>
                           {result.soap.subjective?.presentIllness && (
                             <div>
                               <div className="font-bold text-xs text-theme-secondary mb-1">
@@ -2640,30 +2372,9 @@ export default function Home() {
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
+                      </SOAPSectionWrapper>
 
-                      <div className="soap-section objective">
-                        <div className="soap-label">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="soap-badge"
-                              style={{ background: "var(--soap-o)" }}
-                            >
-                              O
-                            </div>
-                            客観的情報
-                          </div>
-                          <button
-                            onClick={copySectionO}
-                            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                            aria-label="Oセクションをコピー"
-                            data-tooltip="コピー"
-                          >
-                            <ClipboardDocumentIcon className="w-4 h-4 opacity-60 hover:opacity-100" />
-                          </button>
-                        </div>
-                        <div className="space-y-3 text-sm">
+                      <SOAPSectionWrapper type="objective" badge="O" label="客観的情報" onCopy={copySectionO}>
                           {result.soap.objective?.vitalSigns && (
                             <div>
                               <div className="font-bold text-xs text-theme-secondary mb-2">
@@ -2728,30 +2439,9 @@ export default function Home() {
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
+                      </SOAPSectionWrapper>
 
-                      <div className="soap-section assessment">
-                        <div className="soap-label">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="soap-badge"
-                              style={{ background: "var(--soap-a)" }}
-                            >
-                              A
-                            </div>
-                            評価・診断
-                          </div>
-                          <button
-                            onClick={copySectionA}
-                            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                            aria-label="Aセクションをコピー"
-                            data-tooltip="コピー"
-                          >
-                            <ClipboardDocumentIcon className="w-4 h-4 opacity-60 hover:opacity-100" />
-                          </button>
-                        </div>
-                        <div className="space-y-3 text-sm">
+                      <SOAPSectionWrapper type="assessment" badge="A" label="評価・診断" onCopy={copySectionA}>
                           {result.soap.assessment?.diagnosis && (
                             <div className="flex flex-wrap gap-2 items-center">
                               <span className="font-bold text-xs text-theme-secondary">
@@ -2793,30 +2483,9 @@ export default function Home() {
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
+                      </SOAPSectionWrapper>
 
-                      <div className="soap-section plan">
-                        <div className="soap-label">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="soap-badge"
-                              style={{ background: "var(--soap-p)" }}
-                            >
-                              P
-                            </div>
-                            治療計画
-                          </div>
-                          <button
-                            onClick={copySectionP}
-                            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                            aria-label="Pセクションをコピー"
-                            data-tooltip="コピー"
-                          >
-                            <ClipboardDocumentIcon className="w-4 h-4 opacity-60 hover:opacity-100" />
-                          </button>
-                        </div>
-                        <div className="space-y-3 text-sm">
+                      <SOAPSectionWrapper type="plan" badge="P" label="治療計画" onCopy={copySectionP}>
                           {result.soap.plan?.treatment && (
                             <div>
                               <div className="font-bold text-xs text-theme-secondary mb-1">
@@ -2904,8 +2573,7 @@ export default function Home() {
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
+                      </SOAPSectionWrapper>
 
                       {/* Generated timestamp and token usage */}
                       <div className="px-6 py-3 bg-theme-card text-xs text-theme-tertiary font-mono border-t border-theme-border flex items-center justify-between">
@@ -2928,8 +2596,8 @@ export default function Home() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-soft bg-theme-modal-header rounded-t-2xl">
-                  <h3 className="text-lg font-semibold text-theme-primary">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
+                  <h3 className="text-lg font-semibold text-white">
                     エクスポートプレビュー (
                     {exportPreviewData.type.toUpperCase()})
                   </h3>
@@ -2938,7 +2606,7 @@ export default function Home() {
                       setShowExportPreview(false);
                       setExportPreviewData(null);
                     }}
-                    className="text-theme-tertiary hover:text-theme-primary transition-colors"
+                    className="text-white/60 hover:text-white transition-colors"
                     aria-label="プレビューを閉じる"
                     data-tooltip-bottom="閉じる"
                   >
@@ -2988,21 +2656,20 @@ export default function Home() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border bg-theme-modal-header rounded-t-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg"
-                      style={{ background: "var(--gradient-primary)" }}
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg bg-white/20"
                     >
                       <QuestionMarkCircleIcon className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-theme-primary">
+                    <h3 className="text-xl font-bold text-white">
                       使い方ガイド
                     </h3>
                   </div>
                   <button
                     onClick={() => setShowHelp(false)}
-                    className="text-theme-tertiary hover:text-theme-primary transition-colors"
+                    className="text-white/60 hover:text-white transition-colors"
                     aria-label="ヘルプを閉じる"
                     data-tooltip-bottom="閉じる"
                   >
@@ -3342,16 +3009,16 @@ export default function Home() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-soft bg-theme-modal-header rounded-t-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-theme-card flex items-center justify-center">
-                      <KeyboardIcon className="w-6 h-6 text-theme-primary" />
+                    <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                      <KeyboardIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-theme-primary">
+                      <h3 className="text-xl font-bold text-white">
                         ショートカット設定
                       </h3>
-                      <p className="text-xs text-theme-secondary">
+                      <p className="text-xs text-white/70">
                         クリックしてキー割り当てを変更できます
                       </p>
                     </div>
@@ -3361,7 +3028,7 @@ export default function Home() {
                       setShowShortcutsModal(false);
                       setEditingShortcutId(null);
                     }}
-                    className="text-theme-tertiary hover:text-theme-primary transition-colors"
+                    className="text-white/60 hover:text-white transition-colors"
                     aria-label="閉じる"
                     data-tooltip-bottom="閉じる"
                   >
