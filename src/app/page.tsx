@@ -1547,20 +1547,20 @@ export default function Home() {
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Minimal header - sticky */}
       <header className="app-header flex-shrink-0">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative flex items-center justify-between h-12 sm:h-14">
+        <div className="max-w-[1600px] mx-auto px-3 md:px-6 lg:px-8">
+          <div className="relative flex items-center justify-between h-12 md:h-14">
             {/* Branding + Clock */}
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-shrink-0">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm flex-shrink-0">
+            <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-shrink-0">
+              <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm flex-shrink-0">
                   <MicrophoneIcon
-                    className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                    className="w-4 h-4 md:w-5 md:h-5 text-white"
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />
                 </div>
-                <div className="min-w-0 hidden sm:block">
-                  <h1 className="text-sm sm:text-lg font-bold text-theme-primary leading-none truncate">
+                <div className="min-w-0 hidden md:block">
+                  <h1 className="text-lg font-bold text-theme-primary leading-none truncate">
                     {appMode === "medical" ? "Medical Voice Scribe" : appMode === "clock" ? "Clock" : "Voice Memo"}
                   </h1>
                   <p className="text-xs text-theme-secondary font-medium mt-0.5">
@@ -1569,11 +1569,11 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Clock and Recording Timer - next to logo */}
+              {/* Clock and Recording Timer */}
               {mounted && showClock && (
-                <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2 md:flex-col md:items-center">
                   <time
-                    className="hidden sm:block text-xl md:text-2xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
+                    className="text-sm md:text-xl lg:text-2xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
                     dateTime={currentTime.toISOString()}
                     aria-label="現在時刻"
                     suppressHydrationWarning
@@ -1581,7 +1581,7 @@ export default function Home() {
                     {formatTime(currentTime)}
                   </time>
                   {isRecording && (
-                    <div className="flex items-center gap-1 sm:mt-0.5">
+                    <div className="flex items-center gap-1 md:mt-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                       <span className="text-xs font-mono text-orange-500 tabular-nums">
                         {formatElapsedTime(recordingElapsed)}
@@ -1592,8 +1592,8 @@ export default function Home() {
               )}
             </div>
 
-            {/* Mode Switcher + Status indicator */}
-            <div className="hidden sm:flex items-center gap-3">
+            {/* Mode Switcher + Status indicator — Desktop */}
+            <div className="hidden md:flex items-center gap-3">
               <ModeSwitcher currentMode={appMode} onModeChange={setAppMode} />
               {appMode === "medical" && <StatusBadge isRecording={isRecording} />}
 
@@ -1696,7 +1696,7 @@ export default function Home() {
             </div>
 
             {/* Mobile menu */}
-            <div className="sm:hidden flex items-center gap-1.5">
+            <div className="md:hidden flex items-center gap-1.5">
               <ModeSwitcher currentMode={appMode} onModeChange={setAppMode} />
               {appMode === "medical" && (
                 <div
@@ -1917,7 +1917,7 @@ export default function Home() {
                           aria-label="サンプル問診を挿入"
                           data-tooltip="サンプル問診テキストを挿入"
                         >
-                          <DocumentTextIcon className="w-5 h-5 sm:w-4 sm:h-4" />
+                          <DocumentTextIcon className="w-5 h-5 md:w-4 md:h-4" />
                           <span className="hidden sm:inline">サンプル</span>
                           <ChevronDownIcon className="w-3.5 h-3.5" />
                         </button>
@@ -1931,7 +1931,7 @@ export default function Home() {
                         aria-label="会話テキストをコピー"
                         data-tooltip="会話テキストをコピー"
                       >
-                        <DocumentDuplicateIcon className="w-5 h-5 sm:w-4 sm:h-4" />
+                        <DocumentDuplicateIcon className="w-5 h-5 md:w-4 md:h-4" />
                       </button>
 
                       {/* Mobile accordion toggle */}
@@ -1942,7 +1942,7 @@ export default function Home() {
                           aria-label="SOAPカルテを表示"
                           data-tooltip="カルテ表示に切り替え"
                         >
-                          <ArrowRightIcon className="w-5 h-5 sm:w-4 sm:h-4" />
+                          <ArrowRightIcon className="w-5 h-5 md:w-4 md:h-4" />
                           <span className="hidden xs:inline">カルテ</span>
                         </button>
                       )}
