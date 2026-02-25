@@ -48,6 +48,9 @@ import SOAPSectionWrapper from "./components/SOAPSectionWrapper";
 import { formatElapsedTime as formatElapsedTimeHelper, buildSpeechText, getVoiceForLanguage } from "@/lib/audioHelpers";
 import { buildCsvContent, validateImportFile, validateImportData } from "@/lib/fileHelpers";
 import { cycleTheme, getLayoutPresetWidth, buildCopySectionS, buildCopySectionO, buildCopySectionA, buildCopySectionP } from "@/lib/uiHelpers";
+import ModeSwitcher, { type AppMode } from "./components/ModeSwitcher";
+import ClockMode from "./components/ClockMode";
+import VoiceRecorderMode from "./components/VoiceRecorderMode";
 
 // Custom Keyboard Icon Component
 const KeyboardIcon = ({ className }: { className?: string }) => (
@@ -343,6 +346,9 @@ const SAMPLE_INTERVIEWS = [
 ];
 
 export default function Home() {
+  // App mode
+  const [appMode, setAppMode] = useState<AppMode>("medical");
+
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [loading, setLoading] = useState(false);
@@ -515,6 +521,12 @@ export default function Home() {
       setUseModifiers(savedUseModifiers === "true");
     }
 
+    // Load app mode setting
+    const savedMode = localStorage.getItem("medical-scribe-app-mode") as AppMode | null;
+    if (savedMode && ["medical", "clock", "voice"].includes(savedMode)) {
+      setAppMode(savedMode);
+    }
+
     // Load AI model setting
     const savedModel = localStorage.getItem(
       "medical-scribe-model"
@@ -533,6 +545,11 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
+
+  // Save app mode setting
+  useEffect(() => {
+    localStorage.setItem("medical-scribe-app-mode", appMode);
+  }, [appMode]);
 
   // Clock update - every second
   useEffect(() => {
@@ -1504,10 +1521,10 @@ export default function Home() {
                 </div>
                 <div className="min-w-0 hidden sm:block">
                   <h1 className="text-sm sm:text-lg font-bold text-theme-primary leading-none truncate">
-                    Medical Voice Scribe
+                    {appMode === "medical" ? "Medical Voice Scribe" : appMode === "clock" ? "Clock" : "Voice Memo"}
                   </h1>
                   <p className="text-xs text-theme-secondary font-medium mt-0.5">
-                    AI音声問診・カルテ自動生成
+                    {appMode === "medical" ? "AI音声問診・カルテ自動生成" : appMode === "clock" ? "フルスクリーン時計" : "録音・整理・要約"}
                   </p>
                 </div>
               </div>
@@ -1535,9 +1552,10 @@ export default function Home() {
               )}
             </div>
 
-            {/* Status indicator */}
+            {/* Mode Switcher + Status indicator */}
             <div className="hidden sm:flex items-center gap-3">
-              <StatusBadge isRecording={isRecording} />
+              <ModeSwitcher currentMode={appMode} onModeChange={setAppMode} />
+              {appMode === "medical" && <StatusBadge isRecording={isRecording} />}
 
               {/* AI Model selector */}
               <div className="relative group">
@@ -1639,11 +1657,14 @@ export default function Home() {
 
             {/* Mobile menu */}
             <div className="sm:hidden flex items-center gap-1">
-              <div
-                className={`status-indicator flex-shrink-0 ${
-                  isRecording ? "recording recording-pulse" : "idle"
-                }`}
-              />
+              <ModeSwitcher currentMode={appMode} onModeChange={setAppMode} />
+              {appMode === "medical" && (
+                <div
+                  className={`status-indicator flex-shrink-0 ${
+                    isRecording ? "recording recording-pulse" : "idle"
+                  }`}
+                />
+              )}
 
               {/* AI Model selector (Mobile) - compact */}
               <div className="relative">
@@ -1707,6 +1728,14 @@ export default function Home() {
 
       {/* Main content area */}
       <main className="flex-1 relative overflow-hidden flex flex-col">
+        {/* Clock Mode */}
+        {appMode === "clock" && <ClockMode />}
+
+        {/* Voice Recorder Mode */}
+        {appMode === "voice" && <VoiceRecorderMode />}
+
+        {/* Medical Mode */}
+        {appMode === "medical" && (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-col flex-1 overflow-hidden w-full">
           {/* Control panel */}
           <div className={`mb-2 ${mounted ? "animate-fade-in" : "opacity-0"}`}>
@@ -3235,6 +3264,7 @@ export default function Home() {
             </div>
           </footer>
         </div>
+        )}
       </main>
 
       {/* Hidden file input for import */}
