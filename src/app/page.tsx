@@ -1550,7 +1550,7 @@ export default function Home() {
         <div className="max-w-[1600px] mx-auto px-3 md:px-6 lg:px-8">
           <div className="relative flex items-center justify-between h-12 md:h-14">
             {/* Branding + Clock */}
-            <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-shrink-0">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-shrink min-w-0">
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm flex-shrink-0">
                   <MicrophoneIcon
@@ -1559,11 +1559,11 @@ export default function Home() {
                     aria-hidden="true"
                   />
                 </div>
-                <div className="min-w-0 hidden md:block">
-                  <h1 className="text-lg font-bold text-theme-primary leading-none truncate">
+                <div className="min-w-0 hidden lg:block">
+                  <h1 className="text-base font-bold text-theme-primary leading-none truncate">
                     {appMode === "medical" ? "Medical Voice Scribe" : appMode === "clock" ? "Clock" : "Voice Memo"}
                   </h1>
-                  <p className="text-xs text-theme-secondary font-medium mt-0.5">
+                  <p className="text-[11px] text-theme-secondary font-medium mt-0.5 truncate">
                     {appMode === "medical" ? "AI音声問診・カルテ自動生成" : appMode === "clock" ? "フルスクリーン時計" : "録音・整理・要約"}
                   </p>
                 </div>
@@ -1571,9 +1571,9 @@ export default function Home() {
 
               {/* Clock and Recording Timer */}
               {mounted && showClock && (
-                <div className="flex items-center gap-2 md:flex-col md:items-center">
+                <div className="flex items-center gap-2 lg:flex-col lg:items-center flex-shrink-0">
                   <time
-                    className="text-sm md:text-xl lg:text-2xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
+                    className="text-sm md:text-base lg:text-xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
                     dateTime={currentTime.toISOString()}
                     aria-label="現在時刻"
                     suppressHydrationWarning
@@ -1581,7 +1581,7 @@ export default function Home() {
                     {formatTime(currentTime)}
                   </time>
                   {isRecording && (
-                    <div className="flex items-center gap-1 md:mt-0.5">
+                    <div className="flex items-center gap-1 lg:mt-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                       <span className="text-xs font-mono text-orange-500 tabular-nums">
                         {formatElapsedTime(recordingElapsed)}
@@ -1593,7 +1593,7 @@ export default function Home() {
             </div>
 
             {/* Mode Switcher + Status indicator — Desktop */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 lg:gap-3">
               <ModeSwitcher currentMode={appMode} onModeChange={setAppMode} />
               {appMode === "medical" && <StatusBadge isRecording={isRecording} />}
 
@@ -1602,7 +1602,7 @@ export default function Home() {
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-3 pr-8 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-7 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-blue-500"
                   aria-label="AIモデル選択"
                   title={(() => {
                     const m = AVAILABLE_MODELS.find(m => m.id === selectedModel);
@@ -1611,12 +1611,12 @@ export default function Home() {
                 >
                   {AVAILABLE_MODELS.map((model) => (
                     <option key={model.id} value={model.id} title={`${model.description} | 速度:${model.speed}/5 品質:${model.quality}/5`}>
-                      {model.name} ({model.description})
+                      {model.name}
                     </option>
                   ))}
                 </select>
                 <ChevronDownIcon
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-muted pointer-events-none"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-muted pointer-events-none"
                   aria-hidden="true"
                 />
                 {/* Model info tooltip */}
@@ -1642,21 +1642,21 @@ export default function Home() {
               </div>
 
               {/* Icon buttons - unified grid */}
-              <div className="flex items-center">
+              <div className="flex items-center flex-shrink-0">
                 {/* Shortcut settings button */}
                 <button
                   onClick={() => setShowShortcutsModal(true)}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                  className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="キーボード設定"
                   data-tooltip-bottom="ショートカット設定"
                 >
-                  <KeyboardIcon className="w-6 h-6" aria-hidden="true" />
+                  <KeyboardIcon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
                 </button>
 
                 {/* Theme toggle button */}
                 <button
                   onClick={handleThemeCycle}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                  className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="テーマ切り替え"
                   data-tooltip-bottom={`テーマ: ${
                     theme === "system"
@@ -1667,14 +1667,14 @@ export default function Home() {
                   }`}
                 >
                   {theme === "light" && (
-                    <SunIcon className="w-6 h-6" aria-hidden="true" />
+                    <SunIcon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
                   )}
                   {theme === "dark" && (
-                    <MoonIcon className="w-6 h-6" aria-hidden="true" />
+                    <MoonIcon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
                   )}
                   {theme === "system" && (
                     <ComputerDesktopIcon
-                      className="w-6 h-6"
+                      className="w-5 h-5 lg:w-6 lg:h-6"
                       aria-hidden="true"
                     />
                   )}
@@ -1683,12 +1683,12 @@ export default function Home() {
                 {/* Help button */}
                 <button
                   onClick={() => setShowHelp(true)}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                  className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="ヘルプを表示"
                   data-tooltip-bottom="ヘルプ"
                 >
                   <QuestionMarkCircleIcon
-                    className="w-6 h-6"
+                    className="w-5 h-5 lg:w-6 lg:h-6"
                     aria-hidden="true"
                   />
                 </button>
