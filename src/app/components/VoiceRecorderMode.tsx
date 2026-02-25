@@ -426,11 +426,19 @@ export default function VoiceRecorderMode() {
   const copyText = useCallback(async (text: string, id: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      // fallback
+      // clipboard API非対応環境のフォールバック
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
     }
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   }, []);
 
   // Apply organized text back to group

@@ -101,6 +101,17 @@ export async function POST(req: Request) {
 
     const parsed = JSON.parse(content);
 
+    // AIレスポンスのスキーマ検証
+    if (mode === 'organize') {
+      if (typeof parsed.formatted !== 'string' || !Array.isArray(parsed.changes)) {
+        return NextResponse.json({ error: 'AIの応答形式が不正です（整理結果にformatted/changesがありません）' }, { status: 500 });
+      }
+    } else {
+      if (typeof parsed.summary !== 'string' || !Array.isArray(parsed.keyPoints) || !Array.isArray(parsed.actionItems) || !Array.isArray(parsed.keywords)) {
+        return NextResponse.json({ error: 'AIの応答形式が不正です（要約結果にsummary/keyPoints/actionItems/keywordsがありません）' }, { status: 500 });
+      }
+    }
+
     return NextResponse.json({ result: parsed, tokenUsage });
   } catch (error: unknown) {
     console.error('Voice format error:', error);

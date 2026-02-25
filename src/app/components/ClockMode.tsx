@@ -41,10 +41,13 @@ export default function ClockMode() {
   // Stopwatch tick
   useEffect(() => {
     if (!swRunning || swStartTime === null) return;
-    const timer = setInterval(() => {
+    let rafId: number;
+    const tick = () => {
       setSwElapsed(Date.now() - swStartTime);
-    }, 10);
-    return () => clearInterval(timer);
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [swRunning, swStartTime]);
 
   const handleSwStart = useCallback(() => {
