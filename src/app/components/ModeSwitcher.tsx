@@ -42,7 +42,7 @@ export default function ModeSwitcher({
   onModeChange,
 }: ModeSwitcherProps) {
   return (
-    <div className="flex items-center gap-1 bg-theme-surface rounded-xl p-1 border border-theme-border">
+    <div className="flex items-center gap-0.5 sm:gap-1 bg-theme-surface rounded-xl p-0.5 sm:p-1 border border-theme-border">
       {MODES.map((mode) => {
         const Icon = mode.icon;
         const isActive = currentMode === mode.id;
@@ -51,7 +51,8 @@ export default function ModeSwitcher({
             key={mode.id}
             onClick={() => onModeChange(mode.id)}
             className={`
-              flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
+              flex items-center justify-center gap-1.5 rounded-lg font-medium transition-all duration-200
+              w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 text-xs
               ${
                 isActive
                   ? "bg-teal-500 text-white shadow-sm"
@@ -62,9 +63,8 @@ export default function ModeSwitcher({
             aria-label={`${mode.label}モードに切替`}
             aria-pressed={isActive}
           >
-            <Icon className="w-3.5 h-3.5" strokeWidth={2} aria-hidden="true" />
+            <Icon className="w-5 h-5 sm:w-3.5 sm:h-3.5" strokeWidth={2} aria-hidden="true" />
             <span className="hidden sm:inline">{mode.label}</span>
-            <span className="sm:hidden">{mode.shortLabel}</span>
           </button>
         );
       })}

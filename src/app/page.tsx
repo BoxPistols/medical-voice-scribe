@@ -1573,7 +1573,7 @@ export default function Home() {
               {mounted && showClock && (
                 <div className="flex flex-col items-center">
                   <time
-                    className="text-lg sm:text-xl md:text-2xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
+                    className="hidden sm:block text-xl md:text-2xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
                     dateTime={currentTime.toISOString()}
                     aria-label="現在時刻"
                     suppressHydrationWarning
@@ -1581,7 +1581,7 @@ export default function Home() {
                     {formatTime(currentTime)}
                   </time>
                   {isRecording && (
-                    <div className="flex items-center gap-1 mt-0.5">
+                    <div className="flex items-center gap-1 sm:mt-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                       <span className="text-xs font-mono text-orange-500 tabular-nums">
                         {formatElapsedTime(recordingElapsed)}
@@ -1696,7 +1696,7 @@ export default function Home() {
             </div>
 
             {/* Mobile menu */}
-            <div className="sm:hidden flex items-center gap-1">
+            <div className="sm:hidden flex items-center gap-1.5">
               <ModeSwitcher currentMode={appMode} onModeChange={setAppMode} />
               {appMode === "medical" && (
                 <div
@@ -1706,30 +1706,32 @@ export default function Home() {
                 />
               )}
 
-              {/* AI Model selector (Mobile) - compact */}
-              <div className="relative">
-                <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-6 py-1 text-xs text-theme-tertiary cursor-pointer"
-                  aria-label="AIモデル選択"
-                >
-                  {AVAILABLE_MODELS.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.name.replace('GPT-', '')}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon
-                  className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-theme-muted pointer-events-none"
-                  aria-hidden="true"
-                />
-              </div>
+              {/* AI Model selector (Mobile) - 医療モードのみ表示 */}
+              {appMode === "medical" && (
+                <div className="relative">
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value as ModelId)}
+                    className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-6 py-1.5 text-xs text-theme-tertiary cursor-pointer"
+                    aria-label="AIモデル選択"
+                  >
+                    {AVAILABLE_MODELS.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name.replace('GPT-', '')}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDownIcon
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-muted pointer-events-none"
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
 
               {/* Theme toggle button (Mobile) */}
               <button
                 onClick={handleThemeCycle}
-                className="p-1 rounded-lg text-theme-tertiary btn-theme-hover"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="テーマ切り替え"
                 data-tooltip-bottom={`テーマ: ${
                   theme === "system"
@@ -1740,24 +1742,24 @@ export default function Home() {
                 }`}
               >
                 {theme === "light" && (
-                  <SunIcon className="w-4 h-4" aria-hidden="true" />
+                  <SunIcon className="w-5 h-5" aria-hidden="true" />
                 )}
                 {theme === "dark" && (
-                  <MoonIcon className="w-4 h-4" aria-hidden="true" />
+                  <MoonIcon className="w-5 h-5" aria-hidden="true" />
                 )}
                 {theme === "system" && (
-                  <ComputerDesktopIcon className="w-4 h-4" aria-hidden="true" />
+                  <ComputerDesktopIcon className="w-5 h-5" aria-hidden="true" />
                 )}
               </button>
 
               <button
                 onClick={() => setShowHelp(true)}
-                className="p-1 rounded-lg text-theme-tertiary btn-theme-hover"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="ヘルプ"
                 data-tooltip-bottom="ヘルプ"
               >
                 <QuestionMarkCircleIcon
-                  className="w-4 h-4"
+                  className="w-5 h-5"
                   aria-hidden="true"
                 />
               </button>
@@ -1911,13 +1913,13 @@ export default function Home() {
                       <div className="relative" data-sample-menu ref={sampleMenuButtonRef}>
                         <button
                           onClick={() => setShowSampleMenu(!showSampleMenu)}
-                          className="btn btn-secondary py-1 px-2 text-xs gap-1"
+                          className="btn btn-secondary py-1.5 px-2.5 text-xs gap-1"
                           aria-label="サンプル問診を挿入"
                           data-tooltip="サンプル問診テキストを挿入"
                         >
-                          <DocumentTextIcon className="w-3.5 h-3.5" />
+                          <DocumentTextIcon className="w-5 h-5 sm:w-4 sm:h-4" />
                           <span className="hidden sm:inline">サンプル</span>
-                          <ChevronDownIcon className="w-3 h-3" />
+                          <ChevronDownIcon className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
@@ -1925,22 +1927,22 @@ export default function Home() {
                       <button
                         onClick={() => copyToClipboard(transcript, "会話テキスト")}
                         disabled={!transcript}
-                        className="btn btn-secondary py-1 px-2 text-xs"
+                        className="btn btn-secondary py-1.5 px-2.5 text-xs"
                         aria-label="会話テキストをコピー"
                         data-tooltip="会話テキストをコピー"
                       >
-                        <DocumentDuplicateIcon className="w-3.5 h-3.5" />
+                        <DocumentDuplicateIcon className="w-5 h-5 sm:w-4 sm:h-4" />
                       </button>
 
                       {/* Mobile accordion toggle */}
                       {!isLargeScreen && (
                         <button
                           onClick={() => setActivePanel("result")}
-                          className="btn btn-secondary py-1 px-2 text-xs"
+                          className="btn btn-secondary py-1.5 px-2.5 text-xs"
                           aria-label="SOAPカルテを表示"
                           data-tooltip="カルテ表示に切り替え"
                         >
-                          <ArrowRightIcon className="w-4 h-4" />
+                          <ArrowRightIcon className="w-5 h-5 sm:w-4 sm:h-4" />
                           <span className="hidden xs:inline">カルテ</span>
                         </button>
                       )}
@@ -2110,23 +2112,23 @@ export default function Home() {
                         {/* 左: 戻るボタン */}
                         <button
                           onClick={() => setActivePanel("transcript")}
-                          className="btn btn-secondary py-1 px-2 text-xs flex items-center gap-1 shrink-0"
+                          className="btn btn-secondary py-2 px-3 text-xs flex items-center gap-1 shrink-0"
                           aria-label="会話テキストに戻る"
                           data-tooltip="会話テキストに戻る"
                         >
-                          <ArrowLeftIcon className="w-4 h-4" />
+                          <ArrowLeftIcon className="w-5 h-5" />
                           <span>会話</span>
                         </button>
                         {/* 右: アクションボタン群 */}
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           {/* Import button */}
                           <button
                             onClick={handleImportClick}
-                            className="btn btn-secondary py-1 px-2 text-xs"
+                            className="btn btn-secondary py-2 px-2.5 text-xs"
                             aria-label="インポート"
                             data-tooltip="JSON形式でインポート"
                           >
-                            <ArrowUpTrayIcon className="w-4 h-4" />
+                            <ArrowUpTrayIcon className="w-5 h-5" />
                           </button>
 
                           {/* Export dropdown */}
@@ -2134,11 +2136,11 @@ export default function Home() {
                             <button
                               onClick={() => setShowExportMenu(!showExportMenu)}
                               disabled={!result}
-                              className="btn btn-secondary py-1 px-2 text-xs"
+                              className="btn btn-secondary py-2 px-2.5 text-xs"
                               aria-label="エクスポート"
                               data-tooltip="JSON/CSV形式でエクスポート"
                             >
-                              <ArrowDownTrayIcon className="w-4 h-4" />
+                              <ArrowDownTrayIcon className="w-5 h-5" />
                             </button>
 
                             {showExportMenu && result && (
@@ -2146,16 +2148,16 @@ export default function Home() {
                                 <div className="py-1">
                                   <button
                                     onClick={exportAsJson}
-                                    className="w-full text-left px-3 py-2 text-xs text-theme-primary hover:bg-theme-card flex items-center gap-2"
+                                    className="w-full text-left px-3 py-2 text-sm text-theme-primary hover:bg-theme-card flex items-center gap-2"
                                   >
-                                    <DocumentIcon className="w-3 h-3" />
+                                    <DocumentIcon className="w-4 h-4" />
                                     JSON
                                   </button>
                                   <button
                                     onClick={exportAsCsv}
-                                    className="w-full text-left px-3 py-2 text-xs text-theme-primary hover:bg-theme-card flex items-center gap-2"
+                                    className="w-full text-left px-3 py-2 text-sm text-theme-primary hover:bg-theme-card flex items-center gap-2"
                                   >
-                                    <DocumentChartBarIcon className="w-3 h-3" />
+                                    <DocumentChartBarIcon className="w-4 h-4" />
                                     CSV
                                   </button>
                                 </div>
@@ -2166,7 +2168,7 @@ export default function Home() {
                           <button
                             onClick={toggleSpeech}
                             disabled={!result}
-                            className="btn btn-secondary py-1 px-2 text-xs"
+                            className="btn btn-secondary py-2 px-2.5 text-xs"
                             aria-label={
                               isSpeaking ? "読み上げを停止" : "カルテを読み上げ"
                             }
@@ -2177,9 +2179,9 @@ export default function Home() {
                             }
                           >
                             {isSpeaking ? (
-                              <StopIconSolid className="w-4 h-4" />
+                              <StopIconSolid className="w-5 h-5" />
                             ) : (
-                              <SpeakerWaveIcon className="w-4 h-4" />
+                              <SpeakerWaveIcon className="w-5 h-5" />
                             )}
                           </button>
                           <button
@@ -2187,12 +2189,12 @@ export default function Home() {
                               setShowSpeechSettings(!showSpeechSettings)
                             }
                             disabled={!result}
-                            className="btn btn-secondary py-1 px-2 text-xs"
+                            className="btn btn-secondary py-2 px-2.5 text-xs"
                             aria-label="音声設定"
                             data-tooltip="音声・速度設定"
                           >
                             <ChevronDownIcon
-                              className={`w-4 h-4 transition-transform ${
+                              className={`w-5 h-5 transition-transform ${
                                 showSpeechSettings ? "rotate-180" : ""
                               }`}
                             />
@@ -2209,14 +2211,14 @@ export default function Home() {
                           <button
                             onClick={toggleSpeech}
                             disabled={!result}
-                            className="btn btn-secondary text-xs py-0.5 px-2"
+                            className="btn btn-secondary text-xs py-1 px-2"
                             aria-label={isSpeaking ? "読み上げを停止" : "カルテを読み上げ"}
                             data-tooltip={`読み上げ [${formatShortcut(shortcuts.toggleSpeech, true)}]`}
                           >
                             {isSpeaking ? (
-                              <StopIconSolid className="w-3.5 h-3.5" aria-hidden="true" />
+                              <StopIconSolid className="w-4 h-4" aria-hidden="true" />
                             ) : (
-                              <SpeakerWaveIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                              <SpeakerWaveIcon className="w-4 h-4" aria-hidden="true" />
                             )}
                             <span className="text-xs">Voice</span>
                             <span className="hidden sm:inline text-xs opacity-70 ml-0.5">
@@ -2242,11 +2244,11 @@ export default function Home() {
                           {/* Import button */}
                           <button
                             onClick={handleImportClick}
-                            className="btn btn-secondary text-xs py-0.5 px-1.5"
+                            className="btn btn-secondary text-xs py-1 px-2"
                             aria-label="カルテをインポート"
                             data-tooltip="インポート"
                           >
-                            <ArrowUpTrayIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                            <ArrowUpTrayIcon className="w-4 h-4" aria-hidden="true" />
                           </button>
 
                           {/* Export dropdown */}
@@ -2254,11 +2256,11 @@ export default function Home() {
                             <button
                               onClick={() => setShowExportMenu(!showExportMenu)}
                               disabled={!result}
-                              className="btn btn-secondary text-xs py-0.5 px-1.5"
+                              className="btn btn-secondary text-xs py-1 px-2"
                               aria-label="カルテをエクスポート"
                               data-tooltip="エクスポート"
                             >
-                              <ArrowDownTrayIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                              <ArrowDownTrayIcon className="w-4 h-4" aria-hidden="true" />
                               <ChevronDownIcon
                                 className={`w-3 h-3 transition-transform ${showExportMenu ? "rotate-180" : ""}`}
                                 aria-hidden="true"
@@ -2292,11 +2294,11 @@ export default function Home() {
                           <button
                             onClick={copyFullChart}
                             disabled={!result}
-                            className="btn btn-secondary text-xs py-0.5 px-1.5"
+                            className="btn btn-secondary text-xs py-1 px-2"
                             aria-label="カルテ全体をコピー"
                             data-tooltip="コピー"
                           >
-                            <ClipboardDocumentIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                            <ClipboardDocumentIcon className="w-4 h-4" aria-hidden="true" />
                           </button>
                         </div>
                       </div>
