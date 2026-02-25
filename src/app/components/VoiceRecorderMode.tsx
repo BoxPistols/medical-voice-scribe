@@ -201,12 +201,17 @@ export default function VoiceRecorderMode() {
 
     recognition.onend = () => {
       // auto-restart if still supposed to be recording
+      // Use a small delay to let the browser's speech engine fully reset
       if (recognitionRef.current === recognition) {
-        try {
-          recognition.start();
-        } catch {
-          // already stopped or being disposed
-        }
+        setTimeout(() => {
+          if (recognitionRef.current === recognition) {
+            try {
+              recognition.start();
+            } catch {
+              // already stopped or being disposed
+            }
+          }
+        }, 200);
       }
     };
 

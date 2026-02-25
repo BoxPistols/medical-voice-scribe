@@ -212,6 +212,8 @@ interface SpeechRecognitionInstance {
   interimResults: boolean;
   lang: string;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
   start: () => void;
   stop: () => void;
 }
@@ -733,6 +735,30 @@ export default function Home() {
         }
         if (finalTranscript) {
           setTranscript((prev) => prev + finalTranscript + "。\n");
+        }
+      };
+
+      recognition.onerror = (event) => {
+        // "no-speech" and "aborted" are normal during stop/restart cycles
+        if (event.error !== "no-speech" && event.error !== "aborted") {
+          console.warn("Medical recognition error:", event.error);
+        }
+      };
+
+      recognition.onend = () => {
+        // Auto-restart if we're still supposed to be recording
+        // recognitionRef.current === recognition ensures we don't restart a stale instance
+        if (recognitionRef.current === recognition) {
+          setIsRecording((recording) => {
+            if (recording) {
+              try {
+                recognition.start();
+              } catch {
+                // already started or being disposed
+              }
+            }
+            return recording;
+          });
         }
       };
 
