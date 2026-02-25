@@ -546,10 +546,21 @@ export default function Home() {
     localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
 
-  // Save app mode setting
+  // Save app mode setting & stop medical recognition when leaving medical mode
   useEffect(() => {
     localStorage.setItem("medical-scribe-app-mode", appMode);
-  }, [appMode]);
+    if (appMode !== "medical") {
+      // Stop medical mode's speech recognition so it doesn't conflict
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (isRecording) {
+        setIsRecording(false);
+        setRecordingStartTime(null);
+        setRecordingElapsed(0);
+      }
+    }
+  }, [appMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clock update - every second
   useEffect(() => {

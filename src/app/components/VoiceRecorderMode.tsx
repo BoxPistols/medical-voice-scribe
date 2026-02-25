@@ -122,6 +122,17 @@ export default function VoiceRecorderMode() {
   const [splitTarget, setSplitTarget] = useState<string | null>(null);
   const [splitPosition, setSplitPosition] = useState(0);
 
+  // Cleanup recognition on unmount (when switching away from voice mode)
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        const ref = recognitionRef.current;
+        recognitionRef.current = null;
+        try { ref.stop(); } catch { /* already stopped */ }
+      }
+    };
+  }, []);
+
   // Recording elapsed timer
   useEffect(() => {
     if (!isRecording || !recordingStartRef.current) return;
