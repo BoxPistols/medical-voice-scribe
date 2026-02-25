@@ -182,18 +182,19 @@ export default function VoiceRecorderMode() {
     };
 
     recognition.onerror = (event) => {
-      if (event.error !== "no-speech") {
+      // "no-speech" and "aborted" are normal during stop/restart cycles
+      if (event.error !== "no-speech" && event.error !== "aborted") {
         setAiError(`音声認識エラー: ${event.error}`);
       }
     };
 
     recognition.onend = () => {
       // auto-restart if still supposed to be recording
-      if (recognitionRef.current) {
+      if (recognitionRef.current === recognition) {
         try {
-          recognitionRef.current.start();
+          recognition.start();
         } catch {
-          // already stopped
+          // already stopped or being disposed
         }
       }
     };
