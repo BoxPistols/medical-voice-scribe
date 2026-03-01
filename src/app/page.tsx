@@ -1571,7 +1571,7 @@ export default function Home() {
 
               {/* Clock and Recording Timer */}
               {mounted && showClock && (
-                <div className="flex items-center gap-2 lg:flex-col lg:items-center flex-shrink-0">
+                <div className="flex items-center gap-2 lg:flex-col lg:items-center flex-shrink-0 self-start mt-1.5 md:mt-2">
                   <time
                     className="text-sm md:text-base lg:text-xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
                     dateTime={currentTime.toISOString()}
