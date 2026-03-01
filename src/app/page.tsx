@@ -1552,7 +1552,7 @@ export default function Home() {
             {/* Branding + Clock */}
             <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-shrink min-w-0">
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 items-center justify-center shadow-sm flex-shrink-0">
                   <MicrophoneIcon
                     className="w-4 h-4 md:w-5 md:h-5 text-white"
                     strokeWidth={2.5}

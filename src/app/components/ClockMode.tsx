@@ -102,7 +102,7 @@ export default function ClockMode() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full select-none">
+    <div className="flex flex-col items-center justify-center h-full select-none pb-24 md:pb-32">
       {/* Display toggle */}
       <div className="flex items-center gap-2 mb-8">
         <button
