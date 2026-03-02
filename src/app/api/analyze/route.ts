@@ -3,14 +3,13 @@ import OpenAI from 'openai';
 import { SYSTEM_PROMPT } from './prompt';
 import type { SoapNote, ModelId, TokenUsage } from './types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from './types';
+import { validateModel } from '@/lib/helpers';
 
 // USD/JPY レート（概算）
 const USD_TO_JPY = 150;
 
-// モデルIDの検証
-function isValidModel(model: string): model is ModelId {
-  return AVAILABLE_MODELS.some(m => m.id === model);
-}
+// AVAILABLE_MODELSからIDリストを生成
+const VALID_MODEL_IDS = AVAILABLE_MODELS.map(m => m.id) as unknown as string[];
 
 // トークンコスト計算
 function calculateTokenCost(modelId: ModelId, promptTokens: number, completionTokens: number): TokenUsage {
@@ -53,7 +52,7 @@ export async function POST(req: Request) {
     }
 
     // モデルの検証とフォールバック
-    const model = requestedModel && isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
+    const model = validateModel(requestedModel, VALID_MODEL_IDS, DEFAULT_MODEL) as ModelId;
 
     const openai = getOpenAIClient();
 
