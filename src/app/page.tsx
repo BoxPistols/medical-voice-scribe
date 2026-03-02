@@ -35,6 +35,10 @@ import {
   ComputerDesktopIcon,
   DocumentIcon,
   DocumentChartBarIcon,
+  ClockIcon,
+  ArrowPathIcon,
+  CpuChipIcon,
+  CloudArrowDownIcon,
 } from "@heroicons/react/24/outline";
 import { StopIcon as StopIconSolid } from "@heroicons/react/24/solid";
 import ChatSupportWidget from "./components/ChatSupportWidget";
@@ -3350,13 +3354,13 @@ export default function Home() {
                 <button
                   key={tab}
                   onClick={() => setHelpTab(tab)}
-                  className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
                     helpTab === tab
                       ? "border-teal-400 text-white"
                       : "border-transparent text-white/50 hover:text-white/80"
                   }`}
                 >
-                  {tab === "medical" ? "🏥 医療カルテ" : tab === "clock" ? "🕐 時計" : "🎤 音声メモ"}
+                  {tab === "medical" ? <><DocumentChartBarIcon className="w-4 h-4" />医療カルテ</> : tab === "clock" ? <><ClockIcon className="w-4 h-4" />時計</> : <><MicrophoneIcon className="w-4 h-4" />音声メモ</>}
                 </button>
               ))}
             </div>
@@ -3404,13 +3408,13 @@ export default function Home() {
                     </h4>
                     <div className="grid sm:grid-cols-2 gap-3 text-sm">
                       {[
-                        { icon: "🎤", title: "音声入力", desc: "ブラウザの音声認識機能を使用してリアルタイムに文字起こし" },
-                        { icon: "🤖", title: "AI生成", desc: "OpenAI GPT-4oを使用したSOAPカルテの自動生成" },
-                        { icon: "🔊", title: "読み上げ", desc: "生成されたカルテをシステム音声で読み上げ（速度・音声調整可能）" },
-                        { icon: "💾", title: "保存・共有", desc: "JSON/CSV形式でエクスポート、インポートが可能" },
-                      ].map(({ icon, title, desc }) => (
+                        { Icon: MicrophoneIcon,    title: "音声入力", desc: "ブラウザの音声認識機能を使用してリアルタイムに文字起こし" },
+                        { Icon: CpuChipIcon,       title: "AI生成",   desc: "OpenAI GPT-4oを使用したSOAPカルテの自動生成" },
+                        { Icon: SpeakerWaveIcon,   title: "読み上げ", desc: "生成されたカルテをシステム音声で読み上げ（速度・音声調整可能）" },
+                        { Icon: CloudArrowDownIcon, title: "保存・共有", desc: "JSON/CSV形式でエクスポート、インポートが可能" },
+                      ].map(({ Icon, title, desc }) => (
                         <div key={title} className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
-                          <div className="font-semibold text-theme-primary mb-1">{icon} {title}</div>
+                          <div className="font-semibold text-theme-primary mb-1 flex items-center gap-1.5"><Icon className="w-4 h-4 text-theme-help-icon flex-shrink-0" />{title}</div>
                           <div className="text-theme-secondary text-xs">{desc}</div>
                         </div>
                       ))}
@@ -3461,7 +3465,7 @@ export default function Home() {
                       時計モードについて
                     </h4>
                     <p className="text-sm text-theme-secondary leading-relaxed">
-                      フルスクリーンで現在時刻とストップウォッチを表示します。診察室や待合室の大型ディスプレイでの利用を想定しています。
+                      フルスクリーンで現在時刻・ストップウォッチ・ポモドーロタイマーを表示します。診察室や待合室の大型ディスプレイでの利用を想定しています。
                     </p>
                   </div>
                   <div>
@@ -3471,11 +3475,12 @@ export default function Home() {
                     </h4>
                     <div className="grid sm:grid-cols-2 gap-3 text-sm">
                       {[
-                        { icon: "🕐", title: "時計", desc: "現在時刻を大きく表示。24時間/12時間切り替え、秒表示・日付表示のオン/オフが可能" },
-                        { icon: "⏱", title: "ストップウォッチ", desc: "スタート・ストップ・ラップ記録・リセット機能付き。ラップタイムを一覧表示" },
-                      ].map(({ icon, title, desc }) => (
+                        { Icon: ClockIcon,      title: "時計",            desc: "現在時刻を大きく表示。24時間/12時間切り替え、秒表示・日付表示のオン/オフが可能" },
+                        { Icon: ArrowPathIcon,  title: "ストップウォッチ",   desc: "スタート・ストップ・ラップ記録・リセット機能付き。ラップタイムを一覧表示" },
+                        { Icon: PlayIcon,       title: "ポモドーロタイマー", desc: "25分作業/5分休憩サイクル。Brown Noise・チャイム・振動・画面点滅通知付き" },
+                      ].map(({ Icon, title, desc }) => (
                         <div key={title} className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
-                          <div className="font-semibold text-theme-primary mb-1">{icon} {title}</div>
+                          <div className="font-semibold text-theme-primary mb-1 flex items-center gap-1.5"><Icon className="w-4 h-4 text-theme-help-icon flex-shrink-0" />{title}</div>
                           <div className="text-theme-secondary text-xs">{desc}</div>
                         </div>
                       ))}
@@ -3551,13 +3556,13 @@ export default function Home() {
                     </h4>
                     <div className="grid sm:grid-cols-2 gap-3 text-sm">
                       {[
-                        { icon: "🎤", title: "音声録音", desc: "Web Speech APIによるリアルタイム文字起こし。複数グループで管理可能" },
-                        { icon: "✨", title: "AI整理", desc: "録音テキストを読みやすい文章に自動整形。冗長な部分を削除し構造化" },
-                        { icon: "📋", title: "AI要約", desc: "要点・アクションアイテム・キーワードを自動抽出してコンパクトに表示" },
-                        { icon: "📎", title: "コピー＆共有", desc: "整理・要約したテキストをワンクリックでクリップボードにコピー" },
-                      ].map(({ icon, title, desc }) => (
+                        { Icon: MicrophoneIcon,      title: "音声録音",    desc: "Web Speech APIによるリアルタイム文字起こし。複数グループで管理可能" },
+                        { Icon: SparklesIcon,        title: "AI整理",     desc: "録音テキストを読みやすい文章に自動整形。冗長な部分を削除し構造化" },
+                        { Icon: DocumentTextIcon,    title: "AI要約",     desc: "要点・アクションアイテム・キーワードを自動抽出してコンパクトに表示" },
+                        { Icon: DocumentDuplicateIcon, title: "コピー＆共有", desc: "整理・要約したテキストをワンクリックでクリップボードにコピー" },
+                      ].map(({ Icon, title, desc }) => (
                         <div key={title} className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
-                          <div className="font-semibold text-theme-primary mb-1">{icon} {title}</div>
+                          <div className="font-semibold text-theme-primary mb-1 flex items-center gap-1.5"><Icon className="w-4 h-4 text-theme-help-icon flex-shrink-0" />{title}</div>
                           <div className="text-theme-secondary text-xs">{desc}</div>
                         </div>
                       ))}
