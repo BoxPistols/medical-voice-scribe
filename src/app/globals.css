@@ -17,11 +17,7 @@
   --accent-success: #14b8a6;
 
   /* Modal and Help screen colors */
-  --modal-header-bg: linear-gradient(
-    135deg,
-    rgba(15, 140, 125, 0.85) 0%,
-    rgba(12, 115, 105, 0.85) 100%
-  );
+  --modal-header-bg: linear-gradient(135deg, #48e1d0b3 0%, #40d9cca6 100%);
   --modal-footer-bg: rgba(249, 250, 251, 0.5);
   --modal-card-bg: #f9fafb;
   --help-number-bg: #14b8a6;
@@ -113,11 +109,7 @@
   --accent-success: #34d399;
 
   /* Modal and Help screen colors - Dark Mode */
-  --modal-header-bg: linear-gradient(
-    135deg,
-    rgba(20, 184, 166, 0.7) 0%,
-    rgba(13, 148, 136, 0.65) 100%
-  );
+  --modal-header-bg: linear-gradient(135deg, #1cbdabf7 0%, #17dbcaf2 100%);
   --modal-footer-bg: rgba(30, 41, 59, 0.3);
   --modal-card-bg: rgba(51, 65, 85, 0.5);
   --help-number-bg: #14b8a6;
@@ -977,6 +969,30 @@ body::after {
   max-width: 1600px;
   margin: 0 auto;
   padding: 0 1rem;
+}
+
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pomodoro screen flash animation */
+@keyframes pomodoro-flash {
+  0%   { opacity: 0; }
+  8%   { opacity: 0.88; }
+  20%  { opacity: 0; }
+  35%  { opacity: 0.88; }
+  48%  { opacity: 0; }
+  63%  { opacity: 0.88; }
+  76%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+.animate-pomodoro-flash {
+  animation: pomodoro-flash 1.3s ease-in-out forwards;
 }
 
 /* ============================================

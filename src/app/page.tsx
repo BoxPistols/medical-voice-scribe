@@ -398,6 +398,7 @@ export default function Home() {
 
   // Help modal state
   const [showHelp, setShowHelp] = useState(false);
+  const [helpTab, setHelpTab] = useState<AppMode>("medical");
   const [showOnboardingVideo, setShowOnboardingVideo] = useState(false);
 
   // Theme and settings state
@@ -1548,11 +1549,13 @@ export default function Home() {
       {/* Minimal header - sticky */}
       <header className="app-header flex-shrink-0">
         <div className="max-w-[1600px] mx-auto px-3 md:px-6 lg:px-8">
-          <div className="relative flex items-center justify-between h-12 md:h-14">
+          {/* Mobile horizontal scroll wrapper */}
+          <div className="overflow-x-auto md:overflow-visible scrollbar-none">
+          <div className="relative flex items-center gap-2 md:gap-0 md:justify-between h-12 md:h-14 min-w-max md:min-w-0">
             {/* Branding + Clock */}
-            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-shrink min-w-0">
+            <div className="flex items-center gap-2 md:gap-3 md:min-w-0 md:flex-shrink">
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 items-center justify-center shadow-sm flex-shrink-0">
+                <div className="flex w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 items-center justify-center shadow-sm flex-shrink-0">
                   <MicrophoneIcon
                     className="w-4 h-4 md:w-5 md:h-5 text-white"
                     strokeWidth={2.5}
@@ -1573,7 +1576,7 @@ export default function Home() {
               {mounted && showClock && (
                 <div className="flex items-center gap-2 lg:flex-col lg:items-center flex-shrink-0">
                   <time
-                    className="text-sm md:text-base lg:text-xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
+                    className="text-lg lg:text-xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
                     dateTime={currentTime.toISOString()}
                     aria-label="現在時刻"
                     suppressHydrationWarning
@@ -1682,7 +1685,7 @@ export default function Home() {
 
                 {/* Help button */}
                 <button
-                  onClick={() => setShowHelp(true)}
+                  onClick={() => { setHelpTab(appMode); setShowHelp(true); }}
                   className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="ヘルプを表示"
                   data-tooltip-bottom="ヘルプ"
@@ -1753,7 +1756,7 @@ export default function Home() {
               </button>
 
               <button
-                onClick={() => setShowHelp(true)}
+                onClick={() => { setHelpTab(appMode); setShowHelp(true); }}
                 className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="ヘルプ"
                 data-tooltip-bottom="ヘルプ"
@@ -1765,6 +1768,7 @@ export default function Home() {
               </button>
             </div>
           </div>
+          </div>{/* end mobile scroll wrapper */}
         </div>
       </header>
 
@@ -2722,8 +2726,10 @@ export default function Home() {
             </div>
           )}
 
-          {/* Help Modal */}
-          {showHelp && (
+          {/* Help Modal - moved to global scope below */}
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+          {/* @ts-ignore */}
+          {(false as boolean) && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
                 {/* Header */}
@@ -3012,8 +3018,10 @@ export default function Home() {
             </div>
           )}
 
-          {/* Onboarding Video Modal */}
-          {showOnboardingVideo && (
+          {/* Onboarding Video Modal - moved to global scope below */}
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+          {/* @ts-ignore */}
+          {(false as boolean) && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
               <div className="bg-[#0f172a] rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col border border-white/10 overflow-hidden">
                 {/* Header */}
@@ -3075,8 +3083,10 @@ export default function Home() {
             </div>
           )}
 
-          {/* Shortcuts Modal */}
-          {showShortcutsModal && (
+          {/* Shortcuts Modal - moved to global scope below */}
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+          {/* @ts-ignore */}
+          {(false as boolean) && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-theme-modal">
                 {/* Header */}
@@ -3307,6 +3317,461 @@ export default function Home() {
           </footer>
         </div>
         )}
+
+      {/* ============================================================
+           Global modals - available in ALL app modes
+          ============================================================ */}
+
+      {/* Help Modal */}
+      {showHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
+          <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg bg-white/20">
+                  <QuestionMarkCircleIcon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white">使い方ガイド</h3>
+              </div>
+              <button
+                onClick={() => setShowHelp(false)}
+                className="text-white/60 hover:text-white transition-colors"
+                aria-label="ヘルプを閉じる"
+                data-tooltip-bottom="閉じる"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Mode Tabs */}
+            <div className="flex border-b border-white/10 bg-theme-modal-header px-4">
+              {(["medical", "clock", "voice"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setHelpTab(tab)}
+                  className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                    helpTab === tab
+                      ? "border-teal-400 text-white"
+                      : "border-transparent text-white/50 hover:text-white/80"
+                  }`}
+                >
+                  {tab === "medical" ? "🏥 医療カルテ" : tab === "clock" ? "🕐 時計" : "🎤 音声メモ"}
+                </button>
+              ))}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 bg-theme-modal-content">
+
+              {/* ── 医療カルテ tab ── */}
+              {helpTab === "medical" && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-2 flex items-center gap-2">
+                      <InformationCircleIcon className="w-5 h-5 text-theme-help-icon" />
+                      このアプリについて
+                    </h4>
+                    <p className="text-sm text-theme-secondary leading-relaxed">
+                      Medical Voice Scribeは、音声による医療問診を自動的にSOAPカルテ形式に変換するデモアプリケーションです。
+                      医療現場での記録業務の効率化を目的としています。
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <ClipboardDocumentIcon className="w-5 h-5 text-theme-help-icon" />
+                      基本的な使い方
+                    </h4>
+                    <ol className="space-y-3 text-sm text-theme-secondary">
+                      {[
+                        { n: 1, strong: "録音ボタンをクリック", rest: "して、音声入力を開始します。マイクの使用許可を求められた場合は許可してください。" },
+                        { n: 2, strong: null, rest: "医師と患者の会話を自然に話します。問診内容、症状、診察結果などを含めてください。" },
+                        { n: 3, strong: "停止ボタン", pre: "録音が完了したら", rest: "をクリックし、テキスト化された内容を確認します。" },
+                        { n: 4, strong: "「SOAP生成」ボタン", pre: "必要に応じてテキストを編集し、", rest: "をクリックします。" },
+                        { n: 5, strong: "SOAP形式のカルテ", pre: "AIが自動的に", rest: "を生成します。" },
+                      ].map(({ n, strong, pre, rest }) => (
+                        <li key={n} className="flex gap-3">
+                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">{n}</span>
+                          <div>{pre}{strong && <span className="font-semibold">{strong}</span>}{!pre && !strong ? rest : rest}</div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <PuzzlePieceIcon className="w-5 h-5 text-theme-help-icon" />
+                      主な機能
+                    </h4>
+                    <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                      {[
+                        { icon: "🎤", title: "音声入力", desc: "ブラウザの音声認識機能を使用してリアルタイムに文字起こし" },
+                        { icon: "🤖", title: "AI生成", desc: "OpenAI GPT-4oを使用したSOAPカルテの自動生成" },
+                        { icon: "🔊", title: "読み上げ", desc: "生成されたカルテをシステム音声で読み上げ（速度・音声調整可能）" },
+                        { icon: "💾", title: "保存・共有", desc: "JSON/CSV形式でエクスポート、インポートが可能" },
+                      ].map(({ icon, title, desc }) => (
+                        <div key={title} className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
+                          <div className="font-semibold text-theme-primary mb-1">{icon} {title}</div>
+                          <div className="text-theme-secondary text-xs">{desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <DocumentTextIcon className="w-5 h-5 text-theme-help-icon" />
+                      SOAP形式とは
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      {[
+                        { letter: "S", label: "Subjective（主観的情報）", desc: "患者が訴える症状や感じていること", color: "var(--soap-s)" },
+                        { letter: "O", label: "Objective（客観的情報）", desc: "測定可能な検査結果やバイタルサイン", color: "var(--soap-o)" },
+                        { letter: "A", label: "Assessment（評価）", desc: "診断名や臨床的な評価・判断", color: "var(--soap-a)" },
+                        { letter: "P", label: "Plan（計画）", desc: "治療方針、処方、追加検査、フォローアップ", color: "var(--soap-p)" },
+                      ].map(({ letter, label, desc, color }) => (
+                        <div key={letter} className="flex gap-3">
+                          <div className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold" style={{ background: color }}>{letter}</div>
+                          <div>
+                            <span className="font-semibold text-theme-primary">{label}</span>
+                            <p className="text-theme-secondary text-xs mt-0.5">{desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-theme-warning border border-theme-warning rounded-lg p-4">
+                    <h4 className="text-sm font-bold text-theme-warning mb-2 flex items-center gap-2">
+                      <ExclamationTriangleIcon className="w-5 h-5" />重要な注意事項
+                    </h4>
+                    <ul className="space-y-1 text-xs text-theme-warning">
+                      <li className="flex gap-2"><span>•</span><span>このアプリは<strong>デモンストレーション用途</strong>です。実際の臨床現場での使用は想定していません。</span></li>
+                      <li className="flex gap-2"><span>•</span><span>生成されたカルテ内容は必ず<strong>医療従事者が確認・修正</strong>してください。</span></li>
+                      <li className="flex gap-2"><span>•</span><span>個人情報や機密情報を含むデータの入力は<strong>避けてください</strong>。</span></li>
+                      <li className="flex gap-2"><span>•</span><span>音声認識の精度はブラウザやマイクの品質に依存します。</span></li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* ── 時計 tab ── */}
+              {helpTab === "clock" && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-2 flex items-center gap-2">
+                      <InformationCircleIcon className="w-5 h-5 text-theme-help-icon" />
+                      時計モードについて
+                    </h4>
+                    <p className="text-sm text-theme-secondary leading-relaxed">
+                      フルスクリーンで現在時刻とストップウォッチを表示します。診察室や待合室の大型ディスプレイでの利用を想定しています。
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <PuzzlePieceIcon className="w-5 h-5 text-theme-help-icon" />
+                      主な機能
+                    </h4>
+                    <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                      {[
+                        { icon: "🕐", title: "時計", desc: "現在時刻を大きく表示。24時間/12時間切り替え、秒表示・日付表示のオン/オフが可能" },
+                        { icon: "⏱", title: "ストップウォッチ", desc: "スタート・ストップ・ラップ記録・リセット機能付き。ラップタイムを一覧表示" },
+                      ].map(({ icon, title, desc }) => (
+                        <div key={title} className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
+                          <div className="font-semibold text-theme-primary mb-1">{icon} {title}</div>
+                          <div className="text-theme-secondary text-xs">{desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <ClipboardDocumentIcon className="w-5 h-5 text-theme-help-icon" />
+                      使い方
+                    </h4>
+                    <ol className="space-y-3 text-sm text-theme-secondary">
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                        <div>ヘッダーの<span className="font-semibold">「時計」タブ</span>をクリックして時計モードに切り替えます。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                        <div>画面上部のボタンで<span className="font-semibold">「時計」と「ストップウォッチ」</span>を切り替えられます。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                        <div>時計モードでは画面下部の<span className="font-semibold">チェックボックス</span>で24時間表示・秒・日付をカスタマイズできます。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                        <div>ストップウォッチは<span className="font-semibold">「スタート」→「ストップ」→「リセット」</span>で操作します。走行中に「ラップ」ボタンで区間タイムを記録できます。</div>
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* ── 音声メモ tab ── */}
+              {helpTab === "voice" && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-2 flex items-center gap-2">
+                      <InformationCircleIcon className="w-5 h-5 text-theme-help-icon" />
+                      音声メモモードについて
+                    </h4>
+                    <p className="text-sm text-theme-secondary leading-relaxed">
+                      音声を録音してテキスト化し、AIで整理・要約できる汎用音声メモツールです。会議・講義・ブレインストーミングなど幅広い用途に利用できます。
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <ClipboardDocumentIcon className="w-5 h-5 text-theme-help-icon" />
+                      使い方
+                    </h4>
+                    <ol className="space-y-3 text-sm text-theme-secondary">
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                        <div><span className="font-semibold">「録音」ボタン</span>をクリックして音声入力を開始します。初回はマイクのアクセス許可が必要です。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                        <div>録音が完了したら停止ボタンをクリック。<span className="font-semibold">テキストが自動でグループに保存</span>されます。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                        <div><span className="font-semibold">「AI整理」</span>でテキストを読みやすく整形、<span className="font-semibold">「AI要約」</span>で要点・アクションアイテムを抽出します。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                        <div>「<span className="font-semibold">+新しいグループ</span>」で追加録音し、複数グループを分けて管理できます。</div>
+                      </li>
+                    </ol>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <PuzzlePieceIcon className="w-5 h-5 text-theme-help-icon" />
+                      主な機能
+                    </h4>
+                    <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                      {[
+                        { icon: "🎤", title: "音声録音", desc: "Web Speech APIによるリアルタイム文字起こし。複数グループで管理可能" },
+                        { icon: "✨", title: "AI整理", desc: "録音テキストを読みやすい文章に自動整形。冗長な部分を削除し構造化" },
+                        { icon: "📋", title: "AI要約", desc: "要点・アクションアイテム・キーワードを自動抽出してコンパクトに表示" },
+                        { icon: "📎", title: "コピー＆共有", desc: "整理・要約したテキストをワンクリックでクリップボードにコピー" },
+                      ].map(({ icon, title, desc }) => (
+                        <div key={title} className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
+                          <div className="font-semibold text-theme-primary mb-1">{icon} {title}</div>
+                          <div className="text-theme-secondary text-xs">{desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-theme-soft bg-theme-modal-footer flex justify-between items-center rounded-b-2xl">
+              {helpTab === "medical" && appMode === "medical" && (
+                <button
+                  onClick={() => { setShowHelp(false); setShowOnboardingVideo(true); }}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-secondary hover:text-theme-primary transition-colors border border-theme-border rounded-lg hover:bg-theme-card"
+                >
+                  <PlayIcon className="w-4 h-4" />
+                  デモ動画を見る
+                </button>
+              )}
+              <button
+                onClick={() => setShowHelp(false)}
+                className="ml-auto px-5 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors whitespace-nowrap"
+                style={{ background: "var(--gradient-primary)" }}
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Video Modal */}
+      {showOnboardingVideo && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-[#0f172a] rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col border border-white/10 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center">
+                  <PlayIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">製品デモ動画</h3>
+                  <p className="text-xs text-slate-400">Medical Scribe Flow の使い方</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowOnboardingVideo(false); setShowHelp(true); setHelpTab("medical"); }}
+                className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+                aria-label="動画を閉じる"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="relative aspect-video bg-black">
+              <video
+                src="/video.mp4"
+                className="w-full h-full"
+                controls
+                onEnded={() => { setShowOnboardingVideo(false); setShowHelp(true); setHelpTab("medical"); }}
+              />
+            </div>
+            <div className="px-6 py-4 bg-white/5 flex justify-between items-center">
+              <p className="text-xs text-slate-500">※ 音声が流れますのでご注意ください</p>
+              <button
+                onClick={() => { setShowOnboardingVideo(false); setShowHelp(true); setHelpTab("medical"); }}
+                className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-teal-900/20"
+              >
+                はじめる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shortcuts Modal */}
+      {showShortcutsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
+          <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-theme-modal">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                  <KeyboardIcon className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">ショートカット設定</h3>
+                  <p className="text-xs text-white/70">クリックしてキー割り当てを変更できます</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowShortcutsModal(false); setEditingShortcutId(null); }}
+                className="text-white/60 hover:text-white transition-colors"
+                aria-label="閉じる"
+                data-tooltip-bottom="閉じる"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-0 bg-theme-modal-content">
+              {/* Mode Toggle */}
+              <div className="px-6 py-4 border-b border-theme-soft bg-theme-modal-content-alt">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-theme-primary">修飾キーショートカットを使用</div>
+                    <div className="text-xs text-theme-secondary mt-0.5">
+                      オンにすると、テキスト入力中でも{" "}
+                      <span className="font-mono bg-theme-highlight px-1 rounded">Cmd+R</span>{" "}
+                      などで操作できます
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleUseModifiersChange(!useModifiers)}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${useModifiers ? "bg-teal-600" : "bg-gray-200 dark:bg-gray-700"}`}
+                    role="switch"
+                    aria-checked={useModifiers}
+                    aria-label="修飾キーショートカットを使用"
+                  >
+                    <span aria-hidden="true" className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${useModifiers ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Clock Toggle */}
+              <div className="px-6 py-4 border-b border-theme-soft bg-theme-modal-content-alt">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-theme-primary">時計を表示</div>
+                    <div className="text-xs text-theme-secondary mt-0.5">ヘッダーに現在時刻と録音経過時間を表示します</div>
+                  </div>
+                  <button
+                    onClick={() => setShowClock(!showClock)}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${showClock ? "bg-teal-600" : "bg-gray-200 dark:bg-gray-700"}`}
+                    role="switch"
+                    aria-checked={showClock}
+                    aria-label="時計を表示"
+                  >
+                    <span aria-hidden="true" className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showClock ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="divide-y divide-theme-soft">
+                {SHORTCUT_GROUPS.map((group) => {
+                  const groupShortcuts = SHORTCUT_DEFS.filter((def) => def.group === group.id);
+                  if (groupShortcuts.length === 0) return null;
+                  return (
+                    <div key={group.id}>
+                      <div className="px-6 py-2 bg-theme-card sticky top-0">
+                        <span className="text-xs font-semibold text-theme-accent uppercase tracking-wider">{group.label}</span>
+                      </div>
+                      {groupShortcuts.map((def) => {
+                        const isEditing = editingShortcutId === def.id;
+                        const current = shortcuts[def.id] || def.default;
+                        const platformDefault = getPlatformDefaultShortcuts(useModifiers)[def.id];
+                        return (
+                          <div
+                            key={def.id}
+                            className={`flex items-center justify-between px-6 py-3 transition-colors ${isEditing ? "bg-theme-highlight" : "hover:bg-theme-card"}`}
+                          >
+                            <span className="text-sm text-theme-primary pl-2">{def.label}</span>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => setEditingShortcutId(def.id)}
+                                className={`min-w-[100px] px-3 py-1.5 rounded-md text-sm font-mono border transition-all ${
+                                  isEditing
+                                    ? "bg-theme-surface border-teal-500 text-theme-accent ring-2 ring-teal-500/20"
+                                    : "bg-theme-surface border-theme-light text-theme-primary hover:border-theme-accent"
+                                }`}
+                              >
+                                {isEditing ? "キーを入力..." : formatShortcut(current)}
+                              </button>
+                              {JSON.stringify(current) !== JSON.stringify(platformDefault) && (
+                                <button
+                                  onClick={() => handleShortcutChange(def.id, platformDefault)}
+                                  className="p-1.5 text-theme-tertiary hover:text-red-500 transition-colors"
+                                  title="デフォルトに戻す"
+                                >
+                                  <ArrowLeftIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-theme-soft bg-theme-modal-footer flex justify-between items-center">
+              <button
+                onClick={handleResetSettings}
+                className="text-xs text-theme-tertiary hover:text-red-500 flex items-center gap-1 transition-colors"
+              >
+                <TrashIcon className="w-4 h-4" />
+                設定をリセット
+              </button>
+              <button
+                onClick={() => { setShowShortcutsModal(false); setEditingShortcutId(null); }}
+                className="px-5 py-2 text-sm font-medium text-white bg-theme-primary rounded-md hover:opacity-90 transition-opacity"
+              >
+                完了
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </main>
 
       {/* Hidden file input for import */}
