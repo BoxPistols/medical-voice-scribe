@@ -67,10 +67,10 @@ test.describe('Theme Toggle', () => {
     const themeButton = page.getByRole('button', { name: /テーマ/ })
     await themeButton.click()
 
-    // Wait for theme attribute to change
+    // Wait for theme change by asserting DOM state (not timeout)
     await expect(async () => {
-      const currentTheme = await html.getAttribute('data-theme')
-      expect(currentTheme).not.toBe(initialTheme)
+      const newTheme = await html.getAttribute('data-theme')
+      expect(newTheme).not.toBe(initialTheme)
     }).toPass()
   })
 })
@@ -80,30 +80,23 @@ test.describe('Model Selection', () => {
     await page.goto('/')
   })
 
-  test('should have model selector button', async ({ page }) => {
-    const modelButton = page.getByRole('button', { name: 'AIモデル選択' })
-    await expect(modelButton).toBeVisible()
+  test('should have model selector', async ({ page }) => {
+    const modelSelector = page.locator('select[aria-label="AIモデル選択"]')
+    await expect(modelSelector).toBeVisible()
   })
 
-  test('should be able to change model via dropdown', async ({ page }) => {
-    // Open the model dropdown
-    const modelButton = page.getByRole('button', { name: 'AIモデル選択' })
-    const initialText = await modelButton.textContent()
-    await modelButton.click()
+  test('should be able to change model', async ({ page }) => {
+    const modelSelector = page.locator('select[aria-label="AIモデル選択"]').first()
 
-    // Wait for the listbox to appear
-    const listbox = page.getByRole('listbox', { name: 'AIモデル一覧' })
-    await expect(listbox).toBeVisible()
+    // Get initial value
+    const initialValue = await modelSelector.inputValue()
 
-    // Click a different model option
-    const options = listbox.getByRole('option')
-    const secondOption = options.nth(1)
-    await secondOption.click()
+    // Select a different model by value
+    await modelSelector.selectOption('gpt-4.1-mini')
 
-    // Dropdown should close and button text should change
-    await expect(listbox).not.toBeVisible()
-    const newText = await modelButton.textContent()
-    expect(newText).not.toBe(initialText)
+    // Verify selection changed to specific value
+    await expect(modelSelector).toHaveValue('gpt-4.1-mini')
+    expect(initialValue).not.toBe('gpt-4.1-mini')
   })
 })
 
@@ -115,9 +108,8 @@ test.describe('Responsive Design', () => {
     // Header should be visible
     await expect(page.locator('header')).toBeVisible()
 
-    // Mobile-specific: Should show compact branding
-    // On mobile, the title might be shorter or hidden
-    await expect(page.locator('header')).toContainText(/Voice|Medical/)
+    // Mobile-specific: header should still contain interactive elements
+    await expect(page.getByRole('button', { name: /録音/ })).toBeVisible()
   })
 
   test('should display desktop layout on large screens', async ({ page }) => {

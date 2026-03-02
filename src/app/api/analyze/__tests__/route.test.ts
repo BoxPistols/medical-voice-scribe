@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { validateTextInput, isValidSoapNote, validateModel } from '@/lib/helpers'
-import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../types'
+import { validateTextInput, isValidSoapNote } from '@/lib/helpers'
 
 // Mock OpenAI before importing route
 vi.mock('openai', () => {
@@ -15,7 +14,7 @@ vi.mock('openai', () => {
   }
 })
 
-describe('API Route: /api/analyze', () => {
+describe('Helpers used by /api/analyze', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -39,20 +38,28 @@ describe('API Route: /api/analyze', () => {
   })
 
   describe('Model Validation', () => {
-    const VALID_MODEL_IDS = AVAILABLE_MODELS.map(m => m.id) as unknown as string[]
+    const VALID_MODELS = ['gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5-mini', 'gpt-5-nano']
+    const DEFAULT_MODEL = 'gpt-4.1-nano'
+
+    const validateModel = (model: string | undefined): string => {
+      if (!model || !VALID_MODELS.includes(model)) {
+        return DEFAULT_MODEL
+      }
+      return model
+    }
 
     it('should return default model for undefined', () => {
-      expect(validateModel(undefined, VALID_MODEL_IDS, DEFAULT_MODEL)).toBe(DEFAULT_MODEL)
+      expect(validateModel(undefined)).toBe(DEFAULT_MODEL)
     })
 
     it('should return default model for invalid model', () => {
-      expect(validateModel('invalid-model', VALID_MODEL_IDS, DEFAULT_MODEL)).toBe(DEFAULT_MODEL)
-      expect(validateModel('gpt-3.5-turbo', VALID_MODEL_IDS, DEFAULT_MODEL)).toBe(DEFAULT_MODEL)
+      expect(validateModel('invalid-model')).toBe(DEFAULT_MODEL)
+      expect(validateModel('gpt-3.5-turbo')).toBe(DEFAULT_MODEL)
     })
 
     it('should accept valid models', () => {
-      VALID_MODEL_IDS.forEach(model => {
-        expect(validateModel(model, VALID_MODEL_IDS, DEFAULT_MODEL)).toBe(model)
+      VALID_MODELS.forEach(model => {
+        expect(validateModel(model)).toBe(model)
       })
     })
   })

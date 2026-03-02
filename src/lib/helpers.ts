@@ -20,9 +20,7 @@ export const escapeCsvCell = (value: unknown): string => {
 };
 
 /**
- * Detect if running on Mac/iOS platform.
- * Uses navigator.platform (deprecated but widely supported) with
- * navigator.userAgent fallback for cross-browser compatibility.
+ * Detect if running on Mac/iOS platform
  */
 export const isMacPlatform = (): boolean => {
   if (typeof navigator === "undefined") return false;
@@ -58,7 +56,7 @@ export const formatShortcut = (
   const parts: string[] = [];
 
   if (shortcut.meta) parts.push(isMac ? "Cmd" : "Win");
-  if (shortcut.ctrl) parts.push(isMac ? "Cmd" : "Ctrl");
+  if (shortcut.ctrl) parts.push("Ctrl");
   if (shortcut.alt) parts.push(isMac ? "Opt" : "Alt");
   if (shortcut.shift) parts.push("Shift");
 
@@ -104,21 +102,6 @@ export const validateTextInput = (text: string | undefined): { valid: boolean; e
     return { valid: false, error: 'テキストがありません' };
   }
   return { valid: true };
-};
-
-/**
- * Validate and normalize model ID
- * Returns the model if valid, otherwise returns the default model
- */
-export const validateModel = (
-  model: string | undefined,
-  validModels: readonly string[],
-  defaultModel: string
-): string => {
-  if (!model || !validModels.includes(model)) {
-    return defaultModel;
-  }
-  return model;
 };
 
 /**

@@ -15,6 +15,7 @@ import {
   PauseIcon,
   StopIcon,
   Cog6ToothIcon,
+  QuestionMarkCircleIcon,
   XMarkIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -34,9 +35,26 @@ import {
   ComputerDesktopIcon,
   DocumentIcon,
   DocumentChartBarIcon,
+  ClockIcon,
+  ArrowPathIcon,
+  CpuChipIcon,
+  CloudArrowDownIcon,
 } from "@heroicons/react/24/outline";
 import { StopIcon as StopIconSolid } from "@heroicons/react/24/solid";
 import ChatSupportWidget from "./components/ChatSupportWidget";
+import StatusBadge from "./components/StatusBadge";
+import ErrorAlert from "./components/ErrorAlert";
+import EmptyState from "./components/EmptyState";
+import AnalysisProgress from "./components/AnalysisProgress";
+import SummaryCard from "./components/SummaryCard";
+import PatientInfoCard from "./components/PatientInfoCard";
+import SOAPSectionWrapper from "./components/SOAPSectionWrapper";
+import { formatElapsedTime as formatElapsedTimeHelper, buildSpeechText, getVoiceForLanguage } from "@/lib/audioHelpers";
+import { buildCsvContent, validateImportFile, validateImportData } from "@/lib/fileHelpers";
+import { cycleTheme, getLayoutPresetWidth, buildCopySectionS, buildCopySectionO, buildCopySectionA, buildCopySectionP } from "@/lib/uiHelpers";
+import ModeSwitcher, { type AppMode } from "./components/ModeSwitcher";
+import ClockMode from "./components/ClockMode";
+import VoiceRecorderMode from "./components/VoiceRecorderMode";
 
 // Custom Keyboard Icon Component
 const KeyboardIcon = ({ className }: { className?: string }) => (
@@ -50,18 +68,6 @@ const KeyboardIcon = ({ className }: { className?: string }) => (
   >
     <rect x="2" y="6" width="20" height="12" rx="2" />
     <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M18 12h.01M10 12h.01M14 12h.01M8 15h8" />
-  </svg>
-);
-
-// Custom Help Outline Icon Component
-const HelpOutlineIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    aria-hidden="true"
-  >
-    <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z" />
   </svg>
 );
 
@@ -111,6 +117,14 @@ const SHORTCUT_GROUPS: { id: ShortcutGroup; label: string }[] = [
   { id: "layout", label: "レイアウト" },
   { id: "other", label: "その他" },
 ];
+
+// Tooltip positioning constants
+const TOOLTIP_EDGE_PADDING = 60;
+const TOOLTIP_VERTICAL_OFFSET = 8;
+const TOOLTIP_ESTIMATED_HEIGHT = 32;
+
+// Estimated JSON size for streaming progress calculation (typically 2000-4000 chars)
+const ESTIMATED_RESPONSE_SIZE = 3000;
 
 const SHORTCUT_DEFS: ShortcutDef[] = [
   {
@@ -202,6 +216,8 @@ interface SpeechRecognitionInstance {
   interimResults: boolean;
   lang: string;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
   start: () => void;
   stop: () => void;
 }
@@ -227,40 +243,37 @@ const isMacPlatform = (): boolean => {
 
 // Helper to get platform-specific defaults
 const getPlatformDefaultShortcuts = (
-  useModifiers: boolean = false,
+  useModifiers: boolean = false
 ): Record<ActionId, ShortcutKey> => {
   const isMac = isMacPlatform();
 
-  return SHORTCUT_DEFS.reduce(
-    (acc, def) => {
-      // If useModifiers is true and a modifierDefault exists, use it. Otherwise use default.
-      const sourceKey =
-        useModifiers && def.modifierDefault ? def.modifierDefault : def.default;
-      const key = { ...sourceKey };
+  return SHORTCUT_DEFS.reduce((acc, def) => {
+    // If useModifiers is true and a modifierDefault exists, use it. Otherwise use default.
+    const sourceKey =
+      useModifiers && def.modifierDefault ? def.modifierDefault : def.default;
+    const key = { ...sourceKey };
 
-      // Swap Ctrl for Meta on Mac for actions defined with Ctrl
-      if (isMac && key.ctrl) {
-        key.ctrl = false;
-        key.meta = true;
-      }
-      return { ...acc, [def.id]: key };
-    },
-    {} as Record<ActionId, ShortcutKey>,
-  );
+    // Swap Ctrl for Meta on Mac for actions defined with Ctrl
+    if (isMac && key.ctrl) {
+      key.ctrl = false;
+      key.meta = true;
+    }
+    return { ...acc, [def.id]: key };
+  }, {} as Record<ActionId, ShortcutKey>);
 };
 
 // Shortcut helper
 const formatShortcut = (
   shortcut: ShortcutKey | undefined,
-  compact: boolean = false,
+  compact: boolean = false
 ): string => {
   if (!shortcut) return "-";
 
   const isMac = isMacPlatform();
   const parts = [];
 
-  if (shortcut.meta) parts.push(isMac ? (compact ? "Cmd" : "Cmd") : "Win");
-  if (shortcut.ctrl) parts.push(isMac ? (compact ? "Cmd" : "Cmd") : "Ctrl");
+  if (shortcut.meta) parts.push(isMac ? "Cmd" : "Win");
+  if (shortcut.ctrl) parts.push("Ctrl");
   if (shortcut.alt) parts.push(isMac ? "Opt" : "Alt");
   if (shortcut.shift) parts.push("Shift");
 
@@ -271,7 +284,77 @@ const formatShortcut = (
   return compact ? parts.join("+") : parts.join(" + ");
 };
 
+// Sample medical interview texts for quick insertion
+const SAMPLE_INTERVIEWS = [
+  {
+    id: "naika",
+    label: "内科（頭痛・倦怠感）",
+    description: "一般的な頭痛の問診例",
+    text: `医師: 今日はどうされましたか？
+患者: ここ1週間くらい、頭痛がひどくて来ました。
+医師: 頭痛はどのあたりが痛みますか？
+患者: こめかみの両側がズキズキする感じです。
+医師: 痛みの程度はどのくらいですか？10段階で言うとどのくらいでしょう。
+患者: 6か7くらいです。ひどいときは仕事に集中できないくらいです。
+医師: 吐き気やめまいはありますか？
+患者: 吐き気は少しあります。めまいはないです。
+医師: 最近、生活で何か変わったことはありますか？
+患者: 仕事が忙しくて、睡眠時間が4〜5時間くらいになっています。デスクワークも増えました。
+医師: 肩こりや眼精疲労はありますか？
+患者: はい、肩こりがひどいです。目も疲れやすくなりました。
+医師: これまでに大きな病気をされたことはありますか？
+患者: 特にないです。
+医師: アレルギーや常用しているお薬はありますか？
+患者: ありません。市販の頭痛薬を飲むことはあります。`,
+  },
+  {
+    id: "seikei",
+    label: "整形外科（腰痛）",
+    description: "急性腰痛の問診例",
+    text: `医師: どうされましたか？
+患者: 3日前に重い荷物を持ち上げたときに腰をやってしまいまして。
+医師: 痛みはどのあたりですか？
+患者: 右側の腰から少しお尻の方にかけてです。
+医師: しびれはありますか？
+患者: 右のお尻から太ももの裏にかけて、少ししびれる感じがあります。
+医師: どういう姿勢で痛みが強くなりますか？
+患者: 前かがみになると特にひどいです。朝起き上がるのも辛いです。
+医師: お仕事は何をされていますか？
+患者: 倉庫で荷物の搬入作業をしています。
+医師: 以前にも腰を痛めたことはありますか？
+患者: 2年前にもぎっくり腰をやりました。そのときは1週間くらいで治りました。
+医師: 排尿や排便に問題はないですか？
+患者: それは大丈夫です。
+医師: 現在、何かお薬は飲んでいますか？
+患者: 特にないです。湿布は貼っています。`,
+  },
+  {
+    id: "shouni",
+    label: "小児科（発熱・咳）",
+    description: "保護者と医師の会話例",
+    text: `医師: 今日はどうされましたか？
+母親: 5歳の息子なんですが、昨日の夜から熱が出まして。
+医師: 今朝の体温はどのくらいでしたか？
+母親: 38度5分でした。昨晩は39度まで上がりました。
+医師: 咳や鼻水はありますか？
+母親: 咳が出ています。乾いた咳で、夜中に何度も咳き込んでいました。鼻水も少し出ています。
+医師: のどの痛みは訴えていますか？
+母親: はい、のどが痛いと言っています。食欲もあまりなくて、今朝はお粥を少し食べただけです。
+医師: 保育園や幼稚園では何か流行っていますか？
+母親: 保育園で風邪が流行っているみたいです。先週もお休みしている子が何人かいました。
+医師: 予防接種は受けていますか？
+母親: 定期接種は全部済んでいます。インフルエンザも先月受けました。
+医師: お薬のアレルギーはありますか？
+母親: 特にないです。
+医師: 水分は取れていますか？
+母親: お茶やスポーツドリンクは少しずつ飲んでいます。`,
+  },
+];
+
 export default function Home() {
+  // App mode
+  const [appMode, setAppMode] = useState<AppMode>("medical");
+
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [loading, setLoading] = useState(false);
@@ -295,7 +378,7 @@ export default function Home() {
 
   // Accordion state (Mobile)
   const [activePanel, setActivePanel] = useState<"transcript" | "result">(
-    "transcript",
+    "transcript"
   );
 
   // Text-to-speech state
@@ -309,6 +392,7 @@ export default function Home() {
 
   // Export/Import state
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showSampleMenu, setShowSampleMenu] = useState(false);
   const [showExportPreview, setShowExportPreview] = useState(false);
   const [exportPreviewData, setExportPreviewData] = useState<{
     type: "json" | "csv";
@@ -318,6 +402,8 @@ export default function Home() {
 
   // Help modal state
   const [showHelp, setShowHelp] = useState(false);
+  const [helpTab, setHelpTab] = useState<AppMode>("medical");
+  const [showOnboardingVideo, setShowOnboardingVideo] = useState(false);
 
   // Theme and settings state
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
@@ -325,25 +411,11 @@ export default function Home() {
   // Clock and timer state
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showClock, setShowClock] = useState(true);
-  const [recordingStartTime, setRecordingStartTime] = useState<Date | null>(
-    null,
-  );
+  const [recordingStartTime, setRecordingStartTime] = useState<Date | null>(null);
   const [recordingElapsed, setRecordingElapsed] = useState(0);
 
   // AI Model selection state
   const [selectedModel, setSelectedModel] = useState<ModelId>(DEFAULT_MODEL);
-  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
-  const [highlightedModelIndex, setHighlightedModelIndex] = useState(-1);
-  const modelMenuRef = useRef<HTMLDivElement>(null);
-
-  // Portal tooltip state (escapes overflow:hidden ancestors)
-  const [tooltip, setTooltip] = useState<{
-    text: string;
-    x: number;
-    y: number;
-    position: "top" | "bottom";
-  } | null>(null);
-  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Shortcuts state
   const [useModifiers, setUseModifiers] = useState(true); // Default to true (Command+R etc)
@@ -352,13 +424,13 @@ export default function Home() {
       // Initial state will be updated in useEffect
       return SHORTCUT_DEFS.reduce(
         (acc, def) => ({ ...acc, [def.id]: def.default }),
-        {} as Record<ActionId, ShortcutKey>,
+        {} as Record<ActionId, ShortcutKey>
       );
-    },
+    }
   );
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [editingShortcutId, setEditingShortcutId] = useState<ActionId | null>(
-    null,
+    null
   );
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -367,6 +439,75 @@ export default function Home() {
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sampleMenuButtonRef = useRef<HTMLDivElement>(null);
+
+  // Portal tooltip state
+  const [tooltip, setTooltip] = useState<{
+    text: string;
+    x: number;
+    y: number;
+    position: "top" | "bottom";
+  } | null>(null);
+  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hideTooltip = useCallback(() => {
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+    }
+    tooltipTimeoutRef.current = setTimeout(() => {
+      setTooltip(null);
+      tooltipTimeoutRef.current = null;
+    }, 50);
+  }, []);
+
+  // Global tooltip event delegation (Portal-based to escape overflow:hidden)
+  useEffect(() => {
+    const SELECTOR = "[data-tooltip], [data-tooltip-bottom]";
+
+    const showTooltip = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest?.(SELECTOR) as HTMLElement | null;
+      if (!target) return;
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+        tooltipTimeoutRef.current = null;
+      }
+      const preferBottom = target.hasAttribute("data-tooltip-bottom");
+      const text = target.getAttribute(preferBottom ? "data-tooltip-bottom" : "data-tooltip");
+      if (!text) return;
+      const rect = target.getBoundingClientRect();
+      const x = Math.max(TOOLTIP_EDGE_PADDING, Math.min(window.innerWidth - TOOLTIP_EDGE_PADDING, rect.left + rect.width / 2));
+
+      // Determine position with boundary clamping
+      let position: "top" | "bottom" = preferBottom ? "bottom" : "top";
+      let y: number;
+      if (position === "top" && rect.top - TOOLTIP_VERTICAL_OFFSET - TOOLTIP_ESTIMATED_HEIGHT < TOOLTIP_VERTICAL_OFFSET) {
+        position = "bottom";
+      } else if (position === "bottom" && rect.bottom + TOOLTIP_VERTICAL_OFFSET + TOOLTIP_ESTIMATED_HEIGHT > window.innerHeight - TOOLTIP_VERTICAL_OFFSET) {
+        position = "top";
+      }
+      y = position === "bottom" ? rect.bottom + TOOLTIP_VERTICAL_OFFSET : rect.top - TOOLTIP_VERTICAL_OFFSET;
+
+      setTooltip({ text, x, y, position });
+    };
+
+    const handleOut = (e: MouseEvent) => {
+      const related = e.relatedTarget as HTMLElement | null;
+      if (related?.closest?.(SELECTOR)) return;
+      hideTooltip();
+    };
+
+    const handleScroll = () => setTooltip(null);
+
+    document.addEventListener("mouseover", showTooltip, true);
+    document.addEventListener("mouseout", handleOut, true);
+    document.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mouseover", showTooltip, true);
+      document.removeEventListener("mouseout", handleOut, true);
+      document.removeEventListener("scroll", handleScroll, true);
+      if (tooltipTimeoutRef.current) clearTimeout(tooltipTimeoutRef.current);
+    };
+  }, [hideTooltip]);
 
   // Theme management - Load from localStorage
   useEffect(() => {
@@ -381,15 +522,21 @@ export default function Home() {
 
     // Load modifier setting
     const savedUseModifiers = localStorage.getItem(
-      "medical-scribe-use-modifiers",
+      "medical-scribe-use-modifiers"
     );
     if (savedUseModifiers !== null) {
       setUseModifiers(savedUseModifiers === "true");
     }
 
+    // Load app mode setting
+    const savedMode = localStorage.getItem("medical-scribe-app-mode") as AppMode | null;
+    if (savedMode && ["medical", "clock", "voice"].includes(savedMode)) {
+      setAppMode(savedMode);
+    }
+
     // Load AI model setting
     const savedModel = localStorage.getItem(
-      "medical-scribe-model",
+      "medical-scribe-model"
     ) as ModelId | null;
     if (savedModel && AVAILABLE_MODELS.some((m) => m.id === savedModel)) {
       setSelectedModel(savedModel);
@@ -406,6 +553,25 @@ export default function Home() {
     localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
 
+  // Save app mode setting & stop medical recognition when leaving medical mode
+  const isRecordingRef = useRef(isRecording);
+  isRecordingRef.current = isRecording;
+
+  useEffect(() => {
+    localStorage.setItem("medical-scribe-app-mode", appMode);
+    if (appMode !== "medical") {
+      // Stop medical mode's speech recognition so it doesn't conflict
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (isRecordingRef.current) {
+        setIsRecording(false);
+        setRecordingStartTime(null);
+        setRecordingElapsed(0);
+      }
+    }
+  }, [appMode]);
+
   // Clock update - every second
   useEffect(() => {
     const timer = setInterval(() => {
@@ -419,9 +585,7 @@ export default function Home() {
     let timer: NodeJS.Timeout | null = null;
     if (isRecording && recordingStartTime) {
       timer = setInterval(() => {
-        const elapsed = Math.floor(
-          (Date.now() - recordingStartTime.getTime()) / 1000,
-        );
+        const elapsed = Math.floor((Date.now() - recordingStartTime.getTime()) / 1000);
         setRecordingElapsed(elapsed);
       }, 1000);
     }
@@ -438,6 +602,15 @@ export default function Home() {
     }
   }, []);
 
+  // Check for first-time user to show onboarding video
+  useEffect(() => {
+    const onboardingSeen = localStorage.getItem("medical-scribe-onboarding-seen");
+    if (!onboardingSeen) {
+      localStorage.setItem("medical-scribe-onboarding-seen", "true");
+      setShowOnboardingVideo(true);
+    }
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("medical-scribe-show-clock", String(showClock));
   }, [showClock]);
@@ -449,7 +622,7 @@ export default function Home() {
 
       if (theme === "system") {
         const prefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)",
+          "(prefers-color-scheme: dark)"
         ).matches;
         if (prefersDark) {
           root.setAttribute("data-theme", "dark");
@@ -507,7 +680,7 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(
       "medical-scribe-shortcuts-v4",
-      JSON.stringify(shortcuts),
+      JSON.stringify(shortcuts)
     );
   }, [shortcuts]);
 
@@ -573,6 +746,30 @@ export default function Home() {
         }
       };
 
+      recognition.onerror = (event) => {
+        // "no-speech" and "aborted" are normal during stop/restart cycles
+        if (event.error !== "no-speech" && event.error !== "aborted") {
+          console.warn("Medical recognition error:", event.error);
+        }
+      };
+
+      recognition.onend = () => {
+        // Auto-restart if we're still supposed to be recording
+        // recognitionRef.current === recognition ensures we don't restart a stale instance
+        if (recognitionRef.current === recognition) {
+          setIsRecording((recording) => {
+            if (recording) {
+              try {
+                recognition.start();
+              } catch {
+                // already started or being disposed
+              }
+            }
+            return recording;
+          });
+        }
+      };
+
       recognitionRef.current = recognition;
     }
 
@@ -580,7 +777,7 @@ export default function Home() {
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
       const japaneseVoices = voices.filter((voice) =>
-        voice.lang.startsWith("ja"),
+        voice.lang.startsWith("ja")
       );
       setAvailableVoices(japaneseVoices);
       if (japaneseVoices.length > 0 && selectedVoiceIndex === 0) {
@@ -624,14 +821,18 @@ export default function Home() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [showHelp, showExportPreview]);
 
-  // Close export menu when clicking outside
+  // Close export menu / sample menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
       if (showExportMenu) {
-        const target = event.target as HTMLElement;
-        // Check if click is outside the export menu container
         if (!target.closest("[data-export-menu]")) {
           setShowExportMenu(false);
+        }
+      }
+      if (showSampleMenu) {
+        if (!target.closest("[data-sample-menu]")) {
+          setShowSampleMenu(false);
         }
       }
     };
@@ -640,70 +841,7 @@ export default function Home() {
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, [showExportMenu]);
-
-  // Close model menu when clicking outside
-  useEffect(() => {
-    if (!isModelMenuOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        modelMenuRef.current &&
-        !modelMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsModelMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isModelMenuOpen]);
-
-  // Portal tooltip - global event delegation to escape overflow:hidden ancestors
-  const hideTooltip = useCallback(() => {
-    tooltipTimeoutRef.current = setTimeout(() => setTooltip(null), 50);
-  }, []);
-
-  useEffect(() => {
-    const SELECTOR = "[data-tooltip], [data-tooltip-bottom]";
-
-    const showTooltip = (e: MouseEvent) => {
-      const target = (e.target as HTMLElement).closest?.(SELECTOR) as HTMLElement | null;
-      if (!target) return;
-
-      if (tooltipTimeoutRef.current) {
-        clearTimeout(tooltipTimeoutRef.current);
-        tooltipTimeoutRef.current = null;
-      }
-
-      const isBottom = target.hasAttribute("data-tooltip-bottom");
-      const text = target.getAttribute(isBottom ? "data-tooltip-bottom" : "data-tooltip");
-      if (!text) return;
-
-      const rect = target.getBoundingClientRect();
-      const x = Math.max(60, Math.min(window.innerWidth - 60, rect.left + rect.width / 2));
-      const y = isBottom ? rect.bottom + 8 : rect.top - 8;
-
-      setTooltip({ text, x, y, position: isBottom ? "bottom" : "top" });
-    };
-
-    const handleOut = (e: MouseEvent) => {
-      const related = e.relatedTarget as HTMLElement | null;
-      if (related?.closest?.(SELECTOR)) return;
-      hideTooltip();
-    };
-
-    const handleScroll = () => setTooltip(null);
-
-    document.addEventListener("mouseover", showTooltip, true);
-    document.addEventListener("mouseout", handleOut, true);
-    document.addEventListener("scroll", handleScroll, true);
-
-    return () => {
-      document.removeEventListener("mouseover", showTooltip, true);
-      document.removeEventListener("mouseout", handleOut, true);
-      document.removeEventListener("scroll", handleScroll, true);
-      if (tooltipTimeoutRef.current) clearTimeout(tooltipTimeoutRef.current);
-    };
-  }, [hideTooltip]);
+  }, [showExportMenu, showSampleMenu]);
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -729,20 +867,7 @@ export default function Home() {
   };
 
   // Format elapsed time as MM:SS or HH:MM:SS
-  const formatElapsedTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, "0")}:${minutes
-        .toString()
-        .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    }
-    return `${minutes.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
+  const formatElapsedTime = formatElapsedTimeHelper;
 
   const handleAnalyze = async () => {
     if (!transcript) return;
@@ -753,9 +878,6 @@ export default function Home() {
     setResult(null);
     setTokenUsage(null);
     setAnalysisProgress(0);
-
-    // Estimated JSON size for progress calculation (typically 2000-4000 chars)
-    const ESTIMATED_RESPONSE_SIZE = 3000;
 
     try {
       const res = await fetch("/api/analyze", {
@@ -829,7 +951,7 @@ export default function Home() {
                     const parsedResult = JSON.parse(accumulatedText);
                     if (!parsedResult.soap) {
                       setError(
-                        "AIの応答形式が不正です。もう一度お試しください。",
+                        "AIの応答形式が不正です。もう一度お試しください。"
                       );
                       setAnalysisProgress(0);
                     } else {
@@ -853,13 +975,7 @@ export default function Home() {
                   accumulatedText += data.content;
                   setStreamingText(accumulatedText);
                   // Update progress based on received data (10-95%)
-                  const progress = Math.min(
-                    95,
-                    10 +
-                      Math.floor(
-                        (accumulatedText.length / ESTIMATED_RESPONSE_SIZE) * 85,
-                      ),
-                  );
+                  const progress = Math.min(95, 10 + Math.floor((accumulatedText.length / ESTIMATED_RESPONSE_SIZE) * 85));
                   setAnalysisProgress(progress);
                 }
               } catch {
@@ -887,7 +1003,7 @@ export default function Home() {
     } catch (e) {
       console.error(e);
       setError(
-        "エラーが発生しました。APIキーとネットワーク接続を確認してください。",
+        "エラーが発生しました。APIキーとネットワーク接続を確認してください。"
       );
       setAnalysisProgress(0);
     } finally {
@@ -902,7 +1018,7 @@ export default function Home() {
     const hasContent = transcript.length > 0 || result !== null;
     if (hasContent) {
       const confirmed = window.confirm(
-        "入力内容と生成結果をすべて削除しますか？\nこの操作は取り消せません。",
+        "入力内容と生成結果をすべて削除しますか？\nこの操作は取り消せません。"
       );
       if (!confirmed) return;
     }
@@ -924,16 +1040,12 @@ export default function Home() {
   };
 
   const handleThemeCycle = () => {
-    setTheme((prev) => {
-      if (prev === "light") return "dark";
-      if (prev === "dark") return "system";
-      return "light";
-    });
+    setTheme((prev) => cycleTheme(prev));
   };
 
   const handleResetSettings = () => {
     const confirmed = window.confirm(
-      "すべての設定（テーマ・ショートカット）をリセットしますか？",
+      "すべての設定（テーマ・ショートカット）をリセットしますか？"
     );
     if (confirmed) {
       setTheme("system");
@@ -1017,59 +1129,7 @@ export default function Home() {
   const exportAsCsv = () => {
     if (!result) return;
 
-    const csvRows = [
-      ["項目", "内容"],
-      ["要約", result.summary || ""],
-      ["主訴", result.patientInfo?.chiefComplaint || ""],
-      ["期間", result.patientInfo?.duration || ""],
-      ["現病歴", result.soap.subjective?.presentIllness || ""],
-      ["症状", result.soap.subjective?.symptoms?.join(", ") || ""],
-      ["重症度", result.soap.subjective?.severity || ""],
-      ["発症", result.soap.subjective?.onset || ""],
-      [
-        "随伴症状",
-        result.soap.subjective?.associatedSymptoms?.join(", ") || "",
-      ],
-      ["既往歴", result.soap.subjective?.pastMedicalHistory || ""],
-      ["内服薬", result.soap.subjective?.medications?.join(", ") || ""],
-      ["血圧", result.soap.objective?.vitalSigns?.bloodPressure || ""],
-      ["脈拍", result.soap.objective?.vitalSigns?.pulse || ""],
-      ["体温", result.soap.objective?.vitalSigns?.temperature || ""],
-      ["呼吸数", result.soap.objective?.vitalSigns?.respiratoryRate || ""],
-      ["身体所見", result.soap.objective?.physicalExam || ""],
-      ["検査所見", result.soap.objective?.laboratoryFindings || ""],
-      ["診断名", result.soap.assessment?.diagnosis || ""],
-      ["ICD-10", result.soap.assessment?.icd10 || ""],
-      [
-        "鑑別診断",
-        result.soap.assessment?.differentialDiagnosis?.join(", ") || "",
-      ],
-      ["臨床的印象", result.soap.assessment?.clinicalImpression || ""],
-      ["治療方針", result.soap.plan?.treatment || ""],
-      [
-        "処方薬",
-        result.soap.plan?.medications
-          ?.map((m) => {
-            const parts = [
-              m?.name,
-              m?.dosage,
-              m?.frequency,
-              m?.duration,
-            ].filter((p) => p !== undefined && p !== null && p !== "");
-            return parts.join(" ");
-          })
-          .join("; ") || "",
-      ],
-      ["検査", result.soap.plan?.tests?.join(", ") || ""],
-      ["紹介", result.soap.plan?.referral || ""],
-      ["フォローアップ", result.soap.plan?.followUp || ""],
-      ["患者教育", result.soap.plan?.patientEducation || ""],
-    ];
-
-    const csvContent = csvRows
-      .map((row) => row.map(escapeCsvCell).join(","))
-      .join("\n");
-
+    const csvContent = buildCsvContent(result);
     const filename = `soap_note_${getTimestampForFilename()}.csv`;
 
     setExportPreviewData({
@@ -1100,92 +1160,22 @@ export default function Home() {
 
   const copySectionS = () => {
     if (!result) return;
-    let text = "【主観的情報 (Subjective)】\n\n";
-    if (result.soap.subjective?.presentIllness) {
-      text += `現病歴:\n${result.soap.subjective.presentIllness}\n\n`;
-    }
-    if (
-      Array.isArray(result.soap.subjective?.symptoms) &&
-      result.soap.subjective.symptoms.length > 0
-    ) {
-      text += `症状:\n${result.soap.subjective.symptoms
-        .map((s) => `• ${s}`)
-        .join("\n")}\n\n`;
-    }
-    if (result.soap.subjective?.severity) {
-      text += `重症度: ${result.soap.subjective.severity}\n\n`;
-    }
-    if (result.soap.subjective?.pastMedicalHistory) {
-      text += `既往歴:\n${result.soap.subjective.pastMedicalHistory}\n`;
-    }
-    copyToClipboard(text, "Sセクション");
+    copyToClipboard(buildCopySectionS(result), "Sセクション");
   };
 
   const copySectionO = () => {
     if (!result) return;
-    let text = "【客観的情報 (Objective)】\n\n";
-    if (result.soap.objective?.vitalSigns) {
-      text += "バイタルサイン:\n";
-      const vs = result.soap.objective.vitalSigns;
-      if (vs.bloodPressure) text += `• 血圧: ${vs.bloodPressure}\n`;
-      if (vs.pulse) text += `• 脈拍: ${vs.pulse}\n`;
-      if (vs.temperature) text += `• 体温: ${vs.temperature}\n`;
-      if (vs.respiratoryRate) text += `• 呼吸数: ${vs.respiratoryRate}\n`;
-      text += "\n";
-    }
-    if (result.soap.objective?.physicalExam) {
-      text += `身体所見:\n${result.soap.objective.physicalExam}\n`;
-    }
-    copyToClipboard(text, "Oセクション");
+    copyToClipboard(buildCopySectionO(result), "Oセクション");
   };
 
   const copySectionA = () => {
     if (!result) return;
-    let text = "【評価・診断 (Assessment)】\n\n";
-    if (result.soap.assessment?.diagnosis) {
-      text += `診断名: ${result.soap.assessment.diagnosis}\n`;
-      if (result.soap.assessment.icd10) {
-        text += `ICD-10: ${result.soap.assessment.icd10}\n`;
-      }
-      text += "\n";
-    }
-    if (
-      Array.isArray(result.soap.assessment?.differentialDiagnosis) &&
-      result.soap.assessment.differentialDiagnosis.length > 0
-    ) {
-      text += `鑑別診断:\n${result.soap.assessment.differentialDiagnosis
-        .map((d) => `• ${d}`)
-        .join("\n")}\n\n`;
-    }
-    if (result.soap.assessment?.clinicalImpression) {
-      text += `臨床的評価:\n${result.soap.assessment.clinicalImpression}\n`;
-    }
-    copyToClipboard(text, "Aセクション");
+    copyToClipboard(buildCopySectionA(result), "Aセクション");
   };
 
   const copySectionP = () => {
     if (!result) return;
-    let text = "【計画 (Plan)】\n\n";
-    if (result.soap.plan?.treatment) {
-      text += `治療方針:\n${result.soap.plan.treatment}\n\n`;
-    }
-    if (
-      Array.isArray(result.soap.plan?.medications) &&
-      result.soap.plan.medications.length > 0
-    ) {
-      text += "処方:\n";
-      result.soap.plan.medications.forEach((med, i) => {
-        text += `${i + 1}. ${med.name || ""}\n`;
-        if (med.dosage) text += `   用量: ${med.dosage}\n`;
-        if (med.frequency) text += `   頻度: ${med.frequency}\n`;
-        if (med.duration) text += `   期間: ${med.duration}\n`;
-      });
-      text += "\n";
-    }
-    if (result.soap.plan?.followUp) {
-      text += `フォローアップ:\n${result.soap.plan.followUp}\n`;
-    }
-    copyToClipboard(text, "Pセクション");
+    copyToClipboard(buildCopySectionP(result), "Pセクション");
   };
 
   const handleImportClick = () => {
@@ -1196,17 +1186,10 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // File size limit
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      setError(
-        "ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。",
-      );
-      return;
-    }
-
-    // Only accept JSON files
-    if (!file.name.endsWith(".json")) {
-      setError("JSON形式のファイルのみインポート可能です。");
+    // Validate file (size and extension)
+    const fileValidation = validateImportFile(file);
+    if (!fileValidation.valid) {
+      setError(fileValidation.error!);
       return;
     }
 
@@ -1220,36 +1203,10 @@ export default function Home() {
 
         const imported = JSON.parse(content);
 
-        // Validate that imported is an object
-        if (typeof imported !== "object" || imported === null) {
-          throw new Error("無効なJSON形式です。");
-        }
-
-        // Schema validation
-        if (!imported.soap || !imported.patientInfo) {
-          throw new Error(
-            "SOAPノート形式が正しくありません。soapまたはpatientInfoが見つかりません。",
-          );
-        }
-
-        // Validate required SOAP sections
-        if (
-          !imported.soap.subjective ||
-          !imported.soap.objective ||
-          !imported.soap.assessment ||
-          !imported.soap.plan
-        ) {
-          throw new Error("必須のSOAPセクション（S/O/A/P）が不足しています。");
-        }
-
-        // Validate that SOAP sections have the correct structure
-        if (
-          typeof imported.soap.subjective !== "object" ||
-          typeof imported.soap.objective !== "object" ||
-          typeof imported.soap.assessment !== "object" ||
-          typeof imported.soap.plan !== "object"
-        ) {
-          throw new Error("SOAPセクションの構造が正しくありません。");
+        // Validate data structure
+        const dataValidation = validateImportData(imported);
+        if (!dataValidation.valid) {
+          throw new Error(dataValidation.error);
         }
 
         setResult(imported as SoapNote);
@@ -1269,7 +1226,7 @@ export default function Home() {
         // Handle JSON syntax errors specifically
         if (err instanceof SyntaxError) {
           setError(
-            "ファイルの読み込みに失敗しました。正しいJSON形式のSOAPカルテファイルか確認してください。",
+            "ファイルの読み込みに失敗しました。正しいJSON形式のSOAPカルテファイルか確認してください。"
           );
         } else {
           setError(errorMessage);
@@ -1288,81 +1245,7 @@ export default function Home() {
   };
 
   // Text-to-speech functions
-  const extractTextFromSoap = (soapNote: SoapNote): string => {
-    let text = "";
-
-    // Summary
-    if (soapNote.summary) {
-      text += `要約。${soapNote.summary}\n\n`;
-    }
-
-    // Patient Info
-    if (soapNote.patientInfo) {
-      text += "患者情報。";
-      if (soapNote.patientInfo.chiefComplaint) {
-        text += `主訴、${soapNote.patientInfo.chiefComplaint}。`;
-      }
-      if (soapNote.patientInfo.duration) {
-        text += `期間、${soapNote.patientInfo.duration}。`;
-      }
-      text += "\n\n";
-    }
-
-    // Subjective
-    text += "S、主観的情報。";
-    if (soapNote.soap.subjective?.presentIllness) {
-      text += `現病歴、${soapNote.soap.subjective.presentIllness}。`;
-    }
-    if (soapNote.soap.subjective?.symptoms?.length > 0) {
-      text += `症状、${soapNote.soap.subjective.symptoms.join("、")}。`;
-    }
-    if (soapNote.soap.subjective?.severity) {
-      text += `重症度、${soapNote.soap.subjective.severity}。`;
-    }
-    text += "\n\n";
-
-    // Objective
-    text += "O、客観的情報。";
-    if (soapNote.soap.objective?.vitalSigns) {
-      const vs = soapNote.soap.objective.vitalSigns;
-      text += `バイタルサイン、血圧${vs.bloodPressure}、脈拍${vs.pulse}、体温${vs.temperature}、呼吸数${vs.respiratoryRate}。`;
-    }
-    if (soapNote.soap.objective?.physicalExam) {
-      text += `身体所見、${soapNote.soap.objective.physicalExam}。`;
-    }
-    text += "\n\n";
-
-    // Assessment
-    text += "A、評価・診断。";
-    if (soapNote.soap.assessment?.diagnosis) {
-      text += `診断名、${soapNote.soap.assessment.diagnosis}。`;
-    }
-    if (soapNote.soap.assessment?.differentialDiagnosis?.length > 0) {
-      text += `鑑別診断、${soapNote.soap.assessment.differentialDiagnosis.join(
-        "、",
-      )}。`;
-    }
-    text += "\n\n";
-
-    // Plan
-    text += "P、治療計画。";
-    if (soapNote.soap.plan?.treatment) {
-      text += `治療方針、${soapNote.soap.plan.treatment}。`;
-    }
-    if (soapNote.soap.plan?.medications?.length > 0) {
-      text += "処方、";
-      soapNote.soap.plan.medications.forEach((med, i) => {
-        text += `${i + 1}、${med.name}、用量${med.dosage}、用法${
-          med.frequency
-        }、期間${med.duration}。`;
-      });
-    }
-    if (soapNote.soap.plan?.followUp) {
-      text += `フォローアップ、${soapNote.soap.plan.followUp}。`;
-    }
-
-    return text;
-  };
+  const extractTextFromSoap = buildSpeechText;
 
   // Helper to play System TTS from a specific index
   const playSystemTTS = (text: string, startIndex: number = 0) => {
@@ -1457,17 +1340,7 @@ export default function Home() {
   // Layout presets
   const setLayoutPreset = (preset: "equal" | "left" | "right") => {
     setIsTransitioning(true);
-    switch (preset) {
-      case "equal":
-        setLeftWidth(50);
-        break;
-      case "left":
-        setLeftWidth(65);
-        break;
-      case "right":
-        setLeftWidth(35);
-        break;
-    }
+    setLeftWidth(getLayoutPresetWidth(preset));
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
@@ -1679,33 +1552,35 @@ export default function Home() {
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Minimal header - sticky */}
       <header className="app-header flex-shrink-0">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative flex items-center justify-between h-12 sm:h-14">
+        <div className="max-w-[1600px] mx-auto px-3 md:px-6 lg:px-8">
+          {/* Mobile horizontal scroll wrapper */}
+          <div className="overflow-x-auto md:overflow-visible scrollbar-none">
+          <div className="relative flex items-center gap-2 md:gap-0 md:justify-between h-12 md:h-14 min-w-max md:min-w-0">
             {/* Branding + Clock */}
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-shrink-0">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm flex-shrink-0">
+            <div className="flex items-center gap-2 md:gap-3 md:min-w-0 md:flex-shrink">
+              <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                <div className="flex w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 items-center justify-center shadow-sm flex-shrink-0">
                   <MicrophoneIcon
-                    className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                    className="w-4 h-4 md:w-5 md:h-5 text-white"
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />
                 </div>
-                <div className="min-w-0 hidden sm:block">
-                  <h1 className="text-sm sm:text-lg font-bold text-theme-primary leading-none truncate">
-                    Medical Voice Scribe
+                <div className="min-w-0 hidden lg:block">
+                  <h1 className="text-base font-bold text-theme-primary leading-none truncate">
+                    {appMode === "medical" ? "Medical Voice Scribe" : appMode === "clock" ? "Clock" : "Voice Memo"}
                   </h1>
-                  <p className="text-xs text-theme-secondary font-medium mt-0.5">
-                    AI音声問診・カルテ自動生成
+                  <p className="text-[11px] text-theme-secondary font-medium mt-0.5 truncate">
+                    {appMode === "medical" ? "AI音声問診・カルテ自動生成" : appMode === "clock" ? "フルスクリーン時計" : "録音・整理・要約"}
                   </p>
                 </div>
               </div>
 
-              {/* Clock and Recording Timer - next to logo */}
+              {/* Clock and Recording Timer */}
               {mounted && showClock && (
-                <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2 lg:flex-col lg:items-center flex-shrink-0">
                   <time
-                    className="text-lg sm:text-xl md:text-2xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
+                    className="text-lg lg:text-xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
                     dateTime={currentTime.toISOString()}
                     aria-label="現在時刻"
                     suppressHydrationWarning
@@ -1713,7 +1588,7 @@ export default function Home() {
                     {formatTime(currentTime)}
                   </time>
                   {isRecording && (
-                    <div className="flex items-center gap-1 mt-0.5">
+                    <div className="flex items-center gap-1 lg:mt-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                       <span className="text-xs font-mono text-orange-500 tabular-nums">
                         {formatElapsedTime(recordingElapsed)}
@@ -1724,186 +1599,89 @@ export default function Home() {
               )}
             </div>
 
-            {/* Status indicator */}
-            <div className="hidden sm:flex items-center gap-3">
-              <div
-                className={`status-badge ${isRecording ? "recording" : "idle"}`}
-              >
-                <div
-                  className={`status-indicator ${
-                    isRecording ? "recording" : "idle"
-                  } ${isRecording ? "recording-pulse" : ""}`}
-                />
-                {isRecording ? "録音中" : "待機中"}
-              </div>
+            {/* Mode Switcher + Status indicator — Desktop */}
+            <div className="hidden md:flex items-center gap-2 lg:gap-3">
+              <ModeSwitcher currentMode={appMode} onModeChange={setAppMode} />
+              {appMode === "medical" && <StatusBadge isRecording={isRecording} />}
 
               {/* AI Model selector */}
-              <div className="relative" ref={modelMenuRef}>
-                <button
-                  onClick={() => {
-                    const opening = !isModelMenuOpen;
-                    setIsModelMenuOpen(opening);
-                    if (opening) {
-                      setHighlightedModelIndex(
-                        AVAILABLE_MODELS.findIndex(
-                          (m) => m.id === selectedModel,
-                        ),
-                      );
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                      e.preventDefault();
-                      if (!isModelMenuOpen) {
-                        setIsModelMenuOpen(true);
-                        setHighlightedModelIndex(
-                          AVAILABLE_MODELS.findIndex(
-                            (m) => m.id === selectedModel,
-                          ),
-                        );
-                      }
-                    } else if (e.key === "Escape" && isModelMenuOpen) {
-                      setIsModelMenuOpen(false);
-                    }
-                  }}
-                  className="flex items-center justify-between min-w-[180px] bg-theme-card border border-theme-border rounded-lg pl-3 pr-2 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              <div className="relative group">
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value as ModelId)}
+                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-7 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-blue-500"
                   aria-label="AIモデル選択"
-                  aria-expanded={isModelMenuOpen}
-                  aria-haspopup="listbox"
+                  title={(() => {
+                    const m = AVAILABLE_MODELS.find(m => m.id === selectedModel);
+                    return m ? `${m.name}\n${m.description}\n速度: ${'⚡'.repeat(m.speed)} 品質: ${'★'.repeat(m.quality)}` : '';
+                  })()}
                 >
-                  <span className="truncate mr-2">
-                    {(() => {
-                      const m = AVAILABLE_MODELS.find(
-                        (m) => m.id === selectedModel,
-                      );
-                      return m
-                        ? `${m.name} (${m.description})`
-                        : "モデルを選択";
-                    })()}
-                  </span>
-                  <ChevronDownIcon
-                    className={`w-4 h-4 text-theme-muted transition-transform duration-200 ${isModelMenuOpen ? "rotate-180" : ""}`}
-                    aria-hidden="true"
-                  />
-                </button>
-
-                {/* Model selection menu */}
-                {isModelMenuOpen && (
-                  <div
-                    className="absolute left-0 top-full mt-2 z-50 w-72 p-3 bg-theme-card border border-theme-border rounded-lg shadow-lg text-xs animate-fade-in"
-                    role="listbox"
-                    aria-label="AIモデル一覧"
-                    aria-activedescendant={
-                      highlightedModelIndex >= 0
-                        ? `model-option-${AVAILABLE_MODELS[highlightedModelIndex]?.id}`
-                        : undefined
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setIsModelMenuOpen(false);
-                        modelMenuRef.current?.querySelector("button")?.focus();
-                      } else if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        setHighlightedModelIndex((prev) =>
-                          Math.min(prev + 1, AVAILABLE_MODELS.length - 1),
-                        );
-                      } else if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        setHighlightedModelIndex((prev) =>
-                          Math.max(prev - 1, 0),
-                        );
-                      } else if (e.key === "Enter") {
-                        if (highlightedModelIndex >= 0) {
-                          setSelectedModel(
-                            AVAILABLE_MODELS[highlightedModelIndex].id,
-                          );
-                        }
-                        setIsModelMenuOpen(false);
-                        modelMenuRef.current?.querySelector("button")?.focus();
-                      }
-                    }}
-                  >
-                    <div className="font-medium text-theme-secondary text-[11px] mb-2 px-2">
-                      モデル選択
-                    </div>
-                    <div className="grid grid-cols-[60px_80px_60px] gap-2 px-2 py-1.5 text-[10px] text-theme-tertiary border-b border-theme-border mb-1">
-                      <div>モデル</div>
-                      <div>速度</div>
-                      <div>品質</div>
-                    </div>
-                    <div className="space-y-0.5" role="presentation">
-                      {AVAILABLE_MODELS.map((m, index) => (
-                        <button
-                          key={m.id}
-                          id={`model-option-${m.id}`}
-                          role="option"
-                          aria-selected={m.id === selectedModel}
-                          onClick={() => {
-                            setSelectedModel(m.id);
-                            setIsModelMenuOpen(false);
-                          }}
-                          onMouseEnter={() => setHighlightedModelIndex(index)}
-                          className={`w-full grid grid-cols-[60px_80px_60px] gap-2 px-2 py-1.5 rounded text-left transition-colors items-center ${
-                            m.id === selectedModel
-                              ? "bg-theme-highlight text-theme-primary font-medium"
-                              : index === highlightedModelIndex
-                                ? "bg-theme-bg-secondary text-theme-primary"
-                                : "text-theme-secondary hover:bg-theme-bg-secondary hover:text-theme-primary"
-                          }`}
-                        >
-                          <div className="truncate">
-                            {m.name.replace("GPT-", "")}
-                          </div>
-                          <div className="text-amber-500 text-[10px]">
-                            {"⚡".repeat(m.speed)}
-                          </div>
-                          <div
-                            className={`text-[10px] ${m.id === selectedModel ? "text-amber-500" : "text-theme-tertiary"}`}
-                          >
-                            {"★".repeat(m.quality)}
-                            {"☆".repeat(5 - m.quality)}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                  {AVAILABLE_MODELS.map((model) => (
+                    <option key={model.id} value={model.id} title={`${model.description} | 速度:${model.speed}/5 品質:${model.quality}/5`}>
+                      {model.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-muted pointer-events-none"
+                  aria-hidden="true"
+                />
+                {/* Model info tooltip */}
+                <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-theme-card border border-theme-border rounded-lg shadow-lg text-xs">
+                  <div className="font-medium text-theme-secondary text-[11px] mb-2">モデル比較</div>
+                  <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1.5 text-left">
+                    <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">モデル</div>
+                    <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">速度</div>
+                    <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">品質</div>
+                    {AVAILABLE_MODELS.flatMap((m) => [
+                      <div key={`${m.id}-name`} className={`py-0.5 ${m.id === selectedModel ? 'text-theme-primary font-medium' : 'text-theme-secondary'}`}>
+                        {m.name.replace('GPT-', '')}
+                      </div>,
+                      <div key={`${m.id}-speed`} className={`py-0.5 text-amber-500 ${m.id === selectedModel ? 'opacity-100' : 'opacity-70'}`}>
+                        {'⚡'.repeat(m.speed)}
+                      </div>,
+                      <div key={`${m.id}-quality`} className={`py-0.5 ${m.id === selectedModel ? 'text-amber-500' : 'text-theme-tertiary'}`}>
+                        {'★'.repeat(m.quality)}{'☆'.repeat(5 - m.quality)}
+                      </div>,
+                    ])}
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Icon buttons - unified grid */}
-              <div className="flex items-center">
+              <div className="flex items-center flex-shrink-0">
                 {/* Shortcut settings button */}
                 <button
                   onClick={() => setShowShortcutsModal(true)}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                  className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="キーボード設定"
                   data-tooltip-bottom="ショートカット設定"
                 >
-                  <KeyboardIcon className="w-6 h-6" aria-hidden="true" />
+                  <KeyboardIcon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
                 </button>
 
                 {/* Theme toggle button */}
                 <button
                   onClick={handleThemeCycle}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                  className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="テーマ切り替え"
                   data-tooltip-bottom={`テーマ: ${
                     theme === "system"
                       ? "自動"
                       : theme === "light"
-                        ? "ライト"
-                        : "ダーク"
+                      ? "ライト"
+                      : "ダーク"
                   }`}
                 >
                   {theme === "light" && (
-                    <SunIcon className="w-6 h-6" aria-hidden="true" />
+                    <SunIcon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
                   )}
                   {theme === "dark" && (
-                    <MoonIcon className="w-6 h-6" aria-hidden="true" />
+                    <MoonIcon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
                   )}
                   {theme === "system" && (
                     <ComputerDesktopIcon
-                      className="w-6 h-6"
+                      className="w-5 h-5 lg:w-6 lg:h-6"
                       aria-hidden="true"
                     />
                   )}
@@ -1911,83 +1689,103 @@ export default function Home() {
 
                 {/* Help button */}
                 <button
-                  onClick={() => setShowHelp(true)}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                  onClick={() => { setHelpTab(appMode); setShowHelp(true); }}
+                  className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="ヘルプを表示"
                   data-tooltip-bottom="ヘルプ"
                 >
-                  <HelpOutlineIcon className="w-6 h-6" aria-hidden="true" />
+                  <QuestionMarkCircleIcon
+                    className="w-5 h-5 lg:w-6 lg:h-6"
+                    aria-hidden="true"
+                  />
                 </button>
               </div>
             </div>
 
             {/* Mobile menu */}
-            <div className="sm:hidden flex items-center gap-1">
-              <div
-                className={`status-indicator flex-shrink-0 ${
-                  isRecording ? "recording recording-pulse" : "idle"
-                }`}
-              />
-
-              {/* AI Model selector (Mobile) - compact */}
-              <div className="relative">
-                <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-6 py-1 text-xs text-theme-tertiary cursor-pointer"
-                  aria-label="AIモデル選択"
-                >
-                  {AVAILABLE_MODELS.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.name.replace("GPT-", "")}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon
-                  className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-theme-muted pointer-events-none"
-                  aria-hidden="true"
+            <div className="md:hidden flex items-center gap-1.5">
+              <ModeSwitcher currentMode={appMode} onModeChange={setAppMode} />
+              {appMode === "medical" && (
+                <div
+                  className={`status-indicator flex-shrink-0 ${
+                    isRecording ? "recording recording-pulse" : "idle"
+                  }`}
                 />
-              </div>
+              )}
+
+              {/* AI Model selector (Mobile) - 医療モードのみ表示 */}
+              {appMode === "medical" && (
+                <div className="relative">
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value as ModelId)}
+                    className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-6 py-1.5 text-xs text-theme-tertiary cursor-pointer"
+                    aria-label="AIモデル選択"
+                  >
+                    {AVAILABLE_MODELS.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name.replace('GPT-', '')}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDownIcon
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-muted pointer-events-none"
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
 
               {/* Theme toggle button (Mobile) */}
               <button
                 onClick={handleThemeCycle}
-                className="p-1 rounded-lg text-theme-tertiary btn-theme-hover"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="テーマ切り替え"
                 data-tooltip-bottom={`テーマ: ${
                   theme === "system"
                     ? "自動"
                     : theme === "light"
-                      ? "ライト"
-                      : "ダーク"
+                    ? "ライト"
+                    : "ダーク"
                 }`}
               >
                 {theme === "light" && (
-                  <SunIcon className="w-4 h-4" aria-hidden="true" />
+                  <SunIcon className="w-5 h-5" aria-hidden="true" />
                 )}
                 {theme === "dark" && (
-                  <MoonIcon className="w-4 h-4" aria-hidden="true" />
+                  <MoonIcon className="w-5 h-5" aria-hidden="true" />
                 )}
                 {theme === "system" && (
-                  <ComputerDesktopIcon className="w-4 h-4" aria-hidden="true" />
+                  <ComputerDesktopIcon className="w-5 h-5" aria-hidden="true" />
                 )}
               </button>
 
               <button
-                onClick={() => setShowHelp(true)}
-                className="p-1 rounded-lg text-theme-tertiary btn-theme-hover"
+                onClick={() => { setHelpTab(appMode); setShowHelp(true); }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="ヘルプ"
                 data-tooltip-bottom="ヘルプ"
               >
-                <HelpOutlineIcon className="w-4 h-4" aria-hidden="true" />
+                <QuestionMarkCircleIcon
+                  className="w-5 h-5"
+                  aria-hidden="true"
+                />
               </button>
             </div>
           </div>
+          </div>{/* end mobile scroll wrapper */}
         </div>
       </header>
 
       {/* Main content area */}
       <main className="flex-1 relative overflow-hidden flex flex-col">
+        {/* Clock Mode */}
+        {appMode === "clock" && <ClockMode />}
+
+        {/* Voice Recorder Mode */}
+        {appMode === "voice" && <VoiceRecorderMode />}
+
+        {/* Medical Mode */}
+        {appMode === "medical" && (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-col flex-1 overflow-hidden w-full">
           {/* Control panel */}
           <div className={`mb-2 ${mounted ? "animate-fade-in" : "opacity-0"}`}>
@@ -2048,12 +1846,6 @@ export default function Home() {
                   </span>
                 </button>
 
-                {/* Character count - デスクトップのみ */}
-                {transcript && (
-                  <div className="hidden sm:block text-sm text-theme-tertiary font-mono ml-2">
-                    {transcript.length} 文字
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -2067,7 +1859,7 @@ export default function Home() {
             <section
               className={`${
                 mounted ? "animate-fade-in delay-100" : "opacity-0"
-              } flex-shrink-0 overflow-hidden flex flex-col ${
+              } flex-1 lg:flex-none overflow-hidden flex flex-col ${
                 !isLargeScreen && activePanel !== "transcript"
                   ? "hidden"
                   : "flex"
@@ -2116,18 +1908,53 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
-                    {/* Mobile accordion toggle */}
-                    {!isLargeScreen && (
+                    {/* Right side: char count, sample dropdown, copy, mobile toggle */}
+                    <div className="flex items-center gap-1.5">
+                      {/* Character count - デスクトップのみ */}
+                      {transcript && (
+                        <span className="hidden sm:block text-xs text-theme-tertiary font-mono whitespace-nowrap">
+                          {transcript.length}文字
+                        </span>
+                      )}
+
+                      {/* Sample interview dropdown */}
+                      <div className="relative" data-sample-menu ref={sampleMenuButtonRef}>
+                        <button
+                          onClick={() => setShowSampleMenu(!showSampleMenu)}
+                          className="btn btn-secondary py-1.5 px-2.5 text-xs gap-1"
+                          aria-label="サンプル問診を挿入"
+                          data-tooltip="サンプル問診テキストを挿入"
+                        >
+                          <DocumentTextIcon className="w-5 h-5 md:w-4 md:h-4" />
+                          <span className="hidden sm:inline">サンプル</span>
+                          <ChevronDownIcon className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Copy transcript button */}
                       <button
-                        onClick={() => setActivePanel("result")}
-                        className="btn btn-secondary py-1 px-3 text-xs"
-                        aria-label="SOAPカルテを表示"
-                        data-tooltip="カルテ表示に切り替え"
+                        onClick={() => copyToClipboard(transcript, "会話テキスト")}
+                        disabled={!transcript}
+                        className="btn btn-secondary py-1.5 px-2.5 text-xs"
+                        aria-label="会話テキストをコピー"
+                        data-tooltip="会話テキストをコピー"
                       >
-                        <ArrowRightIcon className="w-4 h-4" />
-                        カルテ表示
+                        <DocumentDuplicateIcon className="w-5 h-5 md:w-4 md:h-4" />
                       </button>
-                    )}
+
+                      {/* Mobile accordion toggle */}
+                      {!isLargeScreen && (
+                        <button
+                          onClick={() => setActivePanel("result")}
+                          className="btn btn-secondary py-1.5 px-2.5 text-xs"
+                          aria-label="SOAPカルテを表示"
+                          data-tooltip="カルテ表示に切り替え"
+                        >
+                          <ArrowRightIcon className="w-5 h-5 md:w-4 md:h-4" />
+                          <span className="hidden xs:inline">カルテ</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex-1 p-0 relative overflow-hidden">
@@ -2159,11 +1986,11 @@ export default function Home() {
                 aria-label="レイアウト調整"
               >
                 {/* Layout preset buttons - Top positioned */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col gap-2 z-50">
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col gap-2 z-10">
                   <button
                     onClick={() => setLayoutPreset("left")}
                     className="layout-btn group"
-                    data-tooltip-bottom="左側を広く"
+                    data-tooltip="左側を広く"
                     aria-label="左側を広くする"
                   >
                     <svg
@@ -2193,7 +2020,7 @@ export default function Home() {
                   <button
                     onClick={() => setLayoutPreset("equal")}
                     className="layout-btn group"
-                    data-tooltip-bottom="均等"
+                    data-tooltip="均等"
                     aria-label="左右を均等にする"
                   >
                     <svg
@@ -2223,7 +2050,7 @@ export default function Home() {
                   <button
                     onClick={() => setLayoutPreset("right")}
                     className="layout-btn group"
-                    data-tooltip-bottom="右側を広く"
+                    data-tooltip="右側を広く"
                     aria-label="右側を広くする"
                   >
                     <svg
@@ -2293,23 +2120,23 @@ export default function Home() {
                         {/* 左: 戻るボタン */}
                         <button
                           onClick={() => setActivePanel("transcript")}
-                          className="btn btn-secondary py-1 px-2 text-xs flex items-center gap-1 shrink-0"
+                          className="btn btn-secondary py-2 px-3 text-xs flex items-center gap-1 shrink-0"
                           aria-label="会話テキストに戻る"
                           data-tooltip="会話テキストに戻る"
                         >
-                          <ArrowLeftIcon className="w-4 h-4" />
+                          <ArrowLeftIcon className="w-5 h-5" />
                           <span>会話</span>
                         </button>
                         {/* 右: アクションボタン群 */}
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           {/* Import button */}
                           <button
                             onClick={handleImportClick}
-                            className="btn btn-secondary py-1 px-2 text-xs"
+                            className="btn btn-secondary py-2 px-2.5 text-xs"
                             aria-label="インポート"
                             data-tooltip="JSON形式でインポート"
                           >
-                            <ArrowUpTrayIcon className="w-4 h-4" />
+                            <ArrowUpTrayIcon className="w-5 h-5" />
                           </button>
 
                           {/* Export dropdown */}
@@ -2317,11 +2144,11 @@ export default function Home() {
                             <button
                               onClick={() => setShowExportMenu(!showExportMenu)}
                               disabled={!result}
-                              className="btn btn-secondary py-1 px-2 text-xs"
+                              className="btn btn-secondary py-2 px-2.5 text-xs"
                               aria-label="エクスポート"
                               data-tooltip="JSON/CSV形式でエクスポート"
                             >
-                              <ArrowDownTrayIcon className="w-4 h-4" />
+                              <ArrowDownTrayIcon className="w-5 h-5" />
                             </button>
 
                             {showExportMenu && result && (
@@ -2329,16 +2156,16 @@ export default function Home() {
                                 <div className="py-1">
                                   <button
                                     onClick={exportAsJson}
-                                    className="w-full text-left px-3 py-2 text-xs text-theme-primary hover:bg-theme-card flex items-center gap-2"
+                                    className="w-full text-left px-3 py-2 text-sm text-theme-primary hover:bg-theme-card flex items-center gap-2"
                                   >
-                                    <DocumentIcon className="w-3 h-3" />
+                                    <DocumentIcon className="w-4 h-4" />
                                     JSON
                                   </button>
                                   <button
                                     onClick={exportAsCsv}
-                                    className="w-full text-left px-3 py-2 text-xs text-theme-primary hover:bg-theme-card flex items-center gap-2"
+                                    className="w-full text-left px-3 py-2 text-sm text-theme-primary hover:bg-theme-card flex items-center gap-2"
                                   >
-                                    <DocumentChartBarIcon className="w-3 h-3" />
+                                    <DocumentChartBarIcon className="w-4 h-4" />
                                     CSV
                                   </button>
                                 </div>
@@ -2349,7 +2176,7 @@ export default function Home() {
                           <button
                             onClick={toggleSpeech}
                             disabled={!result}
-                            className="btn btn-secondary py-1 px-2 text-xs"
+                            className="btn btn-secondary py-2 px-2.5 text-xs"
                             aria-label={
                               isSpeaking ? "読み上げを停止" : "カルテを読み上げ"
                             }
@@ -2360,9 +2187,9 @@ export default function Home() {
                             }
                           >
                             {isSpeaking ? (
-                              <StopIconSolid className="w-4 h-4" />
+                              <StopIconSolid className="w-5 h-5" />
                             ) : (
-                              <SpeakerWaveIcon className="w-4 h-4" />
+                              <SpeakerWaveIcon className="w-5 h-5" />
                             )}
                           </button>
                           <button
@@ -2370,12 +2197,12 @@ export default function Home() {
                               setShowSpeechSettings(!showSpeechSettings)
                             }
                             disabled={!result}
-                            className="btn btn-secondary py-1 px-2 text-xs"
+                            className="btn btn-secondary py-2 px-2.5 text-xs"
                             aria-label="音声設定"
                             data-tooltip="音声・速度設定"
                           >
                             <ChevronDownIcon
-                              className={`w-4 h-4 transition-transform ${
+                              className={`w-5 h-5 transition-transform ${
                                 showSpeechSettings ? "rotate-180" : ""
                               }`}
                             />
@@ -2385,31 +2212,21 @@ export default function Home() {
                     ) : (
                       <div className="w-full flex items-center justify-between">
                         {/* 左: 見出し - デスクトップのみ表示 */}
-                        <h2 className="hidden sm:block panel-title whitespace-nowrap text-sm">
-                          カルテ
-                        </h2>
+                        <h2 className="hidden sm:block panel-title whitespace-nowrap text-sm">カルテ</h2>
 
                         {/* 中央: Voice */}
                         <div className="flex items-center gap-1">
                           <button
                             onClick={toggleSpeech}
                             disabled={!result}
-                            className="btn btn-secondary text-xs py-0.5 px-2"
-                            aria-label={
-                              isSpeaking ? "読み上げを停止" : "カルテを読み上げ"
-                            }
+                            className="btn btn-secondary text-xs py-1 px-2"
+                            aria-label={isSpeaking ? "読み上げを停止" : "カルテを読み上げ"}
                             data-tooltip={`読み上げ [${formatShortcut(shortcuts.toggleSpeech, true)}]`}
                           >
                             {isSpeaking ? (
-                              <StopIconSolid
-                                className="w-3.5 h-3.5"
-                                aria-hidden="true"
-                              />
+                              <StopIconSolid className="w-4 h-4" aria-hidden="true" />
                             ) : (
-                              <SpeakerWaveIcon
-                                className="w-3.5 h-3.5"
-                                aria-hidden="true"
-                              />
+                              <SpeakerWaveIcon className="w-4 h-4" aria-hidden="true" />
                             )}
                             <span className="text-xs">Voice</span>
                             <span className="hidden sm:inline text-xs opacity-70 ml-0.5">
@@ -2417,9 +2234,7 @@ export default function Home() {
                             </span>
                           </button>
                           <button
-                            onClick={() =>
-                              setShowSpeechSettings(!showSpeechSettings)
-                            }
+                            onClick={() => setShowSpeechSettings(!showSpeechSettings)}
                             disabled={!result}
                             className="btn btn-secondary text-xs p-1"
                             aria-label="音声設定"
@@ -2437,14 +2252,11 @@ export default function Home() {
                           {/* Import button */}
                           <button
                             onClick={handleImportClick}
-                            className="btn btn-secondary text-xs py-0.5 px-1.5"
+                            className="btn btn-secondary text-xs py-1 px-2"
                             aria-label="カルテをインポート"
                             data-tooltip="インポート"
                           >
-                            <ArrowUpTrayIcon
-                              className="w-3.5 h-3.5"
-                              aria-hidden="true"
-                            />
+                            <ArrowUpTrayIcon className="w-4 h-4" aria-hidden="true" />
                           </button>
 
                           {/* Export dropdown */}
@@ -2452,14 +2264,11 @@ export default function Home() {
                             <button
                               onClick={() => setShowExportMenu(!showExportMenu)}
                               disabled={!result}
-                              className="btn btn-secondary text-xs py-0.5 px-1.5"
+                              className="btn btn-secondary text-xs py-1 px-2"
                               aria-label="カルテをエクスポート"
                               data-tooltip="エクスポート"
                             >
-                              <ArrowDownTrayIcon
-                                className="w-3.5 h-3.5"
-                                aria-hidden="true"
-                              />
+                              <ArrowDownTrayIcon className="w-4 h-4" aria-hidden="true" />
                               <ChevronDownIcon
                                 className={`w-3 h-3 transition-transform ${showExportMenu ? "rotate-180" : ""}`}
                                 aria-hidden="true"
@@ -2493,14 +2302,11 @@ export default function Home() {
                           <button
                             onClick={copyFullChart}
                             disabled={!result}
-                            className="btn btn-secondary text-xs py-0.5 px-1.5"
+                            className="btn btn-secondary text-xs py-1 px-2"
                             aria-label="カルテ全体をコピー"
                             data-tooltip="コピー"
                           >
-                            <ClipboardDocumentIcon
-                              className="w-3.5 h-3.5"
-                              aria-hidden="true"
-                            />
+                            <ClipboardDocumentIcon className="w-4 h-4" aria-hidden="true" />
                           </button>
                         </div>
                       </div>
@@ -2566,176 +2372,20 @@ export default function Home() {
                 <div className="flex-1 overflow-y-auto">
                   {/* Error state */}
                   {error && (
-                    <div className="m-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <svg
-                          className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          aria-hidden="true"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-bold text-red-900 mb-1">
-                            エラー
-                          </h4>
-                          <p className="text-sm text-red-800">{error}</p>
-                        </div>
-                        <button
-                          onClick={() => setError(null)}
-                          className="text-red-600 hover:text-red-800"
-                          aria-label="エラーメッセージを閉じる"
-                          data-tooltip="閉じる"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
+                    <ErrorAlert message={error} onClose={() => setError(null)} />
                   )}
 
-                  {/* Empty state */}
-                  {!result && !loading && !error && (
-                    <div className="empty-state">
-                      <div className="w-20 h-20 mb-6 rounded-full bg-theme-tertiary flex items-center justify-center">
-                        <DocumentTextIcon
-                          className="w-10 h-10 text-theme-secondary opacity-50"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <h3 className="text-lg font-bold text-theme-primary mb-2">SOAPカルテ生成へようこそ</h3>
-                      <p className="text-sm text-theme-secondary mb-8 max-w-sm mx-auto leading-relaxed">
-                        AIが医師と患者の会話を分析し、
-                        <br className="hidden sm:block" />
-                        標準的な医療記録形式（SOAP）でカルテを作成します。
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg text-left">
-                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
-                          <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold mb-3">
-                            1
-                          </div>
-                          <div className="font-bold text-sm text-theme-primary mb-1">
-                            録音
-                          </div>
-                          <div className="text-xs text-theme-secondary">
-                            「録音」ボタンを押して会話を開始
-                          </div>
-                        </div>
-                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-bold mb-3">
-                            2
-                          </div>
-                          <div className="font-bold text-sm text-theme-primary mb-1">
-                            停止
-                          </div>
-                          <div className="text-xs text-theme-secondary">
-                            会話が終わったら録音を停止
-                          </div>
-                        </div>
-                        <div className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow">
-                          <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm font-bold mb-3">
-                            3
-                          </div>
-                          <div className="font-bold text-sm text-theme-primary mb-1">
-                            生成
-                          </div>
-                          <div className="text-xs text-theme-secondary">
-                            「カルテ生成」でAIが分析開始
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {/* Empty state - onboarding */}
+                  {!result && !loading && !error && <EmptyState />}
 
                   {/* Loading/Streaming state */}
                   {loading && (
-                    <div className="p-6">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="relative">
-                          <div
-                            className="loading-spinner animate-spin"
-                            style={{
-                              width: "1.5rem",
-                              height: "1.5rem",
-                              borderWidth: "2px",
-                            }}
-                          />
-                        </div>
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          {isStreaming
-                            ? "リアルタイム生成中..."
-                            : "解析準備中..."}
-                        </span>
-                        <span
-                          className="text-xs font-mono tabular-nums"
-                          style={{ color: "var(--accent-primary)" }}
-                        >
-                          {analysisProgress}%
-                        </span>
-                        <span
-                          className="text-xs ml-auto"
-                          style={{ color: "var(--text-tertiary)" }}
-                        >
-                          {AVAILABLE_MODELS.find((m) => m.id === selectedModel)
-                            ?.name || selectedModel}
-                        </span>
-                      </div>
-                      {/* Progress bar */}
-                      <div
-                        className="h-1 rounded-full mb-4 overflow-hidden"
-                        style={{ backgroundColor: "var(--bg-tertiary)" }}
-                      >
-                        <div
-                          className="h-full rounded-full transition-all duration-300 ease-out"
-                          style={{
-                            width: `${analysisProgress}%`,
-                            backgroundColor: "var(--accent-primary)",
-                          }}
-                        />
-                      </div>
-                      {isStreaming && streamingText && (
-                        <div
-                          className="rounded-lg p-4 border"
-                          style={{
-                            backgroundColor: "var(--bg-tertiary)",
-                            borderColor: "var(--border-primary)",
-                          }}
-                        >
-                          <pre
-                            className="text-xs font-mono whitespace-pre-wrap break-all max-h-96 overflow-y-auto"
-                            style={{ color: "var(--text-secondary)" }}
-                          >
-                            {streamingText}
-                            <span
-                              className="inline-block w-2 h-4 animate-pulse ml-0.5"
-                              style={{
-                                backgroundColor: "var(--accent-primary)",
-                              }}
-                            />
-                          </pre>
-                        </div>
-                      )}
-                    </div>
+                    <AnalysisProgress
+                      isStreaming={isStreaming}
+                      streamingText={streamingText}
+                      progress={analysisProgress}
+                      modelName={AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name || selectedModel}
+                    />
                   )}
 
                   {/* Results */}
@@ -2743,92 +2393,19 @@ export default function Home() {
                     <div className="space-y-3 p-6">
                       {/* Summary */}
                       {result.summary && (
-                        <div className="p-6 rounded-lg shadow-sm border-l-4 border-amber-600 dark:border-amber-500 border border-amber-200 dark:border-amber-600/40">
-                          <div className="flex items-center gap-2 mb-2">
-                            <svg
-                              className="w-5 h-5 text-amber-600 dark:text-amber-500"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              aria-hidden="true"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">
-                              要約
-                            </h3>
-                          </div>
-                          <p className="text-sm text-theme-primary leading-relaxed">
-                            {result.summary}
-                          </p>
-                        </div>
+                        <SummaryCard summary={result.summary} />
                       )}
 
                       {/* Patient Info */}
                       {result.patientInfo && (
-                        <div className="p-6 rounded-lg shadow-sm border-l-4 border-blue-600 dark:border-blue-500 border border-blue-200 dark:border-blue-600/40">
-                          <div className="flex items-center gap-2 mb-3">
-                            <svg
-                              className="w-5 h-5 text-blue-600 dark:text-blue-500"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              aria-hidden="true"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <h3 className="font-bold text-sm text-theme-primary uppercase tracking-wide">
-                              患者情報
-                            </h3>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            {result.patientInfo.chiefComplaint && (
-                              <>
-                                <div className="text-theme-secondary font-semibold">
-                                  主訴:
-                                </div>
-                                <div className="text-theme-primary">
-                                  {result.patientInfo.chiefComplaint}
-                                </div>
-                              </>
-                            )}
-                            {result.patientInfo.duration && (
-                              <>
-                                <div className="text-theme-secondary font-semibold">
-                                  期間:
-                                </div>
-                                <div className="text-theme-primary">
-                                  {result.patientInfo.duration}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        <PatientInfoCard
+                          chiefComplaint={result.patientInfo.chiefComplaint}
+                          duration={result.patientInfo.duration}
+                        />
                       )}
 
                       {/* SOAP sections */}
-                      <div className="soap-section subjective">
-                        <div className="soap-label">
-                          <div className="flex items-center gap-2">
-                            <div className="soap-badge">S</div>
-                            主観的情報
-                          </div>
-                          <button
-                            onClick={copySectionS}
-                            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-theme-secondary"
-                            aria-label="Sセクションをコピー"
-                            data-tooltip="コピー"
-                          >
-                            <ClipboardDocumentIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="space-y-3 text-sm">
+                      <SOAPSectionWrapper type="subjective" badge="S" label="主観的情報" onCopy={copySectionS}>
                           {result.soap.subjective?.presentIllness && (
                             <div>
                               <div className="font-bold text-xs text-theme-secondary mb-1">
@@ -2849,7 +2426,7 @@ export default function Home() {
                                   {result.soap.subjective.symptoms.map(
                                     (s: string, i: number) => (
                                       <li key={i}>{s}</li>
-                                    ),
+                                    )
                                   )}
                                 </ul>
                               </div>
@@ -2874,25 +2451,9 @@ export default function Home() {
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
+                      </SOAPSectionWrapper>
 
-                      <div className="soap-section objective">
-                        <div className="soap-label">
-                          <div className="flex items-center gap-2">
-                            <div className="soap-badge">O</div>
-                            客観的情報
-                          </div>
-                          <button
-                            onClick={copySectionO}
-                            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-theme-secondary"
-                            aria-label="Oセクションをコピー"
-                            data-tooltip="コピー"
-                          >
-                            <ClipboardDocumentIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="space-y-3 text-sm">
+                      <SOAPSectionWrapper type="objective" badge="O" label="客観的情報" onCopy={copySectionO}>
                           {result.soap.objective?.vitalSigns && (
                             <div>
                               <div className="font-bold text-xs text-theme-secondary mb-2">
@@ -2957,25 +2518,9 @@ export default function Home() {
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
+                      </SOAPSectionWrapper>
 
-                      <div className="soap-section assessment">
-                        <div className="soap-label">
-                          <div className="flex items-center gap-2">
-                            <div className="soap-badge">A</div>
-                            評価・診断
-                          </div>
-                          <button
-                            onClick={copySectionA}
-                            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-theme-secondary"
-                            aria-label="Aセクションをコピー"
-                            data-tooltip="コピー"
-                          >
-                            <ClipboardDocumentIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="space-y-3 text-sm">
+                      <SOAPSectionWrapper type="assessment" badge="A" label="評価・診断" onCopy={copySectionA}>
                           {result.soap.assessment?.diagnosis && (
                             <div className="flex flex-wrap gap-2 items-center">
                               <span className="font-bold text-xs text-theme-secondary">
@@ -2991,9 +2536,7 @@ export default function Home() {
                               )}
                             </div>
                           )}
-                          {Array.isArray(
-                            result.soap.assessment?.differentialDiagnosis,
-                          ) &&
+                          {Array.isArray(result.soap.assessment?.differentialDiagnosis) &&
                             result.soap.assessment.differentialDiagnosis
                               .length > 0 && (
                               <div>
@@ -3004,7 +2547,7 @@ export default function Home() {
                                   {result.soap.assessment.differentialDiagnosis.map(
                                     (d: string, i: number) => (
                                       <li key={i}>{d}</li>
-                                    ),
+                                    )
                                   )}
                                 </ul>
                               </div>
@@ -3019,25 +2562,9 @@ export default function Home() {
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
+                      </SOAPSectionWrapper>
 
-                      <div className="soap-section plan">
-                        <div className="soap-label">
-                          <div className="flex items-center gap-2">
-                            <div className="soap-badge">P</div>
-                            治療計画
-                          </div>
-                          <button
-                            onClick={copySectionP}
-                            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-theme-secondary"
-                            aria-label="Pセクションをコピー"
-                            data-tooltip="コピー"
-                          >
-                            <ClipboardDocumentIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="space-y-3 text-sm">
+                      <SOAPSectionWrapper type="plan" badge="P" label="治療計画" onCopy={copySectionP}>
                           {result.soap.plan?.treatment && (
                             <div>
                               <div className="font-bold text-xs text-theme-secondary mb-1">
@@ -3085,7 +2612,7 @@ export default function Home() {
                                           </div>
                                         </div>
                                       </div>
-                                    ),
+                                    )
                                   )}
                                 </div>
                               </div>
@@ -3100,7 +2627,7 @@ export default function Home() {
                                   {result.soap.plan.tests.map(
                                     (t: string, i: number) => (
                                       <li key={i}>{t}</li>
-                                    ),
+                                    )
                                   )}
                                 </ul>
                               </div>
@@ -3125,21 +2652,14 @@ export default function Home() {
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
+                      </SOAPSectionWrapper>
 
                       {/* Generated timestamp and token usage */}
                       <div className="px-6 py-3 bg-theme-card text-xs text-theme-tertiary font-mono border-t border-theme-border flex items-center justify-between">
-                        <span>
-                          生成時刻: {new Date().toLocaleTimeString("ja-JP")}
-                        </span>
+                        <span>生成時刻: {new Date().toLocaleTimeString("ja-JP")}</span>
                         {tokenUsage && (
-                          <span
-                            className="opacity-60"
-                            title={`入力: ${tokenUsage.promptTokens} / 出力: ${tokenUsage.completionTokens}`}
-                          >
-                            {tokenUsage.totalTokens.toLocaleString()} tokens ≈ ¥
-                            {tokenUsage.estimatedCostJPY.toFixed(3)}
+                          <span className="opacity-60" title={`入力: ${tokenUsage.promptTokens} / 出力: ${tokenUsage.completionTokens}`}>
+                            {tokenUsage.totalTokens.toLocaleString()} tokens ≈ ¥{tokenUsage.estimatedCostJPY.toFixed(3)}
                           </span>
                         )}
                       </div>
@@ -3155,8 +2675,8 @@ export default function Home() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-soft bg-theme-modal-header rounded-t-2xl">
-                  <h3 className="text-lg font-semibold text-theme-primary">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
+                  <h3 className="text-lg font-semibold text-white">
                     エクスポートプレビュー (
                     {exportPreviewData.type.toUpperCase()})
                   </h3>
@@ -3165,7 +2685,7 @@ export default function Home() {
                       setShowExportPreview(false);
                       setExportPreviewData(null);
                     }}
-                    className="text-theme-tertiary hover:text-theme-primary transition-colors"
+                    className="text-white/60 hover:text-white transition-colors"
                     aria-label="プレビューを閉じる"
                     data-tooltip-bottom="閉じる"
                   >
@@ -3210,26 +2730,27 @@ export default function Home() {
             </div>
           )}
 
-          {/* Help Modal */}
-          {showHelp && (
+          {/* Help Modal - moved to global scope below */}
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+          {/* @ts-ignore */}
+          {(false as boolean) && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border bg-theme-modal-header rounded-t-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg"
-                      style={{ background: "var(--gradient-primary)" }}
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg bg-white/20"
                     >
-                      <HelpOutlineIcon className="w-6 h-6 text-white" />
+                      <QuestionMarkCircleIcon className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-theme-primary">
+                    <h3 className="text-xl font-bold text-white">
                       使い方ガイド
                     </h3>
                   </div>
                   <button
                     onClick={() => setShowHelp(false)}
-                    className="text-theme-tertiary hover:text-theme-primary transition-colors"
+                    className="text-white/60 hover:text-white transition-colors"
                     aria-label="ヘルプを閉じる"
                     data-tooltip-bottom="閉じる"
                   >
@@ -3478,7 +2999,17 @@ export default function Home() {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-theme-soft bg-theme-modal-footer flex justify-end rounded-b-2xl">
+                <div className="px-6 py-4 border-t border-theme-soft bg-theme-modal-footer flex justify-between items-center rounded-b-2xl">
+                  <button
+                    onClick={() => {
+                      setShowHelp(false);
+                      setShowOnboardingVideo(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-secondary hover:text-theme-primary transition-colors border border-theme-border rounded-lg hover:bg-theme-card"
+                  >
+                    <PlayIcon className="w-4 h-4" />
+                    デモ動画を見る
+                  </button>
                   <button
                     onClick={() => setShowHelp(false)}
                     className="px-5 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors whitespace-nowrap"
@@ -3491,21 +3022,88 @@ export default function Home() {
             </div>
           )}
 
-          {/* Shortcuts Modal */}
-          {showShortcutsModal && (
+          {/* Onboarding Video Modal - moved to global scope below */}
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+          {/* @ts-ignore */}
+          {(false as boolean) && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+              <div className="bg-[#0f172a] rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col border border-white/10 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center">
+                      <PlayIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        製品デモ動画
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Medical Scribe Flow の使い方
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowOnboardingVideo(false);
+                      setShowHelp(true);
+                    }}
+                    className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+                    aria-label="動画を閉じる"
+                  >
+                    <XMarkIcon className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Video Player Area */}
+                <div className="relative aspect-video bg-black">
+                  <video
+                    src="/video.mp4"
+                    className="w-full h-full"
+                    controls
+                    onEnded={() => {
+                      setShowOnboardingVideo(false);
+                      setShowHelp(true);
+                    }}
+                  />
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 bg-white/5 flex justify-between items-center">
+                  <p className="text-xs text-slate-500">
+                    ※ 音声が流れますのでご注意ください
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowOnboardingVideo(false);
+                      setShowHelp(true);
+                    }}
+                    className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-teal-900/20"
+                  >
+                    はじめる
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Shortcuts Modal - moved to global scope below */}
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+          {/* @ts-ignore */}
+          {(false as boolean) && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
               <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-theme-modal">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-theme-soft bg-theme-modal-header rounded-t-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-theme-card flex items-center justify-center">
-                      <KeyboardIcon className="w-6 h-6 text-theme-primary" />
+                    <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                      <KeyboardIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-theme-primary">
+                      <h3 className="text-xl font-bold text-white">
                         ショートカット設定
                       </h3>
-                      <p className="text-xs text-theme-secondary">
+                      <p className="text-xs text-white/70">
                         クリックしてキー割り当てを変更できます
                       </p>
                     </div>
@@ -3515,7 +3113,7 @@ export default function Home() {
                       setShowShortcutsModal(false);
                       setEditingShortcutId(null);
                     }}
-                    className="text-theme-tertiary hover:text-theme-primary transition-colors"
+                    className="text-white/60 hover:text-white transition-colors"
                     aria-label="閉じる"
                     data-tooltip-bottom="閉じる"
                   >
@@ -3596,7 +3194,7 @@ export default function Home() {
                   <div className="divide-y divide-theme-soft">
                     {SHORTCUT_GROUPS.map((group) => {
                       const groupShortcuts = SHORTCUT_DEFS.filter(
-                        (def) => def.group === group.id,
+                        (def) => def.group === group.id
                       );
                       if (groupShortcuts.length === 0) return null;
 
@@ -3637,7 +3235,7 @@ export default function Home() {
                                       ${
                                         isEditing
                                           ? "bg-theme-surface border-teal-500 text-theme-accent ring-2 ring-teal-500/20"
-                                          : "bg-theme-card border-transparent text-theme-primary hover:border-theme-light"
+                                          : "bg-theme-surface border-theme-light text-theme-primary hover:border-theme-accent"
                                       }
                                     `}
                                   >
@@ -3652,7 +3250,7 @@ export default function Home() {
                                       onClick={() =>
                                         handleShortcutChange(
                                           def.id,
-                                          platformDefault,
+                                          platformDefault
                                         )
                                       }
                                       className="p-1.5 text-theme-tertiary hover:text-red-500 transition-colors"
@@ -3722,6 +3320,463 @@ export default function Home() {
             </div>
           </footer>
         </div>
+        )}
+
+      {/* ============================================================
+           Global modals - available in ALL app modes
+          ============================================================ */}
+
+      {/* Help Modal */}
+      {showHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
+          <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg bg-white/20">
+                  <QuestionMarkCircleIcon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white">使い方ガイド</h3>
+              </div>
+              <button
+                onClick={() => setShowHelp(false)}
+                className="text-white/60 hover:text-white transition-colors"
+                aria-label="ヘルプを閉じる"
+                data-tooltip-bottom="閉じる"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Mode Tabs */}
+            <div className="flex border-b border-white/10 bg-theme-modal-header px-4">
+              {(["medical", "clock", "voice"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setHelpTab(tab)}
+                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                    helpTab === tab
+                      ? "border-teal-400 text-white"
+                      : "border-transparent text-white/50 hover:text-white/80"
+                  }`}
+                >
+                  {tab === "medical" ? <><DocumentChartBarIcon className="w-4 h-4" />医療カルテ</> : tab === "clock" ? <><ClockIcon className="w-4 h-4" />時計</> : <><MicrophoneIcon className="w-4 h-4" />音声メモ</>}
+                </button>
+              ))}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 bg-theme-modal-content">
+
+              {/* ── 医療カルテ tab ── */}
+              {helpTab === "medical" && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-2 flex items-center gap-2">
+                      <InformationCircleIcon className="w-5 h-5 text-theme-help-icon" />
+                      このアプリについて
+                    </h4>
+                    <p className="text-sm text-theme-secondary leading-relaxed">
+                      Medical Voice Scribeは、音声による医療問診を自動的にSOAPカルテ形式に変換するデモアプリケーションです。
+                      医療現場での記録業務の効率化を目的としています。
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <ClipboardDocumentIcon className="w-5 h-5 text-theme-help-icon" />
+                      基本的な使い方
+                    </h4>
+                    <ol className="space-y-3 text-sm text-theme-secondary">
+                      {[
+                        { n: 1, strong: "録音ボタンをクリック", rest: "して、音声入力を開始します。マイクの使用許可を求められた場合は許可してください。" },
+                        { n: 2, strong: null, rest: "医師と患者の会話を自然に話します。問診内容、症状、診察結果などを含めてください。" },
+                        { n: 3, strong: "停止ボタン", pre: "録音が完了したら", rest: "をクリックし、テキスト化された内容を確認します。" },
+                        { n: 4, strong: "「SOAP生成」ボタン", pre: "必要に応じてテキストを編集し、", rest: "をクリックします。" },
+                        { n: 5, strong: "SOAP形式のカルテ", pre: "AIが自動的に", rest: "を生成します。" },
+                      ].map(({ n, strong, pre, rest }) => (
+                        <li key={n} className="flex gap-3">
+                          <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">{n}</span>
+                          <div>{pre}{strong && <span className="font-semibold">{strong}</span>}{!pre && !strong ? rest : rest}</div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <PuzzlePieceIcon className="w-5 h-5 text-theme-help-icon" />
+                      主な機能
+                    </h4>
+                    <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                      {[
+                        { Icon: MicrophoneIcon,    title: "音声入力", desc: "ブラウザの音声認識機能を使用してリアルタイムに文字起こし" },
+                        { Icon: CpuChipIcon,       title: "AI生成",   desc: "OpenAI GPT-4oを使用したSOAPカルテの自動生成" },
+                        { Icon: SpeakerWaveIcon,   title: "読み上げ", desc: "生成されたカルテをシステム音声で読み上げ（速度・音声調整可能）" },
+                        { Icon: CloudArrowDownIcon, title: "保存・共有", desc: "JSON/CSV形式でエクスポート、インポートが可能" },
+                      ].map(({ Icon, title, desc }) => (
+                        <div key={title} className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
+                          <div className="font-semibold text-theme-primary mb-1 flex items-center gap-1.5"><Icon className="w-4 h-4 text-theme-help-icon flex-shrink-0" />{title}</div>
+                          <div className="text-theme-secondary text-xs">{desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <DocumentTextIcon className="w-5 h-5 text-theme-help-icon" />
+                      SOAP形式とは
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      {[
+                        { letter: "S", label: "Subjective（主観的情報）", desc: "患者が訴える症状や感じていること", color: "var(--soap-s)" },
+                        { letter: "O", label: "Objective（客観的情報）", desc: "測定可能な検査結果やバイタルサイン", color: "var(--soap-o)" },
+                        { letter: "A", label: "Assessment（評価）", desc: "診断名や臨床的な評価・判断", color: "var(--soap-a)" },
+                        { letter: "P", label: "Plan（計画）", desc: "治療方針、処方、追加検査、フォローアップ", color: "var(--soap-p)" },
+                      ].map(({ letter, label, desc, color }) => (
+                        <div key={letter} className="flex gap-3">
+                          <div className="flex-shrink-0 w-6 h-6 text-white rounded flex items-center justify-center text-xs font-bold" style={{ background: color }}>{letter}</div>
+                          <div>
+                            <span className="font-semibold text-theme-primary">{label}</span>
+                            <p className="text-theme-secondary text-xs mt-0.5">{desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-theme-warning border border-theme-warning rounded-lg p-4">
+                    <h4 className="text-sm font-bold text-theme-warning mb-2 flex items-center gap-2">
+                      <ExclamationTriangleIcon className="w-5 h-5" />重要な注意事項
+                    </h4>
+                    <ul className="space-y-1 text-xs text-theme-warning">
+                      <li className="flex gap-2"><span>•</span><span>このアプリは<strong>デモンストレーション用途</strong>です。実際の臨床現場での使用は想定していません。</span></li>
+                      <li className="flex gap-2"><span>•</span><span>生成されたカルテ内容は必ず<strong>医療従事者が確認・修正</strong>してください。</span></li>
+                      <li className="flex gap-2"><span>•</span><span>個人情報や機密情報を含むデータの入力は<strong>避けてください</strong>。</span></li>
+                      <li className="flex gap-2"><span>•</span><span>音声認識の精度はブラウザやマイクの品質に依存します。</span></li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* ── 時計 tab ── */}
+              {helpTab === "clock" && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-2 flex items-center gap-2">
+                      <InformationCircleIcon className="w-5 h-5 text-theme-help-icon" />
+                      時計モードについて
+                    </h4>
+                    <p className="text-sm text-theme-secondary leading-relaxed">
+                      フルスクリーンで現在時刻・ストップウォッチ・ポモドーロタイマーを表示します。診察室や待合室の大型ディスプレイでの利用を想定しています。
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <PuzzlePieceIcon className="w-5 h-5 text-theme-help-icon" />
+                      主な機能
+                    </h4>
+                    <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                      {[
+                        { Icon: ClockIcon,      title: "時計",            desc: "現在時刻を大きく表示。24時間/12時間切り替え、秒表示・日付表示のオン/オフが可能" },
+                        { Icon: ArrowPathIcon,  title: "ストップウォッチ",   desc: "スタート・ストップ・ラップ記録・リセット機能付き。ラップタイムを一覧表示" },
+                        { Icon: PlayIcon,       title: "ポモドーロタイマー", desc: "25分作業/5分休憩サイクル。Brown Noise・チャイム・振動・画面点滅通知付き" },
+                      ].map(({ Icon, title, desc }) => (
+                        <div key={title} className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
+                          <div className="font-semibold text-theme-primary mb-1 flex items-center gap-1.5"><Icon className="w-4 h-4 text-theme-help-icon flex-shrink-0" />{title}</div>
+                          <div className="text-theme-secondary text-xs">{desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <ClipboardDocumentIcon className="w-5 h-5 text-theme-help-icon" />
+                      使い方
+                    </h4>
+                    <ol className="space-y-3 text-sm text-theme-secondary">
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                        <div>ヘッダーの<span className="font-semibold">「時計」タブ</span>をクリックして時計モードに切り替えます。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                        <div>画面上部のボタンで<span className="font-semibold">「時計」と「ストップウォッチ」</span>を切り替えられます。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                        <div>時計モードでは画面下部の<span className="font-semibold">チェックボックス</span>で24時間表示・秒・日付をカスタマイズできます。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                        <div>ストップウォッチは<span className="font-semibold">「スタート」→「ストップ」→「リセット」</span>で操作します。走行中に「ラップ」ボタンで区間タイムを記録できます。</div>
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* ── 音声メモ tab ── */}
+              {helpTab === "voice" && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-2 flex items-center gap-2">
+                      <InformationCircleIcon className="w-5 h-5 text-theme-help-icon" />
+                      音声メモモードについて
+                    </h4>
+                    <p className="text-sm text-theme-secondary leading-relaxed">
+                      音声を録音してテキスト化し、AIで整理・要約できる汎用音声メモツールです。会議・講義・ブレインストーミングなど幅広い用途に利用できます。
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <ClipboardDocumentIcon className="w-5 h-5 text-theme-help-icon" />
+                      使い方
+                    </h4>
+                    <ol className="space-y-3 text-sm text-theme-secondary">
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                        <div><span className="font-semibold">「録音」ボタン</span>をクリックして音声入力を開始します。初回はマイクのアクセス許可が必要です。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                        <div>録音が完了したら停止ボタンをクリック。<span className="font-semibold">テキストが自動でグループに保存</span>されます。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                        <div><span className="font-semibold">「AI整理」</span>でテキストを読みやすく整形、<span className="font-semibold">「AI要約」</span>で要点・アクションアイテムを抽出します。</div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-theme-help-number text-white rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                        <div>「<span className="font-semibold">+新しいグループ</span>」で追加録音し、複数グループを分けて管理できます。</div>
+                      </li>
+                    </ol>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-theme-primary mb-3 flex items-center gap-2">
+                      <PuzzlePieceIcon className="w-5 h-5 text-theme-help-icon" />
+                      主な機能
+                    </h4>
+                    <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                      {[
+                        { Icon: MicrophoneIcon,      title: "音声録音",    desc: "Web Speech APIによるリアルタイム文字起こし。複数グループで管理可能" },
+                        { Icon: SparklesIcon,        title: "AI整理",     desc: "録音テキストを読みやすい文章に自動整形。冗長な部分を削除し構造化" },
+                        { Icon: DocumentTextIcon,    title: "AI要約",     desc: "要点・アクションアイテム・キーワードを自動抽出してコンパクトに表示" },
+                        { Icon: DocumentDuplicateIcon, title: "コピー＆共有", desc: "整理・要約したテキストをワンクリックでクリップボードにコピー" },
+                      ].map(({ Icon, title, desc }) => (
+                        <div key={title} className="bg-theme-modal-card rounded-lg p-3 border border-theme-border">
+                          <div className="font-semibold text-theme-primary mb-1 flex items-center gap-1.5"><Icon className="w-4 h-4 text-theme-help-icon flex-shrink-0" />{title}</div>
+                          <div className="text-theme-secondary text-xs">{desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-theme-soft bg-theme-modal-footer flex justify-between items-center rounded-b-2xl">
+              {helpTab === "medical" && appMode === "medical" && (
+                <button
+                  onClick={() => { setShowHelp(false); setShowOnboardingVideo(true); }}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-secondary hover:text-theme-primary transition-colors border border-theme-border rounded-lg hover:bg-theme-card"
+                >
+                  <PlayIcon className="w-4 h-4" />
+                  デモ動画を見る
+                </button>
+              )}
+              <button
+                onClick={() => setShowHelp(false)}
+                className="ml-auto px-5 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors whitespace-nowrap"
+                style={{ background: "var(--gradient-primary)" }}
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Video Modal */}
+      {showOnboardingVideo && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-[#0f172a] rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col border border-white/10 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center">
+                  <PlayIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">製品デモ動画</h3>
+                  <p className="text-xs text-slate-400">Medical Scribe Flow の使い方</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowOnboardingVideo(false); setShowHelp(true); setHelpTab("medical"); }}
+                className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+                aria-label="動画を閉じる"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="relative aspect-video bg-black">
+              <video
+                src="/video.mp4"
+                className="w-full h-full"
+                controls
+                onEnded={() => { setShowOnboardingVideo(false); setShowHelp(true); setHelpTab("medical"); }}
+              />
+            </div>
+            <div className="px-6 py-4 bg-white/5 flex justify-between items-center">
+              <p className="text-xs text-slate-500">※ 音声が流れますのでご注意ください</p>
+              <button
+                onClick={() => { setShowOnboardingVideo(false); setShowHelp(true); setHelpTab("medical"); }}
+                className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-teal-900/20"
+              >
+                はじめる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shortcuts Modal */}
+      {showShortcutsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
+          <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-theme-modal">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                  <KeyboardIcon className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">ショートカット設定</h3>
+                  <p className="text-xs text-white/70">クリックしてキー割り当てを変更できます</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowShortcutsModal(false); setEditingShortcutId(null); }}
+                className="text-white/60 hover:text-white transition-colors"
+                aria-label="閉じる"
+                data-tooltip-bottom="閉じる"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-0 bg-theme-modal-content">
+              {/* Mode Toggle */}
+              <div className="px-6 py-4 border-b border-theme-soft bg-theme-modal-content-alt">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-theme-primary">修飾キーショートカットを使用</div>
+                    <div className="text-xs text-theme-secondary mt-0.5">
+                      オンにすると、テキスト入力中でも{" "}
+                      <span className="font-mono bg-theme-highlight px-1 rounded">Cmd+R</span>{" "}
+                      などで操作できます
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleUseModifiersChange(!useModifiers)}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${useModifiers ? "bg-teal-600" : "bg-gray-200 dark:bg-gray-700"}`}
+                    role="switch"
+                    aria-checked={useModifiers}
+                    aria-label="修飾キーショートカットを使用"
+                  >
+                    <span aria-hidden="true" className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${useModifiers ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Clock Toggle */}
+              <div className="px-6 py-4 border-b border-theme-soft bg-theme-modal-content-alt">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-theme-primary">時計を表示</div>
+                    <div className="text-xs text-theme-secondary mt-0.5">ヘッダーに現在時刻と録音経過時間を表示します</div>
+                  </div>
+                  <button
+                    onClick={() => setShowClock(!showClock)}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${showClock ? "bg-teal-600" : "bg-gray-200 dark:bg-gray-700"}`}
+                    role="switch"
+                    aria-checked={showClock}
+                    aria-label="時計を表示"
+                  >
+                    <span aria-hidden="true" className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showClock ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="divide-y divide-theme-soft">
+                {SHORTCUT_GROUPS.map((group) => {
+                  const groupShortcuts = SHORTCUT_DEFS.filter((def) => def.group === group.id);
+                  if (groupShortcuts.length === 0) return null;
+                  return (
+                    <div key={group.id}>
+                      <div className="px-6 py-2 bg-theme-card sticky top-0">
+                        <span className="text-xs font-semibold text-theme-accent uppercase tracking-wider">{group.label}</span>
+                      </div>
+                      {groupShortcuts.map((def) => {
+                        const isEditing = editingShortcutId === def.id;
+                        const current = shortcuts[def.id] || def.default;
+                        const platformDefault = getPlatformDefaultShortcuts(useModifiers)[def.id];
+                        return (
+                          <div
+                            key={def.id}
+                            className={`flex items-center justify-between px-6 py-3 transition-colors ${isEditing ? "bg-theme-highlight" : "hover:bg-theme-card"}`}
+                          >
+                            <span className="text-sm text-theme-primary pl-2">{def.label}</span>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => setEditingShortcutId(def.id)}
+                                className={`min-w-[100px] px-3 py-1.5 rounded-md text-sm font-mono border transition-all ${
+                                  isEditing
+                                    ? "bg-theme-surface border-teal-500 text-theme-accent ring-2 ring-teal-500/20"
+                                    : "bg-theme-surface border-theme-light text-theme-primary hover:border-theme-accent"
+                                }`}
+                              >
+                                {isEditing ? "キーを入力..." : formatShortcut(current)}
+                              </button>
+                              {JSON.stringify(current) !== JSON.stringify(platformDefault) && (
+                                <button
+                                  onClick={() => handleShortcutChange(def.id, platformDefault)}
+                                  className="p-1.5 text-theme-tertiary hover:text-red-500 transition-colors"
+                                  title="デフォルトに戻す"
+                                >
+                                  <ArrowLeftIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-theme-soft bg-theme-modal-footer flex justify-between items-center">
+              <button
+                onClick={handleResetSettings}
+                className="text-xs text-theme-tertiary hover:text-red-500 flex items-center gap-1 transition-colors"
+              >
+                <TrashIcon className="w-4 h-4" />
+                設定をリセット
+              </button>
+              <button
+                onClick={() => { setShowShortcutsModal(false); setEditingShortcutId(null); }}
+                className="px-5 py-2 text-sm font-medium text-white bg-theme-primary rounded-md hover:opacity-90 transition-opacity"
+              >
+                完了
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </main>
 
       {/* Hidden file input for import */}
@@ -3743,8 +3798,49 @@ export default function Home() {
         isAnalyzing={loading || isStreaming}
       />
 
-      {/* Portal tooltip - rendered at document.body to escape overflow:hidden */}
-      {typeof window !== "undefined" && tooltip &&
+      {/* Portal Sample Menu (renders at document.body to escape overflow:hidden) */}
+      {typeof window !== "undefined" &&
+        showSampleMenu &&
+        sampleMenuButtonRef.current &&
+        createPortal(
+          (() => {
+            const rect = sampleMenuButtonRef.current!.getBoundingClientRect();
+            return (
+              <div
+                className="sample-menu"
+                data-sample-menu
+                style={{
+                  position: "fixed",
+                  top: rect.bottom + 6,
+                  right: window.innerWidth - rect.right,
+                }}
+              >
+                {SAMPLE_INTERVIEWS.map((sample) => (
+                  <button
+                    key={sample.id}
+                    className="sample-menu-item"
+                    onClick={() => {
+                      setTranscript(sample.text);
+                      setShowSampleMenu(false);
+                    }}
+                  >
+                    <div className="font-semibold text-theme-primary text-xs">
+                      {sample.label}
+                    </div>
+                    <div className="sample-menu-item-desc">
+                      {sample.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            );
+          })(),
+          document.body,
+        )}
+
+      {/* Portal Tooltip (renders at document.body to escape overflow:hidden) */}
+      {typeof window !== "undefined" &&
+        tooltip &&
         createPortal(
           <div
             className={`portal-tooltip ${tooltip.position === "bottom" ? "portal-tooltip-bottom" : ""}`}
@@ -3769,7 +3865,7 @@ export default function Home() {
               <div className="portal-tooltip-arrow portal-tooltip-arrow-bottom" />
             )}
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
