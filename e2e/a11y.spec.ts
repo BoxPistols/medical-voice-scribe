@@ -121,7 +121,7 @@ test.describe('コントラスト – Modal Header', () => {
     expect(ratio, `Title contrast must be ≥3.0:1, got ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3.0);
   });
 
-  test('非アクティブタブテキスト – WCAG AA 3:1 以上', async ({ page }) => {
+  test('非アクティブタブテキスト – WCAG AA 4.5:1 以上（小テキスト）', async ({ page }) => {
     // 医療カルテタブがデフォルトでアクティブなので、他の2つは非アクティブ
     const inactiveTabs = page.locator('[data-testid="help-modal-header"] ~ div button[class*="border-transparent"]');
     const count = await inactiveTabs.count();
@@ -145,7 +145,7 @@ test.describe('コントラスト – Modal Header', () => {
     const ratio = contrastRatio(luminance(fg.r, fg.g, fg.b), luminance(bg.r, bg.g, bg.b));
     console.log(`Inactive tab contrast: ${ratio.toFixed(2)}:1  fg=${fgCss} bg=${bgCss}`);
 
-    expect(ratio, `Inactive tab contrast must be ≥3.0:1, got ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3.0);
+    expect(ratio, `Inactive tab contrast must be ≥4.5:1, got ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
   });
 });
 
@@ -178,8 +178,7 @@ test.describe('Modal – キーボード & ARIA', () => {
     await expect(titleEl).toBeVisible();
   });
 
-  // フォーカストラップは現時点未実装 → WCAG 2.1 AA への対応 TODO
-  test.fixme('ヘルプモーダル内でフォーカスがトラップされること', async ({ page }) => {
+  test('ヘルプモーダル内でフォーカスがトラップされること', async ({ page }) => {
     await openHelpModal(page);
 
     for (let i = 0; i < 12; i++) {
