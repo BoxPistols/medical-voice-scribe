@@ -41,7 +41,7 @@ export const buildCopySectionS = (result: SoapNote): string => {
     text += `現病歴:\n${result.soap.subjective.presentIllness}\n\n`;
   }
   if (
-    result.soap.subjective?.symptoms &&
+    Array.isArray(result.soap.subjective?.symptoms) &&
     result.soap.subjective.symptoms.length > 0
   ) {
     text += `症状:\n${result.soap.subjective.symptoms
@@ -90,7 +90,7 @@ export const buildCopySectionA = (result: SoapNote): string => {
     text += "\n";
   }
   if (
-    result.soap.assessment?.differentialDiagnosis &&
+    Array.isArray(result.soap.assessment?.differentialDiagnosis) &&
     result.soap.assessment.differentialDiagnosis.length > 0
   ) {
     text += `鑑別診断:\n${result.soap.assessment.differentialDiagnosis
@@ -112,7 +112,7 @@ export const buildCopySectionP = (result: SoapNote): string => {
     text += `治療方針:\n${result.soap.plan.treatment}\n\n`;
   }
   if (
-    result.soap.plan?.medications &&
+    Array.isArray(result.soap.plan?.medications) &&
     result.soap.plan.medications.length > 0
   ) {
     text += "処方:\n";

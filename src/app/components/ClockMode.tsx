@@ -571,6 +571,7 @@ export default function ClockMode() {
               <button
                 onClick={handlePomReset}
                 title="全リセット"
+                aria-label="全リセット"
                 className="w-12 h-12 rounded-xl border border-theme-border text-theme-secondary hover:bg-theme-card transition-colors flex items-center justify-center"
               >
                 <ResetIcon className="w-5 h-5" />
@@ -578,6 +579,7 @@ export default function ClockMode() {
               <button
                 onClick={handlePomSkip}
                 title="このセッションをスキップ"
+                aria-label="このセッションをスキップ"
                 className="w-12 h-12 rounded-xl border border-theme-border text-theme-secondary hover:bg-theme-card transition-colors flex items-center justify-center"
               >
                 <SkipIcon className="w-5 h-5" />
@@ -585,6 +587,8 @@ export default function ClockMode() {
               <button
                 onClick={() => setShowSettings((v) => !v)}
                 title="設定"
+                aria-label="ポモドーロ設定"
+                aria-expanded={showSettings}
                 className={`w-12 h-12 rounded-xl border transition-colors flex items-center justify-center ${
                   showSettings
                     ? "border-teal-400 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"

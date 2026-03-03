@@ -558,7 +558,7 @@ export default function ChatSupportWidget({
           <div className="chat-support-header">
             {/* リサイズハンドル（ヘッダー左端） */}
             <button
-              className="drag-handle"
+              className="chat-support-resize-btn"
               onMouseDown={handleResizeStart}
               aria-label="ドラッグでリサイズ"
               type="button"

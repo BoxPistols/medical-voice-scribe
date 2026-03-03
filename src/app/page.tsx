@@ -3598,7 +3598,7 @@ export default function Home() {
 
       {/* Onboarding Video Modal */}
       {showOnboardingVideo && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="onboarding-video-title">
           <div className="bg-[#0f172a] rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col border border-white/10 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/5">
               <div className="flex items-center gap-3">
@@ -3606,7 +3606,7 @@ export default function Home() {
                   <PlayIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">製品デモ動画</h3>
+                  <h3 id="onboarding-video-title" className="text-lg font-bold text-white">製品デモ動画</h3>
                   <p className="text-xs text-slate-400">Medical Scribe Flow の使い方</p>
                 </div>
               </div>
@@ -3641,7 +3641,7 @@ export default function Home() {
 
       {/* Shortcuts Modal */}
       {showShortcutsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title">
           <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-theme-modal">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
@@ -3650,7 +3650,7 @@ export default function Home() {
                   <KeyboardIcon className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">ショートカット設定</h3>
+                  <h3 id="shortcuts-modal-title" className="text-xl font-bold text-white">ショートカット設定</h3>
                   <p className="text-xs text-white/70">クリックしてキー割り当てを変更できます</p>
                 </div>
               </div>
