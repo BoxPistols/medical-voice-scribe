@@ -222,6 +222,7 @@ body {
   color: var(--text-primary);
   font-family:
     var(--font-sans),
+    var(--font-jp),
     system-ui,
     -apple-system,
     sans-serif;
@@ -995,6 +996,42 @@ body::after {
 }
 .animate-pomodoro-flash {
   animation: pomodoro-flash 1.3s ease-in-out forwards;
+}
+
+/* prefers-reduced-motion – WCAG 2.1 SC 2.3.3 (AAA) / 2.3 (AA) */
+@media (prefers-reduced-motion: reduce) {
+  /* Decorative entrance animations → instant */
+  .animate-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .delay-100,
+  .delay-200 {
+    animation-delay: 0ms;
+  }
+
+  /* Recording pulse → static (still visible, just not moving) */
+  .recording-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.4);
+  }
+
+  /* Pomodoro flash → suppress entirely (notification already played) */
+  .animate-pomodoro-flash {
+    animation: none;
+    opacity: 0;
+  }
+
+  /* Tailwind animate-pulse / animate-spin from inline classes */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ============================================
