@@ -3357,7 +3357,7 @@ export default function Home() {
                   className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
                     helpTab === tab
                       ? "border-teal-400 text-white"
-                      : "border-transparent text-white/50 hover:text-white/80"
+                      : "border-transparent text-white/75 hover:text-white"
                   }`}
                 >
                   {tab === "medical" ? <><DocumentChartBarIcon className="w-4 h-4" />医療カルテ</> : tab === "clock" ? <><ClockIcon className="w-4 h-4" />時計</> : <><MicrophoneIcon className="w-4 h-4" />音声メモ</>}

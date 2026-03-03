@@ -25,6 +25,7 @@
     "remotion": "4.0.261"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@chromatic-com/storybook": "^5.0.1",
     "@remotion/cli": "4.0.261",
     "@storybook/addon-a11y": "^10.2.8",
