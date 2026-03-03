@@ -85,6 +85,15 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 type ClockDisplay = "clock" | "stopwatch" | "pomodoro";
 type PomSession = "work" | "break";
+type VibratePattern = "success" | "nudge" | "error" | "buzz" | "bee";
+
+const VIBRATE_PATTERNS: { key: VibratePattern; label: string; desc: string }[] = [
+  { key: "success", label: "やさしい",  desc: "軽い2連タップ" },
+  { key: "nudge",   label: "標準",      desc: "しっかりタップ" },
+  { key: "error",   label: "強め",      desc: "3連の鋭い振動" },
+  { key: "buzz",    label: "ブーッ",    desc: "1秒の長い振動" },
+  { key: "bee",     label: "Bee",       desc: "ブブブブッと連続" },
+];
 
 // ── Brown noise generator ──────────────────────────────────────────────────
 
@@ -140,6 +149,7 @@ export default function ClockMode() {
   // Notification toggles
   const [nSound, setNSound] = useState(true);
   const [nVibrate, setNVibrate] = useState(true);
+  const [vibratePattern, setVibratePattern] = useState<VibratePattern>("nudge");
   const [nFlash, setNFlash] = useState(true);
   const [nBrowser, setNBrowser] = useState(false);
   const [notifPerm, setNotifPerm] = useState<string>("default");
@@ -153,6 +163,7 @@ export default function ClockMode() {
   const pomBreakMinRef = useRef(pomBreakMin);
   const nSoundRef = useRef(nSound);
   const nVibrateRef = useRef(nVibrate);
+  const vibratePatternRef = useRef(vibratePattern);
   const nFlashRef = useRef(nFlash);
   const nBrowserRef = useRef(nBrowser);
   pomSessionRef.current = pomSession;
@@ -160,6 +171,7 @@ export default function ClockMode() {
   pomBreakMinRef.current = pomBreakMin;
   nSoundRef.current = nSound;
   nVibrateRef.current = nVibrate;
+  vibratePatternRef.current = vibratePattern;
   nFlashRef.current = nFlash;
   nBrowserRef.current = nBrowser;
 
@@ -200,7 +212,7 @@ export default function ClockMode() {
     const breakMin = pomBreakMinRef.current;
     setPomRunning(false);
     if (nSoundRef.current) playChime();
-    if (nVibrateRef.current) triggerHaptic("success");
+    if (nVibrateRef.current) fireHaptic(vibratePatternRef.current);
     if (nFlashRef.current) setIsFlashing(true);
     if (nBrowserRef.current) fireBrowserNotif(session);
     if (session === "work") {
@@ -307,12 +319,23 @@ export default function ClockMode() {
     if (perm === "granted") setNBrowser(true);
   }, []);
 
+  // ── Haptic helper ─────────────────────────────────────────────────────────
+
+  const fireHaptic = useCallback((pattern: VibratePattern) => {
+    if (pattern === "bee") {
+      // Rapid repeated buzzes: ブブブブッ
+      triggerHaptic([80, 40, 80, 40, 80, 40, 80, 40, 200]);
+    } else {
+      triggerHaptic(pattern);
+    }
+  }, [triggerHaptic]);
+
   // ── Debug handlers ────────────────────────────────────────────────────────
 
   const debugSound = useCallback(() => playChime(), [playChime]);
   const debugVibrate = useCallback(() => {
-    triggerHaptic("success");
-  }, [triggerHaptic]);
+    fireHaptic(vibratePattern);
+  }, [fireHaptic, vibratePattern]);
   const debugFlash = useCallback(() => setIsFlashing(true), []);
   const debugNotif = useCallback(() => fireBrowserNotif("work"), [fireBrowserNotif]);
 
@@ -677,6 +700,7 @@ export default function ClockMode() {
                       </button>
                     ))}
 
+                    {/* Browser notification button */}
                     {notifPerm === "granted" ? (
                       <button
                         onClick={() => setNBrowser((v) => !v)}
@@ -704,6 +728,29 @@ export default function ClockMode() {
                       </button>
                     )}
                   </div>
+
+                  {/* Vibration pattern selector */}
+                  {nVibrate && (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="text-xs text-theme-tertiary">振動パターン</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {VIBRATE_PATTERNS.map(({ key, label, desc }) => (
+                          <button
+                            key={key}
+                            onClick={() => setVibratePattern(key)}
+                            title={desc}
+                            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                              vibratePattern === key
+                                ? "bg-teal-500 text-white"
+                                : "border border-theme-border text-theme-tertiary hover:bg-theme-bg"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t border-theme-border" />
