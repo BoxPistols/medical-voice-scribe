@@ -178,8 +178,7 @@ test.describe('Modal – キーボード & ARIA', () => {
     await expect(titleEl).toBeVisible();
   });
 
-  // フォーカストラップは現時点未実装 → WCAG 2.1 AA への対応 TODO
-  test.fixme('ヘルプモーダル内でフォーカスがトラップされること', async ({ page }) => {
+  test('ヘルプモーダル内でフォーカスがトラップされること', async ({ page }) => {
     await openHelpModal(page);
 
     for (let i = 0; i < 12; i++) {
