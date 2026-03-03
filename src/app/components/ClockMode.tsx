@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
+import { useWebHaptics } from "web-haptics/react";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 
@@ -104,6 +105,9 @@ function makeBrownNoiseBuffer(ctx: AudioContext): AudioBuffer {
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function ClockMode() {
+  // ── Haptic feedback (iOS Safari + Android) ──
+  const { trigger: triggerHaptic } = useWebHaptics();
+
   // ── Clock ──
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [display, setDisplay] = useState<ClockDisplay>("clock");
@@ -196,7 +200,7 @@ export default function ClockMode() {
     const breakMin = pomBreakMinRef.current;
     setPomRunning(false);
     if (nSoundRef.current) playChime();
-    if (nVibrateRef.current && "vibrate" in navigator) navigator.vibrate([200, 100, 200, 100, 400]);
+    if (nVibrateRef.current) triggerHaptic("success");
     if (nFlashRef.current) setIsFlashing(true);
     if (nBrowserRef.current) fireBrowserNotif(session);
     if (session === "work") {
@@ -307,8 +311,8 @@ export default function ClockMode() {
 
   const debugSound = useCallback(() => playChime(), [playChime]);
   const debugVibrate = useCallback(() => {
-    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200, 100, 400]);
-  }, []);
+    triggerHaptic("success");
+  }, [triggerHaptic]);
   const debugFlash = useCallback(() => setIsFlashing(true), []);
   const debugNotif = useCallback(() => fireBrowserNotif("work"), [fireBrowserNotif]);
 
