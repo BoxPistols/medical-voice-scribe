@@ -21,216 +21,212 @@ function contrastRatio(l1: number, l2: number): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/** Parse computed background-color "rgb(r, g, b)" or "rgba(r, g, b, a)" */
+/** Parse computed color "rgb(r, g, b)" or "rgba(r, g, b, a)" → RGB values */
 function parseRgb(css: string): { r: number; g: number; b: number } | null {
   const m = css.match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/);
   if (!m) return null;
   return { r: parseInt(m[1]), g: parseInt(m[2]), b: parseInt(m[3]) };
 }
 
+/** Walk up the DOM to find the first non-transparent background color */
+function resolvedBg(el: Element): string {
+  let node: Element | null = el;
+  while (node) {
+    const bg = window.getComputedStyle(node).backgroundColor;
+    if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
+    node = node.parentElement;
+  }
+  return 'rgb(255, 255, 255)';
+}
+
+// ── Shared helper: open help modal ─────────────────────────────────────────
+
+async function openHelpModal(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  await page.waitForSelector('button[aria-label="ヘルプを表示"]', { state: 'visible' });
+  await page.locator('button[aria-label="ヘルプを表示"]').first().click();
+  await page.waitForSelector('[data-testid="help-modal-header"]', { state: 'visible' });
+}
+
 // ── Tests ───────────────────────────────────────────────────────────────────
 
-test.describe('アクセシビリティ – 自動 axe スキャン', () => {
-  test('トップページに axe 違反がないこと（criticalのみ）', async ({ page }) => {
+test.describe('アクセシビリティ – axe 自動スキャン', () => {
+  test('トップページ – WCAG 2.0 AA critical/serious 違反がないこと', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForSelector('header', { state: 'visible' });
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa'])
       .disableRules([
-        // マイク/音声認識はブラウザ環境で無効なので除外
-        'audio-caption',
+        'audio-caption', // マイク/音声認識はブラウザ環境で動作しないため除外
       ])
       .analyze();
 
-    // impactが critical / serious のみを報告
     const critical = results.violations.filter(
       (v) => v.impact === 'critical' || v.impact === 'serious'
     );
     if (critical.length > 0) {
       console.log(
         'a11y violations:\n',
-        critical.map((v) => `[${v.impact}] ${v.id}: ${v.description}`).join('\n')
+        critical
+          .map((v) => `[${v.impact}] ${v.id}: ${v.description}\n  → ${v.nodes.map((n) => n.html).join('\n  → ')}`)
+          .join('\n')
       );
     }
-    expect(critical).toHaveLength(0);
+    expect(critical, 'WCAG AA critical/serious violations').toHaveLength(0);
   });
 
-  test('ヘルプモーダル – axe 違反がないこと', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    // ヘルプモーダルを開く
-    const helpBtn = page.locator('button[aria-label="ヘルプを表示"]').first();
-    await helpBtn.click();
-    await page.waitForSelector('text=使い方ガイド', { state: 'visible' });
+  test('ヘルプモーダル – WCAG 2.0 AA critical/serious 違反がないこと', async ({ page }) => {
+    await openHelpModal(page);
 
     const results = await new AxeBuilder({ page })
-      .include('[role="dialog"], .bg-theme-modal, [class*="modal"]')
       .withTags(['wcag2a', 'wcag2aa'])
       .analyze();
 
     const critical = results.violations.filter(
       (v) => v.impact === 'critical' || v.impact === 'serious'
     );
-    expect(critical).toHaveLength(0);
+    if (critical.length > 0) {
+      console.log(
+        'Help modal a11y violations:\n',
+        critical.map((v) => `[${v.impact}] ${v.id}: ${v.description}`).join('\n')
+      );
+    }
+    expect(critical, 'Help modal WCAG AA violations').toHaveLength(0);
   });
 });
 
 test.describe('コントラスト – Modal Header', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+  test.beforeEach(openHelpModal);
 
-    const helpBtn = page.locator('button[aria-label="ヘルプを表示"]').first();
-    await helpBtn.click();
-    await page.waitForSelector('text=使い方ガイド', { state: 'visible' });
-  });
+  test('ヘッダータイトル – WCAG AA 大テキスト 3:1 以上', async ({ page }) => {
+    const title  = page.locator('#help-modal-title');
+    const header = page.locator('[data-testid="help-modal-header"]');
 
-  test('ヘッダータイトル "使い方ガイド" – WCAG AA 3:1 以上（大テキスト）', async ({ page }) => {
-    const title = page.locator('h3', { hasText: '使い方ガイド' });
-    const header = page.locator('.chat-support-header, [class*="modal"] > div').first();
-
-    const [titleColor, headerBg] = await Promise.all([
+    const [fgCss, bgCss] = await Promise.all([
       title.evaluate((el) => window.getComputedStyle(el).color),
       header.evaluate((el) => window.getComputedStyle(el).backgroundColor),
     ]);
 
-    const fg = parseRgb(titleColor);
-    const bg = parseRgb(headerBg);
+    const fg = parseRgb(fgCss);
+    const bg = parseRgb(bgCss);
 
-    // 取得できない場合はスキップ（透明背景など）
-    if (!fg || !bg) {
-      test.skip();
-      return;
-    }
+    test.skip(!fg || !bg, 'computedStyle が取得できない環境（透明背景）');
+    if (!fg || !bg) return;
 
-    const ratio = contrastRatio(
-      luminance(fg.r, fg.g, fg.b),
-      luminance(bg.r, bg.g, bg.b)
-    );
+    const ratio = contrastRatio(luminance(fg.r, fg.g, fg.b), luminance(bg.r, bg.g, bg.b));
+    console.log(`Title contrast: ${ratio.toFixed(2)}:1  fg=${fgCss} bg=${bgCss}`);
 
-    console.log(`Title contrast ratio: ${ratio.toFixed(2)}:1  (fg=${titleColor} bg=${headerBg})`);
-    // 大テキスト(18pt+ or 14pt+bold) WCAG AA = 3:1
-    expect(ratio).toBeGreaterThanOrEqual(3.0);
+    // 大テキスト (text-xl bold = 20px bold ≥ 18.66px) → WCAG AA 3:1
+    expect(ratio, `Title contrast must be ≥3.0:1, got ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3.0);
   });
 
   test('非アクティブタブテキスト – WCAG AA 3:1 以上', async ({ page }) => {
-    // 非アクティブなタブボタン（2番目以降）
-    const inactiveTab = page.locator('button[class*="border-transparent"]').first();
+    // 医療カルテタブがデフォルトでアクティブなので、他の2つは非アクティブ
+    const inactiveTabs = page.locator('[data-testid="help-modal-header"] ~ div button[class*="border-transparent"]');
+    const count = await inactiveTabs.count();
 
-    // タブが取得できない場合（全タブがアクティブになっていない場合）はスキップ
-    const count = await inactiveTab.count();
-    if (count === 0) { test.skip(); return; }
+    test.skip(count === 0, '非アクティブタブが見つからない');
+    if (count === 0) return;
 
-    const [tabColor, headerBg] = await Promise.all([
+    const inactiveTab = inactiveTabs.first();
+
+    const [fgCss, bgCss] = await Promise.all([
       inactiveTab.evaluate((el) => window.getComputedStyle(el).color),
-      inactiveTab.evaluate((el) => {
-        let node: Element | null = el;
-        while (node) {
-          const bg = window.getComputedStyle(node).backgroundColor;
-          if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
-          node = node.parentElement;
-        }
-        return 'rgb(255,255,255)';
-      }),
+      inactiveTab.evaluate(resolvedBg),
     ]);
 
-    const fg = parseRgb(tabColor);
-    const bg = parseRgb(headerBg);
-    if (!fg || !bg) { test.skip(); return; }
+    const fg = parseRgb(fgCss);
+    const bg = parseRgb(bgCss);
 
-    const ratio = contrastRatio(
-      luminance(fg.r, fg.g, fg.b),
-      luminance(bg.r, bg.g, bg.b)
-    );
+    test.skip(!fg || !bg, 'computedStyle が取得できない環境');
+    if (!fg || !bg) return;
 
-    console.log(`Inactive tab contrast: ${ratio.toFixed(2)}:1  (fg=${tabColor} bg=${headerBg})`);
-    expect(ratio).toBeGreaterThanOrEqual(3.0);
+    const ratio = contrastRatio(luminance(fg.r, fg.g, fg.b), luminance(bg.r, bg.g, bg.b));
+    console.log(`Inactive tab contrast: ${ratio.toFixed(2)}:1  fg=${fgCss} bg=${bgCss}`);
+
+    expect(ratio, `Inactive tab contrast must be ≥3.0:1, got ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3.0);
   });
 });
 
-test.describe('Modal – キーボード & フォーカス操作', () => {
+test.describe('Modal – キーボード & ARIA', () => {
   test('ヘルプモーダルが Escape で閉じること', async ({ page }) => {
-    await page.goto('/');
-    const helpBtn = page.locator('button[aria-label="ヘルプを表示"]').first();
-    await helpBtn.click();
-    await page.waitForSelector('text=使い方ガイド', { state: 'visible' });
-
+    await openHelpModal(page);
     await page.keyboard.press('Escape');
-    await expect(page.locator('text=使い方ガイド')).toBeHidden({ timeout: 2000 });
+    await expect(page.locator('[data-testid="help-modal-header"]')).toBeHidden({ timeout: 2000 });
   });
 
-  test('ヘルプモーダル内でタブキーフォーカスが循環すること', async ({ page }) => {
-    await page.goto('/');
-    const helpBtn = page.locator('button[aria-label="ヘルプを表示"]').first();
-    await helpBtn.click();
-    await page.waitForSelector('text=使い方ガイド', { state: 'visible' });
+  test('モーダルに role="dialog" と aria-modal="true" が設定されていること', async ({ page }) => {
+    await openHelpModal(page);
+    const dialog = page.locator('[role="dialog"][aria-modal="true"]');
+    await expect(dialog).toBeVisible();
+  });
 
-    // タブを10回押してもフォーカスがモーダル内に留まるか確認
-    for (let i = 0; i < 10; i++) {
+  test('閉じるボタンに aria-label があること', async ({ page }) => {
+    await openHelpModal(page);
+    await expect(page.locator('button[aria-label="ヘルプを閉じる"]')).toBeVisible();
+  });
+
+  test('モーダルタイトルに aria-labelledby が対応していること', async ({ page }) => {
+    await openHelpModal(page);
+    const dialog = page.locator('[role="dialog"]');
+    const labelledBy = await dialog.getAttribute('aria-labelledby');
+    expect(labelledBy).toBeTruthy();
+
+    // labelledby が指すタイトル要素が存在すること
+    const titleEl = page.locator(`#${labelledBy}`);
+    await expect(titleEl).toBeVisible();
+  });
+
+  // フォーカストラップは現時点未実装 → WCAG 2.1 AA への対応 TODO
+  test.fixme('ヘルプモーダル内でフォーカスがトラップされること', async ({ page }) => {
+    await openHelpModal(page);
+
+    for (let i = 0; i < 12; i++) {
       await page.keyboard.press('Tab');
     }
 
-    // フォーカスが modal の外（body, header etc.）に出ていないこと
-    const focused = await page.evaluate(() => {
-      const el = document.activeElement;
-      if (!el) return false;
-      // dialog役割の祖先を探す
-      let node: Element | null = el;
+    const isInsideModal = await page.evaluate(() => {
+      let node: Element | null = document.activeElement;
       while (node) {
         if (node.getAttribute('role') === 'dialog') return true;
-        // fixed modal の class チェック
-        if (node.classList.contains('fixed') && node.classList.contains('z-50')) return true;
         node = node.parentElement;
       }
       return false;
     });
 
-    // フォーカストラップが実装されていればtrue、未実装でも警告のみ
-    if (!focused) {
-      console.warn('Modal focus trap not implemented – consider adding for full WCAG 2.1 Level AA compliance.');
-    }
-  });
-
-  test('モーダル閉じるボタンに適切な aria-label があること', async ({ page }) => {
-    await page.goto('/');
-    const helpBtn = page.locator('button[aria-label="ヘルプを表示"]').first();
-    await helpBtn.click();
-    await page.waitForSelector('text=使い方ガイド', { state: 'visible' });
-
-    const closeBtn = page.locator('button[aria-label="ヘルプを閉じる"]');
-    await expect(closeBtn).toBeVisible();
+    expect(isInsideModal, 'Focus should stay inside the dialog').toBe(true);
   });
 });
 
 test.describe('Clock Mode – ポモドーロ UI', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    // 時計タブに切り替え
-    await page.getByRole('button', { name: '時計' }).click();
-    await expect(page.locator('text=ポモドーロ')).toBeVisible();
+    await page.waitForSelector('header', { state: 'visible' });
+    // ヘッダーの「時計」タブをクリック
+    await page.getByRole('button', { name: '時計', exact: true }).click();
+    // ポモドーロボタンが表示されるまで待つ
+    await expect(page.getByRole('button', { name: 'ポモドーロ', exact: true })).toBeVisible();
   });
 
-  test('ポモドーロタブが表示・操作可能', async ({ page }) => {
-    await page.getByRole('button', { name: 'ポモドーロ' }).click();
-    await expect(page.locator('text=作業中')).toBeVisible();
+  test('ポモドーロタブ – 表示と操作', async ({ page }) => {
+    await page.getByRole('button', { name: 'ポモドーロ', exact: true }).click();
+    await expect(page.getByText('作業中')).toBeVisible();
 
-    const startBtn = page.getByRole('button', { name: 'スタート' });
+    const startBtn = page.getByRole('button', { name: 'スタート', exact: true });
     await expect(startBtn).toBeVisible();
     await expect(startBtn).toBeEnabled();
   });
 
-  test('設定パネル – 作業時間のプリセット変更', async ({ page }) => {
-    await page.getByRole('button', { name: 'ポモドーロ' }).click();
+  test('設定パネル – 作業時間プリセット変更', async ({ page }) => {
+    await page.getByRole('button', { name: 'ポモドーロ', exact: true }).click();
 
-    // 設定パネルを開く
+    // 設定パネルを開く（title属性で特定）
     await page.locator('button[title="設定"]').click();
-    await expect(page.locator('text=時間設定')).toBeVisible();
+    await expect(page.getByText('時間設定')).toBeVisible();
 
-    // 作業時間を30分に変更
-    await page.getByRole('button', { name: '30' }).first().click();
-    await expect(page.locator('text=30分集中')).toBeVisible();
+    // 作業時間プリセット「30」をクリック（設定パネル内に限定）
+    await page.getByRole('button', { name: '30', exact: true }).first().click();
+    await expect(page.getByText('30分集中')).toBeVisible();
   });
 });

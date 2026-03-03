@@ -3328,15 +3328,15 @@ export default function Home() {
 
       {/* Help Modal */}
       {showHelp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
           <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
+            <div data-testid="help-modal-header" className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg bg-white/20">
                   <QuestionMarkCircleIcon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white">使い方ガイド</h3>
+                <h3 id="help-modal-title" className="text-xl font-bold text-white">使い方ガイド</h3>
               </div>
               <button
                 onClick={() => setShowHelp(false)}
