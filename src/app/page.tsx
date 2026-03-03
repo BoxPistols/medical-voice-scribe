@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import type { SoapNote, ModelId, TokenUsage } from "./api/analyze/types";
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from "./api/analyze/types";
 import {
@@ -449,6 +450,11 @@ export default function Home() {
     position: "top" | "bottom";
   } | null>(null);
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Help modal focus trap refs
+  const helpModalRef = useRef<HTMLDivElement>(null);
+  const helpTriggerRef = useRef<HTMLButtonElement>(null);
+  useFocusTrap(helpModalRef, showHelp, helpTriggerRef);
 
   const hideTooltip = useCallback(() => {
     if (tooltipTimeoutRef.current) {
@@ -1689,6 +1695,7 @@ export default function Home() {
 
                 {/* Help button */}
                 <button
+                  ref={helpTriggerRef}
                   onClick={() => { setHelpTab(appMode); setShowHelp(true); }}
                   className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="ヘルプを表示"
@@ -3328,7 +3335,7 @@ export default function Home() {
 
       {/* Help Modal */}
       {showHelp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+        <div ref={helpModalRef} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-overlay backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
           <div className="bg-theme-modal backdrop-blur-xl rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-theme-modal">
             {/* Header */}
             <div data-testid="help-modal-header" className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-theme-modal-header rounded-t-2xl">
