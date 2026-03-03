@@ -176,6 +176,20 @@ export default function ClockMode() {
   nFlashRef.current = nFlash;
   nBrowserRef.current = nBrowser;
 
+  // ── SW notification helpers (declared early for use in effects) ──────────
+
+  const scheduleSwNotif = useCallback((endTime: number, session: PomSession) => {
+    const title = session === "work" ? "作業時間終了" : "休憩終了";
+    const body = session === "work" ? "休憩を取りましょう" : "次のセッションを始めましょう";
+    navigator.serviceWorker?.controller?.postMessage({
+      type: "SCHEDULE_NOTIFICATION", endTime, title, body,
+    });
+  }, []);
+
+  const cancelSwNotif = useCallback(() => {
+    navigator.serviceWorker?.controller?.postMessage({ type: "CANCEL_NOTIFICATION" });
+  }, []);
+
   // ── Effects ───────────────────────────────────────────────────────────────
 
   // Clock tick
@@ -200,16 +214,20 @@ export default function ClockMode() {
   useEffect(() => {
     if (!pomRunning) {
       pomEndTimeRef.current = null;
+      cancelSwNotif();
       return;
     }
-    pomEndTimeRef.current = Date.now() + pomTimeLeft * 1000;
+    const endTime = Date.now() + pomTimeLeft * 1000;
+    pomEndTimeRef.current = endTime;
+    // Schedule SW notification for background delivery
+    if (nBrowserRef.current) scheduleSwNotif(endTime, pomSessionRef.current);
     const id = setInterval(() => {
       setPomTimeLeft((t) => (t > 0 ? t - 1 : 0));
     }, 1000);
     return () => clearInterval(id);
   // pomTimeLeft is intentionally excluded – only re-run on pomRunning change
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pomRunning]);
+  }, [pomRunning, scheduleSwNotif, cancelSwNotif]);
 
   // Background recovery: iOS Safari suspends setInterval in background.
   // On foreground return, recalculate remaining time from the stored end time.
@@ -324,13 +342,17 @@ export default function ClockMode() {
     }
   }, [brownOn, getCtx, noiseVol]);
 
+  // Send notification via Service Worker (works in iOS PWA) with fallback
   const fireBrowserNotif = useCallback((session: PomSession) => {
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(session === "work" ? "作業時間終了" : "休憩終了", {
-        body: session === "work" ? "休憩を取りましょう" : "次のセッションを始めましょう",
-        silent: true,
-      });
-    }
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const title = session === "work" ? "作業時間終了" : "休憩終了";
+    const body = session === "work" ? "休憩を取りましょう" : "次のセッションを始めましょう";
+    // Prefer SW showNotification (required for iOS PWA)
+    navigator.serviceWorker?.ready.then((reg) => {
+      reg.showNotification(title, { body, icon: "/apple-icon", badge: "/icon", tag: "pomodoro" } as NotificationOptions);
+    }).catch(() => {
+      new Notification(title, { body, silent: true });
+    });
   }, []);
 
   const requestNotifPerm = useCallback(async () => {
@@ -723,9 +745,9 @@ export default function ClockMode() {
 
                     {/* Browser notification button */}
                     {!notifSupported ? (
-                      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-theme-border text-theme-muted" title="iOS Safariでは通知APIが利用できません。音・振動・点滅をご利用ください。">
+                      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-theme-border text-theme-muted" title="ホーム画面に追加（PWA）すると通知が使えます">
                         <BellIcon className="w-3.5 h-3.5" />
-                        通知非対応
+                        通知: PWAで有効
                       </span>
                     ) : notifPerm === "granted" ? (
                       <button
