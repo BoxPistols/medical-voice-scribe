@@ -155,6 +155,7 @@ export default function ClockMode() {
   const [notifPerm, setNotifPerm] = useState<string>("default");
 
   // ── Refs for stable closures ──
+  const pomEndTimeRef = useRef<number | null>(null); // epoch ms when timer should end
   const audioCtxRef = useRef<AudioContext | null>(null);
   const brownSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const noiseGainRef = useRef<GainNode | null>(null);
@@ -195,13 +196,32 @@ export default function ClockMode() {
     return () => cancelAnimationFrame(id);
   }, [swRunning, swStartTime]);
 
-  // Pomodoro tick
+  // Pomodoro tick – record target end time for background recovery
   useEffect(() => {
-    if (!pomRunning) return;
+    if (!pomRunning) {
+      pomEndTimeRef.current = null;
+      return;
+    }
+    pomEndTimeRef.current = Date.now() + pomTimeLeft * 1000;
     const id = setInterval(() => {
       setPomTimeLeft((t) => (t > 0 ? t - 1 : 0));
     }, 1000);
     return () => clearInterval(id);
+  // pomTimeLeft is intentionally excluded – only re-run on pomRunning change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pomRunning]);
+
+  // Background recovery: iOS Safari suspends setInterval in background.
+  // On foreground return, recalculate remaining time from the stored end time.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (!pomEndTimeRef.current || !pomRunning) return;
+      const remaining = Math.max(0, Math.round((pomEndTimeRef.current - Date.now()) / 1000));
+      setPomTimeLeft(remaining);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [pomRunning]);
 
   // Pomodoro completion
@@ -239,9 +259,10 @@ export default function ClockMode() {
   }, [noiseVol]);
 
   // Check browser notification permission
+  const notifSupported = typeof window !== "undefined" && "Notification" in window;
   useEffect(() => {
-    if ("Notification" in window) setNotifPerm(Notification.permission);
-  }, []);
+    if (notifSupported) setNotifPerm(Notification.permission);
+  }, [notifSupported]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -701,7 +722,12 @@ export default function ClockMode() {
                     ))}
 
                     {/* Browser notification button */}
-                    {notifPerm === "granted" ? (
+                    {!notifSupported ? (
+                      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-theme-border text-theme-muted" title="iOS Safariでは通知APIが利用できません。音・振動・点滅をご利用ください。">
+                        <BellIcon className="w-3.5 h-3.5" />
+                        通知非対応
+                      </span>
+                    ) : notifPerm === "granted" ? (
                       <button
                         onClick={() => setNBrowser((v) => !v)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
@@ -780,7 +806,7 @@ export default function ClockMode() {
                       <FlashIcon className="w-3.5 h-3.5" />
                       点滅
                     </button>
-                    {notifPerm === "granted" && (
+                    {notifSupported && notifPerm === "granted" && (
                       <button
                         onClick={debugNotif}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-theme-border text-theme-secondary hover:bg-theme-bg transition-colors"
