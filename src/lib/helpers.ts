@@ -105,6 +105,19 @@ export const validateTextInput = (text: string | undefined): { valid: boolean; e
 };
 
 /**
+ * Validate and sanitize a model ID against an allowlist
+ * Returns the requested model if valid, otherwise falls back to the default
+ */
+export const validateModel = (
+  model: string | undefined,
+  validModels: readonly string[],
+  defaultModel: string
+): string => {
+  if (!model || !validModels.includes(model)) return defaultModel;
+  return model;
+};
+
+/**
  * Validate SOAP note structure
  */
 export const isValidSoapNote = (data: unknown): boolean => {

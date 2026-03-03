@@ -17,11 +17,8 @@
   --accent-success: #14b8a6;
 
   /* Modal and Help screen colors */
-  --modal-header-bg: linear-gradient(
-    135deg,
-    rgba(15, 140, 125, 0.85) 0%,
-    rgba(12, 115, 105, 0.85) 100%
-  );
+  /* teal-800 → teal-700: white text contrast 7.1:1 / 5.5:1 — passes WCAG AA */
+  --modal-header-bg: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
   --modal-footer-bg: rgba(249, 250, 251, 0.5);
   --modal-card-bg: #f9fafb;
   --help-number-bg: #14b8a6;
@@ -113,11 +110,8 @@
   --accent-success: #34d399;
 
   /* Modal and Help screen colors - Dark Mode */
-  --modal-header-bg: linear-gradient(
-    135deg,
-    rgba(20, 184, 166, 0.7) 0%,
-    rgba(13, 148, 136, 0.65) 100%
-  );
+  /* teal-900 → teal-800: white text contrast 9.4:1 / 7.1:1 — passes WCAG AAA */
+  --modal-header-bg: linear-gradient(135deg, #134e4a 0%, #115e59 100%);
   --modal-footer-bg: rgba(30, 41, 59, 0.3);
   --modal-card-bg: rgba(51, 65, 85, 0.5);
   --help-number-bg: #14b8a6;
@@ -228,6 +222,7 @@ body {
   color: var(--text-primary);
   font-family:
     var(--font-sans),
+    var(--font-jp),
     system-ui,
     -apple-system,
     sans-serif;
@@ -977,6 +972,66 @@ body::after {
   max-width: 1600px;
   margin: 0 auto;
   padding: 0 1rem;
+}
+
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pomodoro screen flash animation */
+@keyframes pomodoro-flash {
+  0%   { opacity: 0; }
+  8%   { opacity: 0.88; }
+  20%  { opacity: 0; }
+  35%  { opacity: 0.88; }
+  48%  { opacity: 0; }
+  63%  { opacity: 0.88; }
+  76%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+.animate-pomodoro-flash {
+  animation: pomodoro-flash 1.3s ease-in-out forwards;
+}
+
+/* prefers-reduced-motion – WCAG 2.1 SC 2.3.3 (AAA) / 2.3 (AA) */
+@media (prefers-reduced-motion: reduce) {
+  /* Decorative entrance animations → instant */
+  .animate-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .delay-100,
+  .delay-200 {
+    animation-delay: 0ms;
+  }
+
+  /* Recording pulse → static (still visible, just not moving) */
+  .recording-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.4);
+  }
+
+  /* Pomodoro flash → suppress entirely (notification already played) */
+  .animate-pomodoro-flash {
+    animation: none;
+    opacity: 0;
+  }
+
+  /* Tailwind animate-pulse / animate-spin from inline classes */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ============================================

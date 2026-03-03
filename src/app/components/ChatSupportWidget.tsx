@@ -556,13 +556,14 @@ export default function ChatSupportWidget({
         >
           {/* ヘッダー */}
           <div className="chat-support-header">
-            {/* リサイズボタン（ヘッダー左端） */}
+            {/* リサイズハンドル（ヘッダー左端） */}
             <button
               className="chat-support-resize-btn"
               onMouseDown={handleResizeStart}
-              title="ドラッグしてリサイズ"
+              aria-label="ドラッグでリサイズ"
+              type="button"
             >
-              <svg viewBox="0 0 12 12" fill="none">
+              <svg viewBox="0 0 12 12" fill="none" aria-hidden="true">
                 <path
                   d="M1 7V1H7"
                   stroke="currentColor"
