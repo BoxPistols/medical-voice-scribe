@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { useWebHaptics } from "web-haptics/react";
 
@@ -176,15 +176,19 @@ export default function ClockMode() {
   nFlashRef.current = nFlash;
   nBrowserRef.current = nBrowser;
 
-  // ── SW notification helpers (declared early for use in effects) ──────────
+  // ── Notification helpers (declared early for use in effects) ──────────
+
+  const pomNotifText = useCallback((session: PomSession) => ({
+    title: session === "work" ? "作業時間終了" : "休憩終了",
+    body: session === "work" ? "休憩を取りましょう" : "次のセッションを始めましょう",
+  }), []);
 
   const scheduleSwNotif = useCallback((endTime: number, session: PomSession) => {
-    const title = session === "work" ? "作業時間終了" : "休憩終了";
-    const body = session === "work" ? "休憩を取りましょう" : "次のセッションを始めましょう";
+    const { title, body } = pomNotifText(session);
     navigator.serviceWorker?.controller?.postMessage({
       type: "SCHEDULE_NOTIFICATION", endTime, title, body,
     });
-  }, []);
+  }, [pomNotifText]);
 
   const cancelSwNotif = useCallback(() => {
     navigator.serviceWorker?.controller?.postMessage({ type: "CANCEL_NOTIFICATION" });
@@ -249,6 +253,9 @@ export default function ClockMode() {
     const workMin = pomWorkMinRef.current;
     const breakMin = pomBreakMinRef.current;
     setPomRunning(false);
+    // Cancel any pending SW scheduled notification to prevent duplicates,
+    // then fire notification directly from the main thread.
+    cancelSwNotif();
     if (nSoundRef.current) playChime();
     if (nVibrateRef.current) fireHaptic(vibratePatternRef.current);
     if (nFlashRef.current) setIsFlashing(true);
@@ -277,7 +284,7 @@ export default function ClockMode() {
   }, [noiseVol]);
 
   // Check browser notification permission
-  const notifSupported = typeof window !== "undefined" && "Notification" in window;
+  const notifSupported = useMemo(() => typeof window !== "undefined" && "Notification" in window, []);
   useEffect(() => {
     if (notifSupported) setNotifPerm(Notification.permission);
   }, [notifSupported]);
@@ -345,15 +352,14 @@ export default function ClockMode() {
   // Send notification via Service Worker (works in iOS PWA) with fallback
   const fireBrowserNotif = useCallback((session: PomSession) => {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
-    const title = session === "work" ? "作業時間終了" : "休憩終了";
-    const body = session === "work" ? "休憩を取りましょう" : "次のセッションを始めましょう";
+    const { title, body } = pomNotifText(session);
     // Prefer SW showNotification (required for iOS PWA)
     navigator.serviceWorker?.ready.then((reg) => {
       reg.showNotification(title, { body, icon: "/apple-icon", badge: "/icon", tag: "pomodoro" } as NotificationOptions);
     }).catch(() => {
       new Notification(title, { body, silent: true });
     });
-  }, []);
+  }, [pomNotifText]);
 
   const requestNotifPerm = useCallback(async () => {
     if (!("Notification" in window)) return;

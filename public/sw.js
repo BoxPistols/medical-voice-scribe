@@ -37,17 +37,6 @@ self.addEventListener("message", (e) => {
       TIMER_CACHE.pomodoroTimer = null;
     }
   }
-
-  if (type === "SHOW_NOTIFICATION") {
-    const { title, body } = e.data;
-    self.registration.showNotification(title, {
-      body,
-      icon: "/apple-icon",
-      badge: "/icon",
-      tag: "pomodoro",
-      renotify: true,
-    });
-  }
 });
 
 // Handle notification click – focus the app
