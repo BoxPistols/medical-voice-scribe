@@ -75,6 +75,18 @@ const NoiseIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const ListIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+  </svg>
+);
+
+const TrashIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
+
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const WEEKDAYS_JA = ["日", "月", "火", "水", "木", "金", "土"];
@@ -94,6 +106,13 @@ const VIBRATE_PATTERNS: { key: VibratePattern; label: string; desc: string }[] =
   { key: "buzz",    label: "ブーッ",    desc: "1秒の長い振動" },
   { key: "bee",     label: "Bee",       desc: "ブブブブッと連続" },
 ];
+
+type PomTask = {
+  id: string;
+  title: string;
+  deadline: string; // "HH:MM"
+  done: boolean;
+};
 
 // ── Brown noise generator ──────────────────────────────────────────────────
 
@@ -140,6 +159,11 @@ export default function ClockMode() {
   const [pomTimeLeft, setPomTimeLeft] = useState(25 * 60);
   const [pomRunning, setPomRunning] = useState(false);
   const [pomCount, setPomCount] = useState(0);   // completed work sessions
+  const [pomFocus, setPomFocus] = useState("");
+  const [pomTasks, setPomTasks] = useState<PomTask[]>([]);
+  const [showTaskPanel, setShowTaskPanel] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskDeadline, setNewTaskDeadline] = useState("");
   const [isFlashing, setIsFlashing] = useState(false);
 
   // Brown noise
@@ -390,6 +414,26 @@ export default function ClockMode() {
     if (!pomRunning && pomSession === "break") setPomTimeLeft(min * 60);
   }, [pomRunning, pomSession]);
 
+  // ── Task handlers ─────────────────────────────────────────────────────────
+
+  const handleAddTask = useCallback(() => {
+    if (!newTaskTitle.trim()) return;
+    setPomTasks((prev) => [
+      ...prev,
+      { id: `${Date.now()}-${Math.random()}`, title: newTaskTitle.trim(), deadline: newTaskDeadline, done: false },
+    ]);
+    setNewTaskTitle("");
+    setNewTaskDeadline("");
+  }, [newTaskTitle, newTaskDeadline]);
+
+  const handleCompleteTask = useCallback((id: string) => {
+    setPomTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: true } : t)));
+  }, []);
+
+  const handleDeleteTask = useCallback((id: string) => {
+    setPomTasks((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   // ── Format helpers ────────────────────────────────────────────────────────
 
   const fmtSw = (ms: number) => {
@@ -416,6 +460,28 @@ export default function ClockMode() {
   const fmtDate = () => {
     const d = currentTime;
     return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${WEEKDAYS_JA[d.getDay()]}）`;
+  };
+
+  // ── Task helpers ──────────────────────────────────────────────────────────
+
+  const activeTask = pomTasks.find((t) => !t.done) ?? null;
+  const nextTask = pomTasks.filter((t) => !t.done)[1] ?? null;
+
+  const getDeadlineInfo = (deadline: string) => {
+    if (!deadline) return null;
+    const [hh, mm] = deadline.split(":").map(Number);
+    const deadlineDate = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), hh, mm);
+    const diffMs = deadlineDate.getTime() - currentTime.getTime();
+    if (diffMs < 0) return { overdue: true, urgent: true, warning: false, label: "期限超過" };
+    const diffMin = Math.floor(diffMs / 60000);
+    const h = Math.floor(diffMin / 60);
+    const m = diffMin % 60;
+    return {
+      overdue: false,
+      urgent: diffMin < 30,
+      warning: diffMin < 60,
+      label: h > 0 ? `あと${h}時間${m > 0 ? `${m}分` : ""}` : `あと${m}分`,
+    };
   };
 
   // ── Progress ring ─────────────────────────────────────────────────────────
@@ -553,6 +619,49 @@ export default function ClockMode() {
               </span>
             </div>
 
+            {/* Focus / active task display */}
+            {activeTask ? (
+              <div className="w-full space-y-1">
+                {/* Current task */}
+                <div className="w-full rounded-lg border border-teal-400/70 bg-teal-50/60 dark:bg-teal-900/20 px-3 py-2 flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 shrink-0">NOW</span>
+                  <span className="flex-1 text-sm font-medium text-theme-primary truncate">{activeTask.title}</span>
+                  {activeTask.deadline && (() => {
+                    const info = getDeadlineInfo(activeTask.deadline);
+                    return info ? (
+                      <span className={`text-xs font-mono shrink-0 ${
+                        info.overdue ? "text-red-600 dark:text-red-400" :
+                        info.urgent  ? "text-red-500 dark:text-red-400" :
+                        info.warning ? "text-yellow-600 dark:text-yellow-400" :
+                        "text-theme-tertiary"
+                      }`}>
+                        {activeTask.deadline} · {info.label}
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
+                {/* Next task */}
+                {nextTask && (
+                  <div className="w-full rounded-lg border border-theme-border/50 px-3 py-1.5 flex items-center gap-2 opacity-60 min-w-0">
+                    <span className="text-[10px] font-bold text-theme-tertiary shrink-0">NEXT</span>
+                    <span className="flex-1 text-xs text-theme-secondary truncate">{nextTask.title}</span>
+                    {nextTask.deadline && (
+                      <span className="text-xs font-mono text-theme-tertiary shrink-0">{nextTask.deadline}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={pomFocus}
+                onChange={(e) => setPomFocus(e.target.value)}
+                placeholder="今セッションのテーマを入力…"
+                maxLength={60}
+                className="w-full rounded-lg border border-theme-border bg-theme-card px-3 py-2 text-sm text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-2 focus:ring-teal-500 text-center"
+              />
+            )}
+
             {/* Progress ring + timer */}
             <div className="relative flex items-center justify-center">
               <svg width="224" height="224" viewBox="0 0 224 224" className="-rotate-90">
@@ -612,6 +721,24 @@ export default function ClockMode() {
                 <SkipIcon className="w-5 h-5" />
               </button>
               <button
+                onClick={() => setShowTaskPanel((v) => !v)}
+                title="タスク管理"
+                aria-label="タスク管理"
+                aria-expanded={showTaskPanel}
+                className={`relative w-12 h-12 rounded-xl border transition-colors flex items-center justify-center ${
+                  showTaskPanel
+                    ? "border-teal-400 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
+                    : "border-theme-border text-theme-secondary hover:bg-theme-card"
+                }`}
+              >
+                <ListIcon className="w-5 h-5" />
+                {pomTasks.filter((t) => !t.done).length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-teal-500 text-white text-[9px] flex items-center justify-center font-bold leading-none">
+                    {pomTasks.filter((t) => !t.done).length}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={() => setShowSettings((v) => !v)}
                 title="設定"
                 aria-label="ポモドーロ設定"
@@ -625,6 +752,117 @@ export default function ClockMode() {
                 <SettingsIcon className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Task panel */}
+            {showTaskPanel && (
+              <div className="w-full rounded-xl border border-theme-border bg-theme-card p-4 space-y-3">
+
+                {/* Add task form */}
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-theme-tertiary uppercase tracking-wider">タスク追加</div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newTaskTitle}
+                      onChange={(e) => setNewTaskTitle(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
+                      placeholder="タスク名"
+                      maxLength={40}
+                      className="flex-1 min-w-0 rounded-lg border border-theme-border bg-theme-bg px-2.5 py-1.5 text-sm text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                    <input
+                      type="time"
+                      value={newTaskDeadline}
+                      onChange={(e) => setNewTaskDeadline(e.target.value)}
+                      className="w-[5.5rem] shrink-0 rounded-lg border border-theme-border bg-theme-bg px-2 py-1.5 text-sm text-theme-primary focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                    <button
+                      onClick={handleAddTask}
+                      disabled={!newTaskTitle.trim()}
+                      className="shrink-0 px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+                    >
+                      追加
+                    </button>
+                  </div>
+                </div>
+
+                {/* Task list */}
+                {pomTasks.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <div className="text-xs font-semibold text-theme-tertiary uppercase tracking-wider">タスク一覧</div>
+                    {pomTasks.map((task) => {
+                      const isActive = !task.done && activeTask?.id === task.id;
+                      const isNext   = !task.done && nextTask?.id  === task.id;
+                      const info = task.deadline && !task.done ? getDeadlineInfo(task.deadline) : null;
+                      return (
+                        <div
+                          key={task.id}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                            task.done  ? "border-theme-border/40 opacity-50" :
+                            isActive   ? "border-teal-400 bg-teal-50/50 dark:bg-teal-900/20" :
+                            "border-theme-border"
+                          }`}
+                        >
+                          {/* Complete button */}
+                          <button
+                            onClick={() => handleCompleteTask(task.id)}
+                            disabled={task.done}
+                            className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                              task.done
+                                ? "border-teal-500 bg-teal-500 text-white"
+                                : "border-theme-border hover:border-teal-400"
+                            }`}
+                            title="完了にする"
+                          >
+                            {task.done && (
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+
+                          {/* NOW / NEXT badge */}
+                          {isActive && <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 shrink-0">NOW</span>}
+                          {isNext   && <span className="text-[10px] font-bold text-theme-tertiary shrink-0">NEXT</span>}
+
+                          {/* Title */}
+                          <span className={`flex-1 truncate text-sm ${task.done ? "line-through text-theme-tertiary" : "text-theme-primary"}`}>
+                            {task.title}
+                          </span>
+
+                          {/* Deadline badge */}
+                          {task.deadline && (
+                            <span className={`text-[11px] font-mono shrink-0 px-1.5 py-0.5 rounded ${
+                              task.done ? "text-theme-tertiary" :
+                              !info     ? "text-theme-tertiary" :
+                              info.overdue ? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30" :
+                              info.urgent  ? "text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20" :
+                              info.warning ? "text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20" :
+                              "text-theme-tertiary"
+                            }`}>
+                              {task.deadline}
+                              {!task.done && info && ` · ${info.label}`}
+                            </span>
+                          )}
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => handleDeleteTask(task.id)}
+                            className="shrink-0 w-5 h-5 flex items-center justify-center text-theme-tertiary hover:text-red-500 transition-colors"
+                            title="削除"
+                          >
+                            <TrashIcon className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-center text-xs text-theme-tertiary py-1">タスクを追加してください</p>
+                )}
+
+              </div>
+            )}
 
             {/* Settings panel */}
             {showSettings && (
