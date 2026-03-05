@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { useWebHaptics } from "web-haptics/react";
 
@@ -155,6 +155,7 @@ export default function ClockMode() {
   const [notifPerm, setNotifPerm] = useState<string>("default");
 
   // ── Refs for stable closures ──
+  const pomEndTimeRef = useRef<number | null>(null); // epoch ms when timer should end
   const audioCtxRef = useRef<AudioContext | null>(null);
   const brownSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const noiseGainRef = useRef<GainNode | null>(null);
@@ -174,6 +175,24 @@ export default function ClockMode() {
   vibratePatternRef.current = vibratePattern;
   nFlashRef.current = nFlash;
   nBrowserRef.current = nBrowser;
+
+  // ── Notification helpers (declared early for use in effects) ──────────
+
+  const pomNotifText = useCallback((session: PomSession) => ({
+    title: session === "work" ? "作業時間終了" : "休憩終了",
+    body: session === "work" ? "休憩を取りましょう" : "次のセッションを始めましょう",
+  }), []);
+
+  const scheduleSwNotif = useCallback((endTime: number, session: PomSession) => {
+    const { title, body } = pomNotifText(session);
+    navigator.serviceWorker?.controller?.postMessage({
+      type: "SCHEDULE_NOTIFICATION", endTime, title, body,
+    });
+  }, [pomNotifText]);
+
+  const cancelSwNotif = useCallback(() => {
+    navigator.serviceWorker?.controller?.postMessage({ type: "CANCEL_NOTIFICATION" });
+  }, []);
 
   // ── Effects ───────────────────────────────────────────────────────────────
 
@@ -195,13 +214,36 @@ export default function ClockMode() {
     return () => cancelAnimationFrame(id);
   }, [swRunning, swStartTime]);
 
-  // Pomodoro tick
+  // Pomodoro tick – record target end time for background recovery
   useEffect(() => {
-    if (!pomRunning) return;
+    if (!pomRunning) {
+      pomEndTimeRef.current = null;
+      cancelSwNotif();
+      return;
+    }
+    const endTime = Date.now() + pomTimeLeft * 1000;
+    pomEndTimeRef.current = endTime;
+    // Schedule SW notification for background delivery
+    if (nBrowserRef.current) scheduleSwNotif(endTime, pomSessionRef.current);
     const id = setInterval(() => {
       setPomTimeLeft((t) => (t > 0 ? t - 1 : 0));
     }, 1000);
     return () => clearInterval(id);
+  // pomTimeLeft is intentionally excluded – only re-run on pomRunning change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pomRunning, scheduleSwNotif, cancelSwNotif]);
+
+  // Background recovery: iOS Safari suspends setInterval in background.
+  // On foreground return, recalculate remaining time from the stored end time.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (!pomEndTimeRef.current || !pomRunning) return;
+      const remaining = Math.max(0, Math.round((pomEndTimeRef.current - Date.now()) / 1000));
+      setPomTimeLeft(remaining);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [pomRunning]);
 
   // Pomodoro completion
@@ -211,6 +253,9 @@ export default function ClockMode() {
     const workMin = pomWorkMinRef.current;
     const breakMin = pomBreakMinRef.current;
     setPomRunning(false);
+    // Cancel any pending SW scheduled notification to prevent duplicates,
+    // then fire notification directly from the main thread.
+    cancelSwNotif();
     if (nSoundRef.current) playChime();
     if (nVibrateRef.current) fireHaptic(vibratePatternRef.current);
     if (nFlashRef.current) setIsFlashing(true);
@@ -239,9 +284,10 @@ export default function ClockMode() {
   }, [noiseVol]);
 
   // Check browser notification permission
+  const notifSupported = useMemo(() => typeof window !== "undefined" && "Notification" in window, []);
   useEffect(() => {
-    if ("Notification" in window) setNotifPerm(Notification.permission);
-  }, []);
+    if (notifSupported) setNotifPerm(Notification.permission);
+  }, [notifSupported]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -303,14 +349,17 @@ export default function ClockMode() {
     }
   }, [brownOn, getCtx, noiseVol]);
 
+  // Send notification via Service Worker (works in iOS PWA) with fallback
   const fireBrowserNotif = useCallback((session: PomSession) => {
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(session === "work" ? "作業時間終了" : "休憩終了", {
-        body: session === "work" ? "休憩を取りましょう" : "次のセッションを始めましょう",
-        silent: true,
-      });
-    }
-  }, []);
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const { title, body } = pomNotifText(session);
+    // Prefer SW showNotification (required for iOS PWA)
+    navigator.serviceWorker?.ready.then((reg) => {
+      reg.showNotification(title, { body, icon: "/apple-icon", badge: "/icon", tag: "pomodoro" } as NotificationOptions);
+    }).catch(() => {
+      new Notification(title, { body, silent: true });
+    });
+  }, [pomNotifText]);
 
   const requestNotifPerm = useCallback(async () => {
     if (!("Notification" in window)) return;
@@ -701,7 +750,12 @@ export default function ClockMode() {
                     ))}
 
                     {/* Browser notification button */}
-                    {notifPerm === "granted" ? (
+                    {!notifSupported ? (
+                      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-theme-border text-theme-muted" title="ホーム画面に追加（PWA）すると通知が使えます">
+                        <BellIcon className="w-3.5 h-3.5" />
+                        通知: PWAで有効
+                      </span>
+                    ) : notifPerm === "granted" ? (
                       <button
                         onClick={() => setNBrowser((v) => !v)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
@@ -780,7 +834,7 @@ export default function ClockMode() {
                       <FlashIcon className="w-3.5 h-3.5" />
                       点滅
                     </button>
-                    {notifPerm === "granted" && (
+                    {notifSupported && notifPerm === "granted" && (
                       <button
                         onClick={debugNotif}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-theme-border text-theme-secondary hover:bg-theme-bg transition-colors"
