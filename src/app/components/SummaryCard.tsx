@@ -4,7 +4,7 @@ interface SummaryCardProps {
 
 export default function SummaryCard({ summary }: SummaryCardProps) {
   return (
-    <div className="p-6 rounded-lg shadow-sm border-l-4 border-amber-600 dark:border-amber-500 border border-amber-200 dark:border-amber-600/40">
+    <div className="p-6 rounded-r-lg shadow-sm border-l-4 border-amber-600 dark:border-amber-500 border border-amber-200 dark:border-amber-600/40">
       <div className="flex items-center gap-2 mb-2">
         <svg
           className="w-5 h-5 text-amber-600 dark:text-amber-500"
