@@ -52,6 +52,7 @@ import PatientInfoCard from "./components/PatientInfoCard";
 import SOAPSectionWrapper from "./components/SOAPSectionWrapper";
 import { formatElapsedTime as formatElapsedTimeHelper, buildSpeechText, getVoiceForLanguage } from "@/lib/audioHelpers";
 import { buildCsvContent, validateImportFile, validateImportData } from "@/lib/fileHelpers";
+import { processRecognizedText } from "@/lib/textProcessor";
 import { cycleTheme, getLayoutPresetWidth, buildCopySectionS, buildCopySectionO, buildCopySectionA, buildCopySectionP } from "@/lib/uiHelpers";
 import ModeSwitcher, { type AppMode } from "./components/ModeSwitcher";
 import ClockMode from "./components/ClockMode";
@@ -747,7 +748,8 @@ export default function Home() {
           }
         }
         if (finalTranscript) {
-          setTranscript((prev) => prev + finalTranscript + "。\n");
+          const processed = processRecognizedText(finalTranscript);
+          setTranscript((prev) => prev + processed + "。\n");
         }
       };
 

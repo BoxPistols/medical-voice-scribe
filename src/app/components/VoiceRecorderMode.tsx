@@ -17,6 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 import type { ModelId, TokenUsage } from "../api/analyze/types";
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from "../api/analyze/types";
+import { processRecognizedText } from "@/lib/textProcessor";
 
 // ------ Types ------
 
@@ -184,7 +185,7 @@ export default function VoiceRecorderMode() {
         }
       }
       if (final) {
-        fullText += final;
+        fullText += processRecognizedText(final);
         setGroups((prev) =>
           prev.map((g) => (g.id === groupId ? { ...g, text: fullText } : g))
         );
