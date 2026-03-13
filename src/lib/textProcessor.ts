@@ -2,6 +2,7 @@
  * Text post-processor for speech recognition output
  * - Removes Japanese filler words
  * - Replaces misrecognized IT/tech terms with correct forms
+ * - Formats text for Slack chat communication
  */
 
 /** Filler word patterns to remove from recognized text */
@@ -23,6 +24,22 @@ const FILLER_PATTERNS: RegExp[] = [
   /えー[、,]?\s*/g,
   /あー[、,]?\s*/g,
   /ちょっと[、,]?\s*(?=ちょっと)/g, // 重複「ちょっとちょっと」→「ちょっと」
+  // 追加フィラー
+  /なんていうか[、,]?\s*/g,
+  /なんだろう[、,]?\s*/g,
+  /何て言うか[、,]?\s*/g,
+  /いわゆる[、,]?\s*/g,
+  /ほら[、,]?\s*/g,
+  /やっぱり[、,]?\s*/g,
+  /やっぱ[、,]?\s*/g,
+  /つまり[、,]?\s*(?=つまり)/g, // 重複「つまりつまり」→「つまり」
+  /まあまあ[、,]?\s*/g,
+  /えとー[、,]?\s*/g,
+  /あのーそのー[、,]?\s*/g,
+  /まあそのー?[、,]?\s*/g,
+  /なんというか[、,]?\s*/g,
+  /要するに[、,]?\s*(?=要するに)/g, // 重複除去
+  /基本的に[、,]?\s*(?=基本的に)/g, // 重複除去
 ];
 
 /**
@@ -44,11 +61,13 @@ const IT_TERM_DICTIONARY: [RegExp, string][] = [
   [/オープンエーアイ/g, "OpenAI"],
   [/オープンAI/g, "OpenAI"],
 
-  // --- Git & GitHub ---
+  // --- Git & GitHub (longer compound terms first) ---
   [/プルリクエスト/g, "Pull Request"],
   [/プロリクエスト/g, "Pull Request"],
   [/プルリク/g, "Pull Request"],
   [/マージリクエスト/g, "Merge Request"],
+  [/ギットハブアクションズ/g, "GitHub Actions"],
+  [/ギットハブアクション/g, "GitHub Actions"],
   [/ギットハブ/g, "GitHub"],
   [/ギット・ハブ/g, "GitHub"],
   [/ギットラブ/g, "GitLab"],
@@ -147,6 +166,7 @@ const IT_TERM_DICTIONARY: [RegExp, string][] = [
   [/チケット/g, "ticket"],
   [/バグ/g, "bug"],
   [/デバッグ/g, "debug"],
+  [/バックログ/g, "backlog"],
   [/ログ/g, "log"],
   [/モニタリング/g, "monitoring"],
   [/ダッシュボード/g, "dashboard"],
@@ -190,6 +210,91 @@ const IT_TERM_DICTIONARY: [RegExp, string][] = [
   [/デザインシステム/g, "Design System"],
   [/アクセシビリティ/g, "accessibility"],
   [/インタラクション/g, "interaction"],
+
+  // --- Communication & Project management ---
+  [/スタンドアップ/g, "standup"],
+  [/レトロスペクティブ/g, "retrospective"],
+  [/ストーリーポイント/g, "story point"],
+  [/エスティメート/g, "estimate"],
+  [/プライオリティ/g, "priority"],
+  [/ブロッカー/g, "blocker"],
+  [/ステークホルダー/g, "stakeholder"],
+  [/マイルストーン/g, "milestone"],
+  [/ロードマップ/g, "roadmap"],
+  [/ノーション/g, "Notion"],
+  [/コンフルエンス/g, "Confluence"],
+  [/ジラ/g, "Jira"],
+  [/リニア/g, "Linear"],
+  [/ディスコード/g, "Discord"],
+
+  // --- Architecture & patterns ---
+  [/アーキテクチャ/g, "architecture"],
+  [/マイグレーション/g, "migration"],
+  [/スケーラビリティ/g, "scalability"],
+  [/スケーラブル/g, "scalable"],
+  [/ロードバランサー/g, "load balancer"],
+  [/リバースプロキシ/g, "reverse proxy"],
+  [/ゲートウェイ/g, "gateway"],
+  [/マイクロフロントエンド/g, "micro frontend"],
+  [/モノレポ/g, "monorepo"],
+  [/ポリレポ/g, "polyrepo"],
+  [/サーバーサイドレンダリング/g, "SSR"],
+  [/クライアントサイドレンダリング/g, "CSR"],
+  [/スタティックサイトジェネレーション/g, "SSG"],
+  [/ステートマネジメント/g, "state management"],
+  [/ステート管理/g, "state管理"],
+  [/ホットリロード/g, "hot reload"],
+  [/ホットフィックス/g, "hotfix"],
+  [/ロールバック/g, "rollback"],
+  [/カナリアリリース/g, "canary release"],
+  [/ブルーグリーン/g, "blue-green"],
+  [/フィーチャーフラグ/g, "feature flag"],
+  [/フィーチャートグル/g, "feature toggle"],
+
+  // --- Security ---
+  [/オーオース/g, "OAuth"],
+  [/ジェイダブリューティー/g, "JWT"],
+  [/エスエスオー/g, "SSO"],
+  [/ファイアウォール/g, "firewall"],
+  [/エンクリプション/g, "encryption"],
+  [/ハッシュ/g, "hash"],
+
+  // --- Testing ---
+  [/ユニットテスト/g, "unit test"],
+  [/インテグレーションテスト/g, "integration test"],
+  [/エンドツーエンド/g, "E2E"],
+  [/イーツーイー/g, "E2E"],
+  [/テストカバレッジ/g, "test coverage"],
+  [/モック/g, "mock"],
+  [/スタブ/g, "stub"],
+  [/バイテスト/g, "Vitest"],
+
+  // --- Additional tools & services ---
+  [/エヌピーエム/g, "npm"],
+  [/ヤーン/g, "yarn"],
+  [/ピーエヌピーエム/g, "pnpm"],
+  [/バン/g, "Bun"],
+  [/ターボパック/g, "Turbopack"],
+  [/ターボレポ/g, "Turborepo"],
+  [/サーキュルシーアイ/g, "CircleCI"],
+  [/ジェンキンス/g, "Jenkins"],
+  [/データドッグ/g, "Datadog"],
+  [/センチュリー/g, "Sentry"],
+  [/センチリー/g, "Sentry"],
+  [/グラファナ/g, "Grafana"],
+  [/プロメテウス/g, "Prometheus"],
+  [/エラスティックサーチ/g, "Elasticsearch"],
+  [/カフカ/g, "Kafka"],
+  [/ラビットエムキュー/g, "RabbitMQ"],
+  [/ストライプ/g, "Stripe"],
+  [/オース0/g, "Auth0"],
+  [/オースゼロ/g, "Auth0"],
+  [/アンプリファイ/g, "Amplify"],
+  [/ラムダ/g, "Lambda"],
+  [/イーシーツー/g, "EC2"],
+  [/エスリー/g, "S3"],
+  [/クラウドフロント/g, "CloudFront"],
+  [/ダイナモディービー/g, "DynamoDB"],
 ];
 
 /**
@@ -226,4 +331,53 @@ export function processRecognizedText(text: string): string {
   let result = removeFillerWords(text);
   result = replaceITTerms(result);
   return result;
+}
+
+/**
+ * Split cleaned text into structured paragraphs for Slack chat.
+ * Groups sentences by topic and inserts blank lines between paragraphs.
+ */
+export function structureForSlack(text: string): string {
+  if (!text) return text;
+
+  // Normalize line breaks and trim
+  let result = text.replace(/\r\n/g, "\n").trim();
+
+  // Split on sentence-ending markers (。！？) while keeping the delimiter
+  const sentences = result
+    .split(/(?<=[。！？\n])/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (sentences.length <= 1) return result;
+
+  // Group sentences into paragraphs (roughly 2-3 sentences each)
+  const paragraphs: string[] = [];
+  let current = "";
+  let sentenceCount = 0;
+
+  for (const sentence of sentences) {
+    // Start a new paragraph when:
+    // - current paragraph has 2-3+ sentences AND
+    // - the next sentence starts a new topic (indicated by conjunctions or topic markers)
+    const isTopicShift = /^(ただ|しかし|一方|また|それから|次に|あと|ちなみに|それと|あとは|それで|なので|というわけで|結局)/.test(sentence);
+
+    if (sentenceCount >= 2 && (isTopicShift || sentenceCount >= 3)) {
+      paragraphs.push(current.trim());
+      current = "";
+      sentenceCount = 0;
+    }
+
+    current += sentence;
+    // Only count actual sentences (not just line breaks)
+    if (/[。！？]$/.test(sentence)) {
+      sentenceCount++;
+    }
+  }
+
+  if (current.trim()) {
+    paragraphs.push(current.trim());
+  }
+
+  return paragraphs.join("\n\n");
 }
