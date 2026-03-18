@@ -56,6 +56,9 @@ export async function POST(req: Request) {
 
     const openai = getOpenAIClient();
 
+    // GPT-5.4系のトークン上限（nanoは4000、miniは16000）
+    const maxCompletionTokens = model.includes('nano') ? 4000 : 16000;
+
     // ストリーミングモード
     if (useStream) {
       const stream = await openai.chat.completions.create({
@@ -65,6 +68,7 @@ export async function POST(req: Request) {
           { role: "user", content: text },
         ],
         response_format: { type: "json_object" },
+        max_completion_tokens: maxCompletionTokens,
         stream: true,
         stream_options: { include_usage: true },
       });
@@ -114,6 +118,7 @@ export async function POST(req: Request) {
         { role: "user", content: text },
       ],
       response_format: { type: "json_object" },
+      max_completion_tokens: maxCompletionTokens,
     });
 
     const content = completion.choices[0].message.content;

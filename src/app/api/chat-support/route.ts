@@ -167,8 +167,7 @@ export async function POST(req: Request) {
         ...historyMessages,
         { role: "user", content: message },
       ],
-      max_tokens: 1000,
-      temperature: 0.7,
+      max_completion_tokens: 1000,
     });
 
     const content = completion.choices[0].message.content;

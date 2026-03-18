@@ -1,8 +1,8 @@
 // 利用可能なOpenAIモデル（料金: USD per 1M tokens）
 // speed: 1-5 (5が最速), quality: 1-5 (5が最高品質)
 export const AVAILABLE_MODELS = [
-  { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini', description: '高品質・バランス型', inputPrice: 0.80, outputPrice: 3.20, speed: 3, quality: 5 },
-  { id: 'gpt-5.4-nano', name: 'GPT-5.4 Nano', description: '高速・コスパ最強', inputPrice: 0.20, outputPrice: 0.80, speed: 5, quality: 4 },
+  { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini', description: '高品質・バランス型', inputPrice: 0.30, outputPrice: 1.20, speed: 3, quality: 5 },
+  { id: 'gpt-5.4-nano', name: 'GPT-5.4 Nano', description: '高速・コスパ最強', inputPrice: 0.05, outputPrice: 0.20, speed: 5, quality: 4 },
 ] as const;
 
 export type ModelId = typeof AVAILABLE_MODELS[number]['id'];
