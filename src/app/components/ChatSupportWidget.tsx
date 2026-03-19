@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import ReactMarkdown from "react-markdown";
 import {
   ChatBubbleLeftRightIcon,
   XMarkIcon,
@@ -51,6 +52,8 @@ interface ChatSupportWidgetProps {
   selectedModel: ModelId;
   isRecording: boolean;
   isAnalyzing: boolean;
+  isOpen?: boolean;
+  onToggle?: (open: boolean) => void;
 }
 
 // ヘルプトピック定義
@@ -246,8 +249,15 @@ export default function ChatSupportWidget({
   selectedModel,
   isRecording,
   isAnalyzing,
+  isOpen: isOpenProp,
+  onToggle,
 }: ChatSupportWidgetProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenInternal, setIsOpenInternal] = useState(false);
+  const isOpen = isOpenProp !== undefined ? isOpenProp : isOpenInternal;
+  const setIsOpen = (val: boolean) => {
+    setIsOpenInternal(val);
+    onToggle?.(val);
+  };
   const [activeTab, setActiveTab] = useState<
     "chat" | "recommendations" | "help"
   >("recommendations");
@@ -750,8 +760,8 @@ export default function ChatSupportWidget({
                           key={msg.id}
                           className={`chat-support-message ${msg.role === "user" ? "user" : "assistant"}`}
                         >
-                          <div className="chat-support-message-content group/msg relative">
-                            {msg.content}
+                          <div className="chat-support-message-content group/msg relative chat-markdown">
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
                             <button
                               onClick={() =>
                                 copyMessageToClipboard(msg.id, msg.content)

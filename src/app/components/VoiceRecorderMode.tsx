@@ -690,7 +690,7 @@ export default function VoiceRecorderMode() {
                             {copiedId === `orig-${group.id}` ? (
                               <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />
                             ) : (
-                              <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+                              <ClipboardDocumentIcon className="w-5 h-5" />
                             )}
                           </button>
                         </div>
@@ -814,7 +814,7 @@ export default function VoiceRecorderMode() {
                               {copiedId === `org-${group.id}` ? (
                                 <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />
                               ) : (
-                                <ClipboardDocumentIcon className="w-3.5 h-3.5 text-blue-400" />
+                                <ClipboardDocumentIcon className="w-5 h-5 text-blue-400" />
                               )}
                             </button>
                           </div>
@@ -853,7 +853,7 @@ export default function VoiceRecorderMode() {
                             {copiedId === `sum-${group.id}` ? (
                               <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />
                             ) : (
-                              <ClipboardDocumentIcon className="w-3.5 h-3.5 text-purple-400" />
+                              <ClipboardDocumentIcon className="w-5 h-5 text-purple-400" />
                             )}
                           </button>
                         </div>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { SoapNote, ModelId, ChatMessage } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
+import { checkAndIncrementRateLimit } from '@/lib/rateLimiter';
 
 // チャットサポート用システムプロンプト
 const CHAT_SUPPORT_PROMPT = `あなたは医療従事者向けの診療支援AIアシスタントです。医師や看護師が診療を行う際のサポートを行います。
@@ -133,6 +134,15 @@ export async function POST(req: Request) {
 
     // モデルの検証とフォールバック
     const model = requestedModel && isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
+
+    // レート制限チェック
+    const rateLimit = checkAndIncrementRateLimit(model);
+    if (rateLimit.exceeded) {
+      return NextResponse.json(
+        { error: `本日の使用回数上限（${rateLimit.limit}回）に達しました。明日また試してください。` },
+        { status: 429 }
+      );
+    }
 
     const openai = getOpenAIClient();
 

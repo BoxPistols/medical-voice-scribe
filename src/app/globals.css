@@ -550,11 +550,10 @@ body::after {
 .soap-section {
   position: relative;
   padding: 1.5rem;
-  border-left: 3px solid;
+  border-left: 4px solid;
   background: var(--glass-bg-strong);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -570,7 +569,6 @@ body::after {
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
-  border-radius: 1rem;
 }
 
 .soap-section::after {
@@ -1287,7 +1285,7 @@ body::after {
   font-size: 0.75rem;
   font-weight: 500;
   max-width: min(240px, 70vw);
-  white-space: normal;
+  white-space: pre-line;
   word-break: break-word;
   text-align: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -1437,7 +1435,6 @@ body::after {
 
   .soap-section {
     padding: 1.25rem;
-    border-radius: 0.875rem;
   }
 
   .soap-badge {
@@ -1744,9 +1741,7 @@ body::after {
 /* Recommendations */
 .chat-support-recommendation {
   padding: 0.75rem;
-  border-radius: 0.75rem;
   transition: all 0.2s;
-  border: 1px solid transparent;
 }
 
 .chat-support-recommendation:hover {
@@ -1757,11 +1752,8 @@ body::after {
 .chat-support-recommendation.recommendation-priority-high,
 .chat-support-recommendation.recommendation-priority-medium,
 .chat-support-recommendation.recommendation-priority-low {
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: transparent;
+  box-shadow: none;
 }
 
 .chat-support-recommendation.recommendation-priority-high {
@@ -1777,19 +1769,7 @@ body::after {
 [data-theme="dark"] .chat-support-recommendation.recommendation-priority-high,
 [data-theme="dark"] .chat-support-recommendation.recommendation-priority-medium,
 [data-theme="dark"] .chat-support-recommendation.recommendation-priority-low {
-  background: rgba(30, 41, 59, 0.25);
-  border-color: rgba(255, 255, 255, 0.05);
-}
-
-[data-theme="dark"] .chat-support-recommendation.recommendation-priority-high {
-  border-left-color: #ef4444;
-}
-[data-theme="dark"]
-  .chat-support-recommendation.recommendation-priority-medium {
-  border-left-color: #f59e0b;
-}
-[data-theme="dark"] .chat-support-recommendation.recommendation-priority-low {
-  border-left-color: #10b981;
+  background: transparent;
 }
 
 /* Recommendation icon priority colors */
@@ -2286,4 +2266,63 @@ body::after {
     width: auto;
     max-height: calc(100vh - 6rem);
   }
+}
+
+/* チャット内マークダウンスタイル */
+.chat-markdown p {
+  margin: 0 0 0.5em;
+  line-height: 1.6;
+}
+.chat-markdown p:last-child {
+  margin-bottom: 0;
+}
+.chat-markdown strong {
+  font-weight: 700;
+}
+.chat-markdown em {
+  font-style: italic;
+}
+.chat-markdown ul,
+.chat-markdown ol {
+  margin: 0.4em 0 0.6em 1.2em;
+  padding: 0;
+}
+.chat-markdown ul {
+  list-style-type: disc;
+}
+.chat-markdown ol {
+  list-style-type: decimal;
+}
+.chat-markdown li {
+  margin: 0.2em 0;
+  line-height: 1.5;
+}
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3 {
+  font-weight: 700;
+  margin: 0.6em 0 0.3em;
+  line-height: 1.3;
+}
+.chat-markdown h1 { font-size: 1em; }
+.chat-markdown h2 { font-size: 0.95em; }
+.chat-markdown h3 { font-size: 0.9em; }
+.chat-markdown code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+  background: rgba(0,0,0,0.06);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+.chat-markdown pre {
+  background: rgba(0,0,0,0.06);
+  padding: 0.6em 0.8em;
+  overflow-x: auto;
+  margin: 0.4em 0;
+  font-size: 0.8em;
+}
+.chat-markdown hr {
+  border: none;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  margin: 0.5em 0;
 }

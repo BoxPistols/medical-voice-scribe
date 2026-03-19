@@ -91,7 +91,8 @@ type ActionId =
   | "layoutEqual"
   | "layoutRight"
   | "toggleSettings"
-  | "toggleHelp";
+  | "toggleHelp"
+  | "toggleChat";
 
 interface ShortcutKey {
   key: string;
@@ -184,6 +185,12 @@ const SHORTCUT_DEFS: ShortcutDef[] = [
     group: "other",
   },
   { id: "toggleHelp", label: "ヘルプ", default: { key: "h" }, group: "other" },
+  {
+    id: "toggleChat",
+    label: "チャット開閉",
+    default: { key: "k", ctrl: true, shift: true },
+    group: "other",
+  },
 ];
 
 // Constants
@@ -419,6 +426,25 @@ export default function Home() {
   // AI Model selection state
   const [selectedModel, setSelectedModel] = useState<ModelId>(DEFAULT_MODEL);
 
+  // チャット開閉状態
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // レート制限の使用状況
+  const [usageStatus, setUsageStatus] = useState<Record<string, { count: number; limit: number; remaining: number }>>({});
+
+  const fetchUsageStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/usage-status');
+      if (!res.ok) return;
+      const data: { modelId: string; count: number; limit: number; remaining: number }[] = await res.json();
+      const map: Record<string, { count: number; limit: number; remaining: number }> = {};
+      data.forEach((d) => { map[d.modelId] = { count: d.count, limit: d.limit, remaining: d.remaining }; });
+      setUsageStatus(map);
+    } catch {
+      // 取得失敗時は無視
+    }
+  }, []);
+
   // Shortcuts state
   const [useModifiers, setUseModifiers] = useState(true); // Default to true (Command+R etc)
   const [shortcuts, setShortcuts] = useState<Record<ActionId, ShortcutKey>>(
@@ -558,6 +584,11 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
+
+  // マウント時に使用状況を取得
+  useEffect(() => {
+    fetchUsageStatus();
+  }, [fetchUsageStatus]);
 
   // Save app mode setting & stop medical recognition when leaving medical mode
   const isRecordingRef = useRef(isRecording);
@@ -1016,6 +1047,7 @@ export default function Home() {
     } finally {
       setIsStreaming(false);
       setLoading(false);
+      fetchUsageStatus();
     }
   };
 
@@ -1494,6 +1526,9 @@ export default function Home() {
           case "toggleHelp":
             setShowHelp((prev) => !prev);
             break;
+          case "toggleChat":
+            setIsChatOpen((prev) => !prev);
+            break;
         }
       }
     };
@@ -1634,15 +1669,19 @@ export default function Home() {
                   aria-hidden="true"
                 />
                 {/* Model info tooltip */}
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-theme-card border border-theme-border rounded-lg shadow-lg text-xs">
+                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-white dark:bg-gray-900 border border-theme-border rounded-lg shadow-xl text-xs">
                   <div className="font-medium text-theme-secondary text-[11px] mb-2">モデル比較</div>
                   <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1.5 text-left">
                     <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">モデル</div>
                     <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">速度</div>
                     <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">品質</div>
-                    {AVAILABLE_MODELS.flatMap((m) => [
+                    {AVAILABLE_MODELS.flatMap((m) => {
+                      const usage = usageStatus[m.id];
+                      const usageColor = usage && usage.count / usage.limit >= 1 ? 'text-red-500' : usage && usage.count / usage.limit >= 0.8 ? 'text-amber-500' : 'text-theme-muted';
+                      return [
                       <div key={`${m.id}-name`} className={`py-0.5 ${m.id === selectedModel ? 'text-theme-primary font-medium' : 'text-theme-secondary'}`}>
-                        {m.name.replace('GPT-', '')}
+                        <span>{m.name.replace('GPT-', '')}</span>
+                        {usage && <span className={`ml-1.5 text-[9px] tabular-nums ${usageColor}`}>残り{usage.remaining}/{usage.limit}</span>}
                       </div>,
                       <div key={`${m.id}-speed`} className={`py-0.5 text-amber-500 ${m.id === selectedModel ? 'opacity-100' : 'opacity-70'}`}>
                         {'⚡'.repeat(m.speed)}
@@ -1650,7 +1689,7 @@ export default function Home() {
                       <div key={`${m.id}-quality`} className={`py-0.5 ${m.id === selectedModel ? 'text-amber-500' : 'text-theme-tertiary'}`}>
                         {'★'.repeat(m.quality)}{'☆'.repeat(5 - m.quality)}
                       </div>,
-                    ])}
+                    ];})}
                   </div>
                 </div>
               </div>
@@ -1662,7 +1701,7 @@ export default function Home() {
                   onClick={() => setShowShortcutsModal(true)}
                   className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="キーボード設定"
-                  data-tooltip-bottom="ショートカット設定"
+                  data-tooltip-bottom="ショートカット"
                 >
                   <KeyboardIcon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
                 </button>
@@ -1672,7 +1711,7 @@ export default function Home() {
                   onClick={handleThemeCycle}
                   className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="テーマ切り替え"
-                  data-tooltip-bottom={`テーマ: ${
+                  data-tooltip-bottom={`テーマ:\n${
                     theme === "system"
                       ? "自動"
                       : theme === "light"
@@ -1747,7 +1786,7 @@ export default function Home() {
                 onClick={handleThemeCycle}
                 className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="テーマ切り替え"
-                data-tooltip-bottom={`テーマ: ${
+                data-tooltip-bottom={`テーマ:\n${
                   theme === "system"
                     ? "自動"
                     : theme === "light"
@@ -2313,7 +2352,7 @@ export default function Home() {
                             aria-label="カルテ全体をコピー"
                             data-tooltip="コピー"
                           >
-                            <ClipboardDocumentIcon className="w-4 h-4" aria-hidden="true" />
+                            <ClipboardDocumentIcon className="w-5 h-5" aria-hidden="true" />
                           </button>
                         </div>
                       </div>
@@ -3244,6 +3283,8 @@ export default function Home() {
         selectedModel={selectedModel}
         isRecording={isRecording}
         isAnalyzing={loading || isStreaming}
+        isOpen={isChatOpen}
+        onToggle={setIsChatOpen}
       />
 
       {/* Portal Sample Menu (renders at document.body to escape overflow:hidden) */}

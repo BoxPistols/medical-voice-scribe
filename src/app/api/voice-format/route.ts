@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { ModelId, TokenUsage } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
+import { checkAndIncrementRateLimit } from '@/lib/rateLimiter';
 
 const USD_TO_JPY = 150;
 
@@ -82,6 +83,16 @@ export async function POST(req: Request) {
     }
 
     const model = requestedModel && isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
+
+    // レート制限チェック
+    const rateLimit = checkAndIncrementRateLimit(model);
+    if (rateLimit.exceeded) {
+      return NextResponse.json(
+        { error: `本日の使用回数上限（${rateLimit.limit}回）に達しました。明日また試してください。` },
+        { status: 429 }
+      );
+    }
+
     const openai = getOpenAIClient();
     const systemPrompt = mode === 'organize' ? ORGANIZE_PROMPT : SUMMARIZE_PROMPT;
 

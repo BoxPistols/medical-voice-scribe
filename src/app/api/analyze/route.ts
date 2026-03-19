@@ -4,6 +4,7 @@ import { SYSTEM_PROMPT } from './prompt';
 import type { SoapNote, ModelId, TokenUsage } from './types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from './types';
 import { validateModel } from '@/lib/helpers';
+import { checkAndIncrementRateLimit } from '@/lib/rateLimiter';
 
 // USD/JPY レート（概算）
 const USD_TO_JPY = 150;
@@ -53,6 +54,15 @@ export async function POST(req: Request) {
 
     // モデルの検証とフォールバック
     const model = validateModel(requestedModel, VALID_MODEL_IDS, DEFAULT_MODEL) as ModelId;
+
+    // レート制限チェック
+    const rateLimit = checkAndIncrementRateLimit(model);
+    if (rateLimit.exceeded) {
+      return NextResponse.json(
+        { error: `本日の使用回数上限（${rateLimit.limit}回）に達しました。明日また試してください。` },
+        { status: 429 }
+      );
+    }
 
     const openai = getOpenAIClient();
 
