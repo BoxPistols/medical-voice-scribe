@@ -85,6 +85,9 @@ export async function POST(req: Request) {
     const openai = getOpenAIClient();
     const systemPrompt = mode === 'organize' ? ORGANIZE_PROMPT : SUMMARIZE_PROMPT;
 
+    // GPT-5.4系のトークン上限（nanoは4000、miniは16000）
+    const maxCompletionTokens = model.includes('nano') ? 4000 : 16000;
+
     const response = await openai.chat.completions.create({
       model,
       messages: [
@@ -92,6 +95,7 @@ export async function POST(req: Request) {
         { role: 'user', content: text },
       ],
       response_format: { type: 'json_object' },
+      max_completion_tokens: maxCompletionTokens,
     });
 
     const content = response.choices[0]?.message?.content;

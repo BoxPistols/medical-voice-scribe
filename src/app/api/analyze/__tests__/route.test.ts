@@ -38,8 +38,8 @@ describe('Helpers used by /api/analyze', () => {
   })
 
   describe('Model Validation', () => {
-    const VALID_MODELS = ['gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5-mini', 'gpt-5-nano']
-    const DEFAULT_MODEL = 'gpt-4.1-nano'
+    const VALID_MODELS = ['gpt-5.4-mini', 'gpt-5.4-nano']
+    const DEFAULT_MODEL = 'gpt-5.4-nano'
 
     const validateModel = (model: string | undefined): string => {
       if (!model || !VALID_MODELS.includes(model)) {
