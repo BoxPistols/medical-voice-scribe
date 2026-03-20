@@ -158,8 +158,8 @@ const SHORTCUT_DEFS: ShortcutDef[] = [
   {
     id: "toggleSpeech",
     label: "開始/停止",
-    default: { key: "v" },
-    modifierDefault: { key: "v", ctrl: true },
+    default: { key: "p" },
+    modifierDefault: { key: "p", ctrl: true },
     group: "speech",
   },
   {
@@ -1558,6 +1558,12 @@ export default function Home() {
 
       // Ignore if editing a shortcut
       if (editingShortcutId) return;
+
+      // ブラウザ標準操作（コピー/ペースト/切取/全選択/取消）は常にスルー
+      const browserKeys = ["v", "c", "x", "a", "z"];
+      if ((e.metaKey || e.ctrlKey) && browserKeys.includes(e.key.toLowerCase()) && !e.altKey && !e.shiftKey) {
+        return;
+      }
 
       // Find matching shortcut
       const actionId = (Object.keys(shortcuts) as ActionId[]).find((id) => {
