@@ -14,13 +14,14 @@ interface ModeSwitcherProps {
   onModeChange: (mode: AppMode) => void;
 }
 
-const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof ClockIcon; description: string }[] = [
+const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof ClockIcon; description: string; shortcutKey: number }[] = [
   {
     id: "medical",
     label: "医療カルテ",
     shortLabel: "医療",
     icon: DocumentTextIcon,
     description: "AI問診・SOAP自動生成",
+    shortcutKey: 1,
   },
   {
     id: "clock",
@@ -28,6 +29,7 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "時計",
     icon: ClockIcon,
     description: "フルスクリーン時計",
+    shortcutKey: 2,
   },
   {
     id: "voice",
@@ -35,6 +37,7 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "音声",
     icon: MicrophoneIcon,
     description: "録音・整理・要約",
+    shortcutKey: 3,
   },
   {
     id: "mentoring",
@@ -42,6 +45,7 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "メンタ",
     icon: HeartIcon,
     description: "ポジティブ心理学ベースのメンタルコーチング",
+    shortcutKey: 4,
   },
 ];
 
@@ -67,7 +71,7 @@ export default function ModeSwitcher({
                   : "text-theme-tertiary hover:text-theme-secondary hover:bg-theme-card"
               }
             `}
-            title={mode.description}
+            title={`${mode.description}（⌘${mode.shortcutKey}）`}
             aria-label={`${mode.label}モードに切替`}
             aria-pressed={isActive}
           >

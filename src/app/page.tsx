@@ -1523,6 +1523,22 @@ export default function Home() {
       });
   }, [editingShortcutId]);
 
+  // モード切替ショートカット: Cmd/Ctrl + 1〜4
+  const MODE_ORDER: AppMode[] = ["medical", "clock", "voice", "mentoring"];
+  useEffect(() => {
+    const handleModeShortcut = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey) return;
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= MODE_ORDER.length) {
+        e.preventDefault();
+        setAppMode(MODE_ORDER[num - 1]);
+      }
+    };
+    window.addEventListener("keydown", handleModeShortcut);
+    return () => window.removeEventListener("keydown", handleModeShortcut);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Keyboard shortcuts listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1532,6 +1548,13 @@ export default function Home() {
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
         target.isContentEditable;
+
+      // 医療モード専用ショートカットは医療モード以外では無効
+      const medicalOnlyActions: ActionId[] = [
+        "toggleRecording", "analyze", "clear", "toggleSpeech",
+        "increaseSpeechRate", "decreaseSpeechRate",
+        "import", "exportJson", "exportCsv", "toggleChat",
+      ];
 
       // Ignore if editing a shortcut
       if (editingShortcutId) return;
@@ -1549,6 +1572,9 @@ export default function Home() {
       });
 
       if (actionId) {
+        // 医療モード専用のショートカットは他モードでは無効
+        if (appMode !== "medical" && medicalOnlyActions.includes(actionId)) return;
+
         // Validation for input fields:
         // If in input/textarea, ONLY allow shortcuts that use modifiers (Ctrl/Alt/Meta)
         // AND specifically allow the user's requested actions even in inputs
@@ -1639,6 +1665,7 @@ export default function Home() {
   }, [
     shortcuts,
     editingShortcutId,
+    appMode,
     isRecording,
     transcript,
     loading,
