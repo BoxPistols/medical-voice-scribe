@@ -159,8 +159,14 @@ export default function ClockMode() {
   const [pomTimeLeft, setPomTimeLeft] = useState(25 * 60);
   const [pomRunning, setPomRunning] = useState(false);
   const [pomCount, setPomCount] = useState(0);   // completed work sessions
-  const [pomFocus, setPomFocus] = useState("");
-  const [pomTasks, setPomTasks] = useState<PomTask[]>([]);
+  const [pomFocus, setPomFocus] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("pomFocus") ?? "";
+  });
+  const [pomTasks, setPomTasks] = useState<PomTask[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem("pomTasks") ?? "[]"); } catch { return []; }
+  });
   const [showTaskPanel, setShowTaskPanel] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDeadline, setNewTaskDeadline] = useState("");
@@ -312,6 +318,14 @@ export default function ClockMode() {
   useEffect(() => {
     if (notifSupported) setNotifPerm(Notification.permission);
   }, [notifSupported]);
+
+  // Persist tasks & focus to localStorage
+  useEffect(() => {
+    localStorage.setItem("pomTasks", JSON.stringify(pomTasks));
+  }, [pomTasks]);
+  useEffect(() => {
+    localStorage.setItem("pomFocus", pomFocus);
+  }, [pomFocus]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -469,14 +483,14 @@ export default function ClockMode() {
     if (!newTaskTitle.trim()) return;
     setPomTasks((prev) => [
       ...prev,
-      { id: `${Date.now()}-${Math.random()}`, title: newTaskTitle.trim(), deadline: newTaskDeadline, done: false },
+      { id: crypto.randomUUID(), title: newTaskTitle.trim(), deadline: newTaskDeadline, done: false },
     ]);
     setNewTaskTitle("");
     setNewTaskDeadline("");
   }, [newTaskTitle, newTaskDeadline]);
 
-  const handleCompleteTask = useCallback((id: string) => {
-    setPomTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: true } : t)));
+  const handleToggleTask = useCallback((id: string) => {
+    setPomTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
   }, []);
 
   const handleDeleteTask = useCallback((id: string) => {
@@ -513,16 +527,23 @@ export default function ClockMode() {
 
   // ── Task helpers ──────────────────────────────────────────────────────────
 
-  const activeTask = pomTasks.find((t) => !t.done) ?? null;
-  const nextTask = pomTasks.filter((t) => !t.done)[1] ?? null;
+  const activeTasks = useMemo(() => pomTasks.filter((t) => !t.done), [pomTasks]);
+  const activeTaskCount = activeTasks.length;
+  const activeTask = activeTasks[0] ?? null;
+  const nextTask = activeTasks[1] ?? null;
 
-  const getDeadlineInfo = (deadline: string) => {
+  const getDeadlineInfo = useCallback((deadline: string) => {
     if (!deadline) return null;
     const [hh, mm] = deadline.split(":").map(Number);
-    const deadlineDate = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), hh, mm);
+    let deadlineDate = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), hh, mm);
+    // 日付境界対応: 締切時刻が現在時刻より前で6時間以上前の場合、翌日と判定
     const diffMs = deadlineDate.getTime() - currentTime.getTime();
-    if (diffMs < 0) return { overdue: true, urgent: true, warning: false, label: "期限超過" };
-    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMs < -6 * 60 * 60 * 1000) {
+      deadlineDate = new Date(deadlineDate.getTime() + 24 * 60 * 60 * 1000);
+    }
+    const adjustedDiffMs = deadlineDate.getTime() - currentTime.getTime();
+    if (adjustedDiffMs < 0) return { overdue: true, urgent: true, warning: false, label: "期限超過" };
+    const diffMin = Math.floor(adjustedDiffMs / 60000);
     const h = Math.floor(diffMin / 60);
     const m = diffMin % 60;
     return {
@@ -531,7 +552,9 @@ export default function ClockMode() {
       warning: diffMin < 60,
       label: h > 0 ? `あと${h}時間${m > 0 ? `${m}分` : ""}` : `あと${m}分`,
     };
-  };
+  }, [currentTime]);
+
+  const activeTaskDeadlineInfo = activeTask?.deadline ? getDeadlineInfo(activeTask.deadline) : null;
 
   // ── Progress ring ─────────────────────────────────────────────────────────
   const totalSec = pomSession === "work" ? pomWorkMin * 60 : pomBreakMin * 60;
@@ -675,19 +698,16 @@ export default function ClockMode() {
                 <div className="w-full rounded-lg border border-teal-400/70 bg-teal-50/60 dark:bg-teal-900/20 px-3 py-2 flex items-center gap-2 min-w-0">
                   <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 shrink-0">NOW</span>
                   <span className="flex-1 text-sm font-medium text-theme-primary truncate">{activeTask.title}</span>
-                  {activeTask.deadline && (() => {
-                    const info = getDeadlineInfo(activeTask.deadline);
-                    return info ? (
-                      <span className={`text-xs font-mono shrink-0 ${
-                        info.overdue ? "text-red-600 dark:text-red-400" :
-                        info.urgent  ? "text-red-500 dark:text-red-400" :
-                        info.warning ? "text-yellow-600 dark:text-yellow-400" :
-                        "text-theme-tertiary"
-                      }`}>
-                        {activeTask.deadline} · {info.label}
-                      </span>
-                    ) : null;
-                  })()}
+                  {activeTask.deadline && activeTaskDeadlineInfo && (
+                    <span className={`text-xs font-mono shrink-0 ${
+                      activeTaskDeadlineInfo.overdue ? "text-red-600 dark:text-red-400" :
+                      activeTaskDeadlineInfo.urgent  ? "text-red-500 dark:text-red-400" :
+                      activeTaskDeadlineInfo.warning ? "text-yellow-600 dark:text-yellow-400" :
+                      "text-theme-tertiary"
+                    }`}>
+                      {activeTask.deadline} · {activeTaskDeadlineInfo.label}
+                    </span>
+                  )}
                 </div>
                 {/* Next task */}
                 {nextTask && (
@@ -781,9 +801,9 @@ export default function ClockMode() {
                 }`}
               >
                 <ListIcon className="w-5 h-5" />
-                {pomTasks.filter((t) => !t.done).length > 0 && (
+                {activeTaskCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-teal-500 text-white text-[9px] flex items-center justify-center font-bold leading-none">
-                    {pomTasks.filter((t) => !t.done).length}
+                    {activeTaskCount}
                   </span>
                 )}
               </button>
@@ -852,16 +872,15 @@ export default function ClockMode() {
                             "border-theme-border"
                           }`}
                         >
-                          {/* Complete button */}
+                          {/* Toggle complete button */}
                           <button
-                            onClick={() => handleCompleteTask(task.id)}
-                            disabled={task.done}
+                            onClick={() => handleToggleTask(task.id)}
                             className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                               task.done
-                                ? "border-teal-500 bg-teal-500 text-white"
+                                ? "border-teal-500 bg-teal-500 text-white hover:bg-teal-400"
                                 : "border-theme-border hover:border-teal-400"
                             }`}
-                            title="完了にする"
+                            title={task.done ? "未完了に戻す" : "完了にする"}
                           >
                             {task.done && (
                               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
