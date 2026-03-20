@@ -705,6 +705,8 @@ export default function Home() {
         setRecordingStartTime(null);
         setRecordingElapsed(0);
       }
+      // 診療サポートチャットを閉じる
+      setIsChatOpen(false);
     }
   }, [appMode]);
 
@@ -3403,16 +3405,18 @@ export default function Home() {
         aria-label="JSONファイルを選択"
       />
 
-      {/* Chat Support Widget */}
-      <ChatSupportWidget
-        soapNote={result}
-        transcript={transcript}
-        selectedModel={selectedModel}
-        isRecording={isRecording}
-        isAnalyzing={loading || isStreaming}
-        isOpen={isChatOpen}
-        onToggle={setIsChatOpen}
-      />
+      {/* 診療サポートウィジェット（医療モード専用） */}
+      {appMode === "medical" && (
+        <ChatSupportWidget
+          soapNote={result}
+          transcript={transcript}
+          selectedModel={selectedModel}
+          isRecording={isRecording}
+          isAnalyzing={loading || isStreaming}
+          isOpen={isChatOpen}
+          onToggle={setIsChatOpen}
+        />
+      )}
 
       {/* セッション管理ドロワー */}
       <SessionDrawer

@@ -327,11 +327,23 @@ export default function MentoringMode() {
                 ref={inputRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
+                onPaste={(e) => {
+                  // ペースト後にstateが更新されるよう明示的に処理
+                  const pasted = e.clipboardData.getData("text");
+                  if (pasted) {
+                    e.preventDefault();
+                    const target = e.currentTarget;
+                    const start = target.selectionStart;
+                    const end = target.selectionEnd;
+                    const newValue = inputValue.slice(0, start) + pasted + inputValue.slice(end);
+                    setInputValue(newValue);
+                  }
+                }}
                 onKeyDown={handleKeyDown}
-                placeholder="気持ちや考えを入力してください..."
+                placeholder="気持ちや考えを入力してください...（テキスト入力・ペースト可）"
                 className="w-full resize-none rounded-xl border border-theme-border bg-theme-bg px-4 py-2.5 pr-10 text-sm text-theme-primary placeholder-theme-tertiary focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 disabled={isLoading}
-                rows={1}
+                rows={2}
               />
               <span className="absolute right-3 bottom-1.5 text-[10px] text-theme-tertiary pointer-events-none">
                 {typeof navigator !== "undefined" &&

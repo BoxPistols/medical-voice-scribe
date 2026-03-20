@@ -613,7 +613,7 @@ export default function VoiceRecorderMode() {
                     : "text-theme-tertiary hover:text-theme-secondary"
                 }`}
               >
-                チャット整形
+                伝わる文に整形
               </button>
               <button
                 onClick={() => setFormatMode("summarize")}
@@ -635,7 +635,7 @@ export default function VoiceRecorderMode() {
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-theme-card border border-theme-border text-theme-secondary hover:bg-theme-surface disabled:opacity-50 transition-all"
               >
                 <SparklesIcon className="w-3.5 h-3.5" />
-                {processingAll ? "処理中..." : `全て${formatMode === "organize" ? "整理" : formatMode === "chat-reformat" ? "チャット整形" : "要約"}`}
+                {processingAll ? "処理中..." : `全て${formatMode === "organize" ? "整理" : formatMode === "chat-reformat" ? "整形" : "要約"}`}
               </button>
             )}
 
@@ -958,7 +958,7 @@ export default function VoiceRecorderMode() {
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900 disabled:opacity-50 transition-all"
                         >
                           <ClipboardDocumentIcon className="w-3.5 h-3.5" />
-                          チャット整形
+                          伝わる文に整形
                         </button>
                         <button
                           onClick={() => {
@@ -1071,7 +1071,7 @@ export default function VoiceRecorderMode() {
                       <div className="bg-teal-50 dark:bg-teal-950/50 rounded-lg p-3 border border-teal-200 dark:border-teal-800 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-teal-600 dark:text-teal-300">
-                            チャット整形結果
+                            整形結果
                           </span>
                           <button
                             onClick={() => copyText(chatResult.formatted, `chat-${group.id}`)}
