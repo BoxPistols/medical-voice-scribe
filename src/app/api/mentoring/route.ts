@@ -72,8 +72,8 @@ export async function POST(req: Request) {
 
     const openai = getOpenAIClient();
 
-    // 会話履歴の検証と構築
-    const validRoles = ['user', 'assistant', 'system'];
+    // 会話履歴の検証と構築（systemロールはプロンプトインジェクション防止のため除外）
+    const validRoles = ['user', 'assistant'];
     const historyMessages: OpenAI.Chat.ChatCompletionMessageParam[] = Array.isArray(conversationHistory)
       ? conversationHistory
           .filter((msg: { role?: string; content?: string }) =>

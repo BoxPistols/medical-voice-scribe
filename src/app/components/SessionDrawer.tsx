@@ -91,10 +91,14 @@ export default function SessionDrawer({
 
   const handleDeleteSession = useCallback(
     (id: string) => {
+      // アクティブセッション削除時は未保存の変更を先に保存
+      if (id === store.activeSessionId) {
+        onBeforeSwitch?.();
+      }
       onStoreChange(deleteSession(store, id));
       setDeletingId(null);
     },
-    [store, onStoreChange],
+    [store, onStoreChange, onBeforeSwitch],
   );
 
   // 時刻フォーマット

@@ -370,6 +370,9 @@ const SAMPLE_INTERVIEWS = [
   },
 ];
 
+// モード切替ショートカット用の順序定義
+const MODE_ORDER: AppMode[] = ["medical", "clock", "voice", "mentoring"];
+
 export default function Home() {
   // App mode
   const [appMode, setAppMode] = useState<AppMode>("medical");
@@ -1524,7 +1527,6 @@ export default function Home() {
   }, [editingShortcutId]);
 
   // モード切替ショートカット: Cmd/Ctrl + 1〜4
-  const MODE_ORDER: AppMode[] = ["medical", "clock", "voice", "mentoring"];
   useEffect(() => {
     const handleModeShortcut = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey) return;
