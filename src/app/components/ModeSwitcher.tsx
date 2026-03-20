@@ -4,9 +4,10 @@ import {
   ClockIcon,
   MicrophoneIcon,
   DocumentTextIcon,
+  HeartIcon,
 } from "@heroicons/react/24/outline";
 
-export type AppMode = "medical" | "clock" | "voice";
+export type AppMode = "medical" | "clock" | "voice" | "mentoring";
 
 interface ModeSwitcherProps {
   currentMode: AppMode;
@@ -34,6 +35,13 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "音声",
     icon: MicrophoneIcon,
     description: "録音・整理・要約",
+  },
+  {
+    id: "mentoring",
+    label: "メンタリング",
+    shortLabel: "メンタ",
+    icon: HeartIcon,
+    description: "ポジティブ心理学ベースのメンタルコーチング",
   },
 ];
 

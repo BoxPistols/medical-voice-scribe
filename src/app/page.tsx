@@ -57,6 +57,17 @@ import { cycleTheme, getLayoutPresetWidth, buildCopySectionS, buildCopySectionO,
 import ModeSwitcher, { type AppMode } from "./components/ModeSwitcher";
 import ClockMode from "./components/ClockMode";
 import VoiceRecorderMode from "./components/VoiceRecorderMode";
+import MentoringMode from "./components/MentoringMode";
+import SessionDrawer from "./components/SessionDrawer";
+import type { RecordStore as RecordStoreType } from "@/lib/recordStore";
+import {
+  loadStore,
+  saveStore,
+  createEmptySession,
+  addSession,
+  updateSession,
+  getActiveSession,
+} from "@/lib/recordStore";
 
 // Custom Keyboard Icon Component
 const KeyboardIcon = ({ className }: { className?: string }) => (
@@ -429,6 +440,10 @@ export default function Home() {
   // チャット開閉状態
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  // セッション管理
+  const [recordStore, setRecordStore] = useState<RecordStoreType>(() => loadStore());
+  const [isSessionDrawerOpen, setIsSessionDrawerOpen] = useState(false);
+
   // レート制限の使用状況
   const [usageStatus, setUsageStatus] = useState<Record<string, { count: number; limit: number; remaining: number }>>({});
 
@@ -584,6 +599,75 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
+
+  // recordStore変更時にlocalStorageへ永続化
+  useEffect(() => {
+    saveStore(recordStore);
+  }, [recordStore]);
+
+  // アクティブセッションに現在のデータを保存
+  const saveCurrentSession = useCallback(() => {
+    const active = getActiveSession(recordStore);
+    if (!active) return;
+    const updated = updateSession(recordStore, active.id, {
+      transcript,
+      soapNote: result,
+      tokenUsage,
+    });
+    setRecordStore(updated);
+  }, [recordStore, transcript, result, tokenUsage]);
+
+  // セッション初期化: ストアが空なら初期セッションを作成
+  useEffect(() => {
+    if (recordStore.sessions.length === 0) {
+      const initial = createEmptySession("medical");
+      setRecordStore(addSession(recordStore, initial));
+      return;
+    }
+    // アクティブセッションのデータを復元
+    const active = getActiveSession(recordStore);
+    if (active) {
+      if (active.transcript && !transcript) setTranscript(active.transcript);
+      if (active.soapNote && !result) setResult(active.soapNote);
+      if (active.tokenUsage && !tokenUsage) setTokenUsage(active.tokenUsage);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount時のみ
+
+  // 自動保存: transcript/result/tokenUsage変更時にアクティブセッションへ保存
+  useEffect(() => {
+    const active = getActiveSession(recordStore);
+    if (!active) return;
+    // 変更があるときだけ保存
+    if (active.transcript === transcript && active.soapNote === result && active.tokenUsage === tokenUsage) return;
+    const id = setTimeout(() => {
+      const updated = updateSession(recordStore, active.id, {
+        transcript,
+        soapNote: result,
+        tokenUsage,
+      });
+      setRecordStore(updated);
+    }, 1000);
+    return () => clearTimeout(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transcript, result, tokenUsage]);
+
+  // セッション切り替え時のデータ復元
+  const handleSessionSwitch = useCallback((newStore: RecordStoreType) => {
+    setRecordStore(newStore);
+    const active = getActiveSession(newStore);
+    if (active) {
+      setTranscript(active.transcript);
+      setResult(active.soapNote);
+      setTokenUsage(active.tokenUsage);
+      setError(null);
+      setStreamingText("");
+    } else {
+      setTranscript("");
+      setResult(null);
+      setTokenUsage(null);
+    }
+  }, []);
 
   // マウント時に使用状況を取得
   useEffect(() => {
@@ -1696,6 +1780,17 @@ export default function Home() {
 
               {/* Icon buttons - unified grid */}
               <div className="flex items-center flex-shrink-0">
+                {/* セッション管理ボタン */}
+                <button
+                  onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
+                  className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                  title="セッション管理"
+                  aria-label="セッション管理"
+                  data-tooltip-bottom="セッション"
+                >
+                  <Bars3Icon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
+                </button>
+
                 {/* Shortcut settings button */}
                 <button
                   onClick={() => setShowShortcutsModal(true)}
@@ -1781,6 +1876,16 @@ export default function Home() {
                 </div>
               )}
 
+              {/* セッション管理ボタン (Mobile) */}
+              <button
+                onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                title="セッション管理"
+                aria-label="セッション管理"
+              >
+                <Bars3Icon className="w-5 h-5" aria-hidden="true" />
+              </button>
+
               {/* Theme toggle button (Mobile) */}
               <button
                 onClick={handleThemeCycle}
@@ -1829,6 +1934,9 @@ export default function Home() {
 
         {/* Voice Recorder Mode */}
         {appMode === "voice" && <VoiceRecorderMode />}
+
+        {/* Mentoring Mode */}
+        {appMode === "mentoring" && <MentoringMode />}
 
         {/* Medical Mode */}
         {appMode === "medical" && (
@@ -3285,6 +3393,15 @@ export default function Home() {
         isAnalyzing={loading || isStreaming}
         isOpen={isChatOpen}
         onToggle={setIsChatOpen}
+      />
+
+      {/* セッション管理ドロワー */}
+      <SessionDrawer
+        open={isSessionDrawerOpen}
+        onClose={() => setIsSessionDrawerOpen(false)}
+        store={recordStore}
+        onStoreChange={handleSessionSwitch}
+        onBeforeSwitch={saveCurrentSession}
       />
 
       {/* Portal Sample Menu (renders at document.body to escape overflow:hidden) */}
