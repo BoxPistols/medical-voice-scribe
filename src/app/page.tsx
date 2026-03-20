@@ -1572,8 +1572,12 @@ export default function Home() {
       });
 
       if (actionId) {
-        // 医療モード専用のショートカットは他モードでは無効
-        if (appMode !== "medical" && medicalOnlyActions.includes(actionId)) return;
+        // 医療モード専用のショートカットは他モードではアクションを実行しないが、
+        // ブラウザデフォルト動作（Cmd+Rのリロード等）は防止する
+        if (appMode !== "medical" && medicalOnlyActions.includes(actionId)) {
+          e.preventDefault();
+          return;
+        }
 
         // Validation for input fields:
         // If in input/textarea, ONLY allow shortcuts that use modifiers (Ctrl/Alt/Meta)
