@@ -62,7 +62,6 @@ import SessionDrawer from "./components/SessionDrawer";
 import type { RecordStore as RecordStoreType } from "@/lib/recordStore";
 import {
   loadStore,
-  saveStore,
   createEmptySession,
   addSession,
   updateSession,
@@ -493,6 +492,11 @@ export default function Home() {
   } | null>(null);
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 前回保存した値を追跡するref（自動保存の変更検知用）
+  const lastSavedRef = useRef<{ transcript: string; result: SoapNote | null; tokenUsage: TokenUsage | null }>({
+    transcript: "", result: null, tokenUsage: null,
+  });
+
   // Help modal focus trap refs
   const helpModalRef = useRef<HTMLDivElement>(null);
   useFocusTrap(helpModalRef, showHelp);
@@ -600,22 +604,21 @@ export default function Home() {
     localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
 
-  // recordStore変更時にlocalStorageへ永続化
-  useEffect(() => {
-    saveStore(recordStore);
-  }, [recordStore]);
+  // recordStore永続化は各操作関数(addSession, updateSession等)内で行われるため、
+  // ここでの重複保存は不要（削除済み）
 
-  // アクティブセッションに現在のデータを保存
+  // アクティブセッションに現在のデータを保存（functional updateでstale closure回避）
   const saveCurrentSession = useCallback(() => {
-    const active = getActiveSession(recordStore);
-    if (!active) return;
-    const updated = updateSession(recordStore, active.id, {
-      transcript,
-      soapNote: result,
-      tokenUsage,
+    setRecordStore((currentStore) => {
+      const active = getActiveSession(currentStore);
+      if (!active) return currentStore;
+      return updateSession(currentStore, active.id, {
+        transcript,
+        soapNote: result,
+        tokenUsage,
+      });
     });
-    setRecordStore(updated);
-  }, [recordStore, transcript, result, tokenUsage]);
+  }, [transcript, result, tokenUsage]);
 
   // セッション初期化: ストアが空なら初期セッションを作成
   useEffect(() => {
@@ -634,25 +637,30 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // mount時のみ
 
-  // 自動保存: transcript/result/tokenUsage変更時にアクティブセッションへ保存
+  // 自動保存: 変更検知にはrefを使い、stale closureを回避
   useEffect(() => {
-    const active = getActiveSession(recordStore);
-    if (!active) return;
-    // 変更があるときだけ保存
-    if (active.transcript === transcript && active.soapNote === result && active.tokenUsage === tokenUsage) return;
+    const prev = lastSavedRef.current;
+    if (prev.transcript === transcript && prev.result === result && prev.tokenUsage === tokenUsage) return;
+
     const id = setTimeout(() => {
-      const updated = updateSession(recordStore, active.id, {
-        transcript,
-        soapNote: result,
-        tokenUsage,
+      setRecordStore((currentStore) => {
+        const active = getActiveSession(currentStore);
+        if (!active) return currentStore;
+        const updated = updateSession(currentStore, active.id, {
+          transcript,
+          soapNote: result,
+          tokenUsage,
+        });
+        lastSavedRef.current = { transcript, result, tokenUsage };
+        return updated;
       });
-      setRecordStore(updated);
     }, 1000);
     return () => clearTimeout(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, result, tokenUsage]);
 
   // セッション切り替え時のデータ復元
+  // TODO: chatHistoryの保存・復元はChatSupportWidget内部で管理されているため、
+  // コンポーネントからメッセージを公開するAPIが必要
   const handleSessionSwitch = useCallback((newStore: RecordStoreType) => {
     setRecordStore(newStore);
     const active = getActiveSession(newStore);
@@ -662,10 +670,17 @@ export default function Home() {
       setTokenUsage(active.tokenUsage);
       setError(null);
       setStreamingText("");
+      // lastSavedRefも更新して不要な自動保存を防止
+      lastSavedRef.current = {
+        transcript: active.transcript,
+        result: active.soapNote,
+        tokenUsage: active.tokenUsage,
+      };
     } else {
       setTranscript("");
       setResult(null);
       setTokenUsage(null);
+      lastSavedRef.current = { transcript: "", result: null, tokenUsage: null };
     }
   }, []);
 
@@ -1780,7 +1795,8 @@ export default function Home() {
 
               {/* Icon buttons - unified grid */}
               <div className="flex items-center flex-shrink-0">
-                {/* セッション管理ボタン */}
+                {/* セッション管理ボタン（medicalモードのみ表示） */}
+                {appMode === "medical" && (
                 <button
                   onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
                   className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
@@ -1790,6 +1806,7 @@ export default function Home() {
                 >
                   <Bars3Icon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
                 </button>
+                )}
 
                 {/* Shortcut settings button */}
                 <button
@@ -1876,7 +1893,8 @@ export default function Home() {
                 </div>
               )}
 
-              {/* セッション管理ボタン (Mobile) */}
+              {/* セッション管理ボタン (Mobile)（medicalモードのみ表示） */}
+              {appMode === "medical" && (
               <button
                 onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
                 className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
@@ -1885,6 +1903,7 @@ export default function Home() {
               >
                 <Bars3Icon className="w-5 h-5" aria-hidden="true" />
               </button>
+              )}
 
               {/* Theme toggle button (Mobile) */}
               <button

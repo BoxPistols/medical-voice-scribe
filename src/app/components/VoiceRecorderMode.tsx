@@ -177,9 +177,26 @@ export default function VoiceRecorderMode() {
         tags: [],
         organizeResult: organizeResults[g.id]?.formatted,
         summarizeResult: summarizeResults[g.id]?.summary,
+        chatReformatResult: chatReformatResults[g.id]?.formatted,
       }));
     saveVoiceGroups(toSave);
-  }, [groups, organizeResults, summarizeResults]);
+  }, [groups, organizeResults, summarizeResults, chatReformatResults]);
+
+  // 保存済みの整理・要約・チャット整形結果を復元
+  useEffect(() => {
+    const saved = loadVoiceGroups();
+    const org: Record<string, OrganizeResult> = {};
+    const sum: Record<string, SummarizeResult> = {};
+    const chat: Record<string, OrganizeResult> = {};
+    saved.forEach((g) => {
+      if (g.organizeResult) org[g.id] = { formatted: g.organizeResult, changes: [] };
+      if (g.summarizeResult) sum[g.id] = { summary: g.summarizeResult, keyPoints: [], actionItems: [], keywords: [] };
+      if (g.chatReformatResult) chat[g.id] = { formatted: g.chatReformatResult, changes: [] };
+    });
+    if (Object.keys(org).length) setOrganizeResults((prev) => ({ ...org, ...prev }));
+    if (Object.keys(sum).length) setSummarizeResults((prev) => ({ ...sum, ...prev }));
+    if (Object.keys(chat).length) setChatReformatResults((prev) => ({ ...chat, ...prev }));
+  }, []);
 
   // Recording elapsed timer
   useEffect(() => {

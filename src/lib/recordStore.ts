@@ -88,7 +88,11 @@ export function saveStore(store: RecordStore): void {
     // localStorage容量超過時: 古いセッションを削除して再試行
     if (e instanceof DOMException && e.name === "QuotaExceededError") {
       const trimmed = { ...store, sessions: store.sessions.slice(-Math.floor(MAX_SESSIONS / 2)) };
-      localStorage.setItem(STORE_KEY, JSON.stringify(trimmed));
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(trimmed));
+      } catch {
+        // リトライも失敗した場合はデータロスを許容してクラッシュを防ぐ
+      }
     }
   }
 }

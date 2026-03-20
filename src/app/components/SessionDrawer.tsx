@@ -312,13 +312,19 @@ export default function SessionDrawer({
                     {deletingId === s.id ? (
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                         <button
-                          onClick={() => handleDeleteSession(s.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSession(s.id);
+                          }}
                           className="px-2 py-1 text-[11px] rounded bg-red-500 text-white hover:bg-red-600 transition-colors cursor-pointer"
                         >
                           削除
                         </button>
                         <button
-                          onClick={() => setDeletingId(null)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingId(null);
+                          }}
                           className="px-2 py-1 text-[11px] rounded border border-theme-border text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
                         >
                           戻す
