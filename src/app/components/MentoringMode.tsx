@@ -6,9 +6,11 @@ import {
   PaperAirplaneIcon,
   MicrophoneIcon,
   StopIcon,
+  SpeakerWaveIcon,
 } from "@heroicons/react/24/outline";
 import type { ModelId } from "../api/analyze/types";
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from "../api/analyze/types";
+import { getVoiceForLanguage } from "@/lib/audioHelpers";
 
 // メッセージの型
 interface MentoringMessage {
@@ -59,9 +61,46 @@ export default function MentoringMode() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelId>(DEFAULT_MODEL);
   const [isListening, setIsListening] = useState(false);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+
+  // アンマウント時のクリーンアップ（音声認識 + TTS）
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+      speechSynthesis.cancel();
+    };
+  }, []);
+
+  // TTS読み上げ
+  const speakMessage = useCallback((msgId: string, text: string) => {
+    if (speakingId === msgId) {
+      speechSynthesis.cancel();
+      setSpeakingId(null);
+      return;
+    }
+    speechSynthesis.cancel();
+    // マークダウン記法を除去してプレーンテキストに
+    const plain = text
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/[#*_`~]/g, "")
+      .replace(/\n{2,}/g, "。\n")
+      .trim();
+    const utterance = new SpeechSynthesisUtterance(plain);
+    utterance.lang = "ja-JP";
+    utterance.rate = 1.0;
+    const voices = speechSynthesis.getVoices();
+    const voice = getVoiceForLanguage(voices, "ja-JP");
+    if (voice) utterance.voice = voice;
+    utterance.onend = () => setSpeakingId(null);
+    utterance.onerror = () => setSpeakingId(null);
+    setSpeakingId(msgId);
+    speechSynthesis.speak(utterance);
+  }, [speakingId]);
 
   // 自動スクロール
   useEffect(() => {
@@ -166,6 +205,8 @@ export default function MentoringMode() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      // 応答を自動で読み上げ
+      speakMessage(assistantMessage.id, assistantMessage.content);
     } catch (error) {
       const errorMessage: MentoringMessage = {
         id: generateId(),
@@ -180,7 +221,7 @@ export default function MentoringMode() {
     } finally {
       setIsLoading(false);
     }
-  }, [inputValue, isLoading, messages, selectedModel]);
+  }, [inputValue, isLoading, messages, selectedModel, speakMessage]);
 
   // キーボードイベント（日本語IME対応）
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -271,17 +312,32 @@ export default function MentoringMode() {
                         msg.content
                       )}
                     </div>
-                    <div
-                      className={`text-[10px] mt-1 ${
-                        msg.role === "user"
-                          ? "text-teal-200"
-                          : "text-theme-tertiary"
-                      }`}
-                    >
-                      {msg.timestamp.toLocaleTimeString("ja-JP", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <div className={`flex items-center gap-2 mt-1 ${
+                      msg.role === "user" ? "justify-end" : "justify-between"
+                    }`}>
+                      {msg.role === "assistant" && (
+                        <button
+                          onClick={() => speakMessage(msg.id, msg.content)}
+                          className={`flex items-center gap-1 text-[10px] transition-colors cursor-pointer ${
+                            speakingId === msg.id
+                              ? "text-teal-500"
+                              : "text-theme-tertiary hover:text-teal-500"
+                          }`}
+                          title={speakingId === msg.id ? "読み上げ停止" : "読み上げ"}
+                          aria-label={speakingId === msg.id ? "読み上げ停止" : "読み上げ"}
+                        >
+                          <SpeakerWaveIcon className={`w-3.5 h-3.5 ${speakingId === msg.id ? "animate-pulse" : ""}`} />
+                          {speakingId === msg.id ? "停止" : "読み上げ"}
+                        </button>
+                      )}
+                      <span className={`text-[10px] ${
+                        msg.role === "user" ? "text-teal-200" : "text-theme-tertiary"
+                      }`}>
+                        {msg.timestamp.toLocaleTimeString("ja-JP", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
                   </div>
                 </div>
