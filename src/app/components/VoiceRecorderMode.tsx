@@ -18,14 +18,28 @@ import {
 import type { ModelId, TokenUsage } from "../api/analyze/types";
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from "../api/analyze/types";
 import { processRecognizedText } from "@/lib/textProcessor";
+import {
+  loadVoiceGroups,
+  saveVoiceGroups,
+  type PersistentVoiceGroup,
+  type VoiceCategory,
+} from "@/lib/voiceStore";
 
 // ------ Types ------
+
+const VOICE_CATEGORIES: { value: VoiceCategory; label: string }[] = [
+  { value: "meeting", label: "会議" },
+  { value: "idea", label: "アイデア" },
+  { value: "memo", label: "メモ" },
+  { value: "other", label: "その他" },
+];
 
 interface VoiceGroup {
   id: string;
   text: string;
   createdAt: Date;
   label: string;
+  category: VoiceCategory;
   isRecording?: boolean;
 }
 
@@ -41,7 +55,7 @@ interface SummarizeResult {
   keywords: string[];
 }
 
-type FormatMode = "organize" | "summarize";
+type FormatMode = "organize" | "summarize" | "chat-reformat";
 
 // Web Speech API type definitions
 interface SpeechRecognitionEvent {
@@ -95,9 +109,23 @@ const formatElapsed = (sec: number): string => {
 // ------ Component ------
 
 export default function VoiceRecorderMode() {
-  // Groups
-  const [groups, setGroups] = useState<VoiceGroup[]>([]);
+  // Groups（localStorageから復元）
+  const [groups, setGroups] = useState<VoiceGroup[]>(() => {
+    const saved = loadVoiceGroups();
+    return saved.map((g) => ({
+      id: g.id,
+      text: g.text,
+      createdAt: new Date(g.createdAt),
+      label: g.label,
+      category: g.category,
+    }));
+  });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // 過去の記録UI
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyCategory, setHistoryCategory] = useState<VoiceCategory | "">("");
+  const [historySearch, setHistorySearch] = useState("");
 
   // Recording
   const [isRecording, setIsRecording] = useState(false);
@@ -112,6 +140,7 @@ export default function VoiceRecorderMode() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processingAll, setProcessingAll] = useState(false);
   const [organizeResults, setOrganizeResults] = useState<Record<string, OrganizeResult>>({});
+  const [chatReformatResults, setChatReformatResults] = useState<Record<string, OrganizeResult>>({});
   const [summarizeResults, setSummarizeResults] = useState<Record<string, SummarizeResult>>({});
   const [aiError, setAiError] = useState<string | null>(null);
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
@@ -132,6 +161,41 @@ export default function VoiceRecorderMode() {
         try { ref.stop(); } catch { /* already stopped */ }
       }
     };
+  }, []);
+
+  // groupsが変更されたらlocalStorageに保存（録音中のグループは除外）
+  useEffect(() => {
+    const toSave: PersistentVoiceGroup[] = groups
+      .filter((g) => !g.isRecording && g.text.trim().length > 0)
+      .map((g) => ({
+        id: g.id,
+        text: g.text,
+        createdAt: g.createdAt.toISOString(),
+        updatedAt: new Date().toISOString(),
+        label: g.label,
+        category: g.category,
+        tags: [],
+        organizeResult: organizeResults[g.id]?.formatted,
+        summarizeResult: summarizeResults[g.id]?.summary,
+        chatReformatResult: chatReformatResults[g.id]?.formatted,
+      }));
+    saveVoiceGroups(toSave);
+  }, [groups, organizeResults, summarizeResults, chatReformatResults]);
+
+  // 保存済みの整理・要約・チャット整形結果を復元
+  useEffect(() => {
+    const saved = loadVoiceGroups();
+    const org: Record<string, OrganizeResult> = {};
+    const sum: Record<string, SummarizeResult> = {};
+    const chat: Record<string, OrganizeResult> = {};
+    saved.forEach((g) => {
+      if (g.organizeResult) org[g.id] = { formatted: g.organizeResult, changes: [] };
+      if (g.summarizeResult) sum[g.id] = { summary: g.summarizeResult, keyPoints: [], actionItems: [], keywords: [] };
+      if (g.chatReformatResult) chat[g.id] = { formatted: g.chatReformatResult, changes: [] };
+    });
+    if (Object.keys(org).length) setOrganizeResults((prev) => ({ ...org, ...prev }));
+    if (Object.keys(sum).length) setSummarizeResults((prev) => ({ ...sum, ...prev }));
+    if (Object.keys(chat).length) setChatReformatResults((prev) => ({ ...chat, ...prev }));
   }, []);
 
   // Recording elapsed timer
@@ -164,6 +228,7 @@ export default function VoiceRecorderMode() {
       text: "",
       createdAt: new Date(),
       label: `録音 ${groups.length + 1}`,
+      category: "memo",
       isRecording: true,
     };
 
@@ -274,6 +339,7 @@ export default function VoiceRecorderMode() {
       text: selected.map((g) => g.text).join("\n\n"),
       createdAt: new Date(),
       label: `結合: ${selected.map((g) => g.label).join(" + ")}`,
+      category: selected[0].category,
     };
     // Replace first selected with merged, remove others
     const firstIdx = groups.findIndex((g) => selectedIds.has(g.id));
@@ -303,12 +369,14 @@ export default function VoiceRecorderMode() {
       text: textA,
       createdAt: group.createdAt,
       label: `${group.label} (前半)`,
+      category: group.category,
     };
     const partB: VoiceGroup = {
       id: generateId(),
       text: textB,
       createdAt: new Date(),
       label: `${group.label} (後半)`,
+      category: group.category,
     };
     const idx = groups.findIndex((g) => g.id === splitTarget);
     const newGroups = [...groups];
@@ -345,6 +413,11 @@ export default function VoiceRecorderMode() {
         delete next[id];
         return next;
       });
+      setChatReformatResults((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
       setSummarizeResults((prev) => {
         const next = { ...prev };
         delete next[id];
@@ -374,6 +447,8 @@ export default function VoiceRecorderMode() {
 
         if (mode === "organize") {
           setOrganizeResults((prev) => ({ ...prev, [groupId]: data.result }));
+        } else if (mode === "chat-reformat") {
+          setChatReformatResults((prev) => ({ ...prev, [groupId]: data.result }));
         } else {
           setSummarizeResults((prev) => ({ ...prev, [groupId]: data.result }));
         }
@@ -408,6 +483,8 @@ export default function VoiceRecorderMode() {
 
           if (mode === "organize") {
             setOrganizeResults((prev) => ({ ...prev, [group.id]: data.result }));
+          } else if (mode === "chat-reformat") {
+            setChatReformatResults((prev) => ({ ...prev, [group.id]: data.result }));
           } else {
             setSummarizeResults((prev) => ({ ...prev, [group.id]: data.result }));
           }
@@ -456,8 +533,34 @@ export default function VoiceRecorderMode() {
     });
   }, [organizeResults]);
 
+  // カテゴリ変更
+  const updateCategory = useCallback((id: string, category: VoiceCategory) => {
+    setGroups((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, category } : g))
+    );
+  }, []);
+
+  // ラベル変更
+  const updateLabel = useCallback((id: string, label: string) => {
+    setGroups((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, label } : g))
+    );
+  }, []);
+
+  // 過去の記録のフィルタリング済みリスト
+  const filteredHistory = groups
+    .filter((g) => !g.isRecording && g.text.trim().length > 0)
+    .filter((g) => !historyCategory || g.category === historyCategory)
+    .filter((g) => {
+      if (!historySearch) return true;
+      const q = historySearch.toLowerCase();
+      return g.label.toLowerCase().includes(q) || g.text.toLowerCase().includes(q);
+    })
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
   const hasGroups = groups.length > 0;
   const canMerge = selectedIds.size >= 2;
+  const savedCount = groups.filter((g) => !g.isRecording && g.text.trim().length > 0).length;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -503,6 +606,16 @@ export default function VoiceRecorderMode() {
                 整理
               </button>
               <button
+                onClick={() => setFormatMode("chat-reformat")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  formatMode === "chat-reformat"
+                    ? "bg-teal-500 text-white shadow-sm"
+                    : "text-theme-tertiary hover:text-theme-secondary"
+                }`}
+              >
+                伝わる文に整形
+              </button>
+              <button
                 onClick={() => setFormatMode("summarize")}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   formatMode === "summarize"
@@ -522,7 +635,7 @@ export default function VoiceRecorderMode() {
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-theme-card border border-theme-border text-theme-secondary hover:bg-theme-surface disabled:opacity-50 transition-all"
               >
                 <SparklesIcon className="w-3.5 h-3.5" />
-                {processingAll ? "処理中..." : `全て${formatMode === "organize" ? "整理" : "要約"}`}
+                {processingAll ? "処理中..." : `全て${formatMode === "organize" ? "整理" : formatMode === "chat-reformat" ? "整形" : "要約"}`}
               </button>
             )}
 
@@ -534,6 +647,21 @@ export default function VoiceRecorderMode() {
               >
                 <ArrowsPointingInIcon className="w-3.5 h-3.5" />
                 選択を結合 ({selectedIds.size})
+              </button>
+            )}
+
+            {/* 過去の記録ボタン */}
+            {savedCount > 0 && (
+              <button
+                onClick={() => setShowHistory((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                  showHistory
+                    ? "bg-teal-50 dark:bg-teal-950 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300"
+                    : "bg-theme-card border-theme-border text-theme-secondary hover:bg-theme-surface"
+                }`}
+              >
+                <DocumentTextIcon className="w-3.5 h-3.5" />
+                過去の記録 ({savedCount})
               </button>
             )}
 
@@ -575,6 +703,73 @@ export default function VoiceRecorderMode() {
         </div>
       )}
 
+      {/* 過去の記録パネル */}
+      {showHistory && (
+        <div className="flex-shrink-0 border-b border-theme-border bg-theme-surface/50 max-h-72 overflow-y-auto">
+          <div className="max-w-5xl mx-auto px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-sm font-bold text-theme-secondary">過去の記録</h3>
+              {/* カテゴリフィルタ */}
+              <select
+                value={historyCategory}
+                onChange={(e) => setHistoryCategory(e.target.value as VoiceCategory | "")}
+                className="text-[11px] bg-theme-card border border-theme-border rounded-md px-2 py-1 text-theme-tertiary"
+              >
+                <option value="">全カテゴリ</option>
+                {VOICE_CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
+              {/* テキスト検索 */}
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder="検索..."
+                className="text-[11px] bg-theme-card border border-theme-border rounded-md px-2 py-1 text-theme-primary placeholder:text-theme-muted w-32"
+              />
+              <button
+                onClick={() => setShowHistory(false)}
+                className="ml-auto text-theme-muted hover:text-theme-secondary text-xs"
+              >
+                閉じる
+              </button>
+            </div>
+            {filteredHistory.length === 0 ? (
+              <p className="text-xs text-theme-muted py-2">記録が見つかりません</p>
+            ) : (
+              <div className="space-y-1">
+                {filteredHistory.map((g) => (
+                  <div
+                    key={g.id}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-theme-card border border-theme-border hover:bg-theme-surface transition-all cursor-pointer"
+                    onClick={() => {
+                      setExpandedGroups((prev) => new Set(prev).add(g.id));
+                      setShowHistory(false);
+                      // スクロール先のグループにフォーカス
+                      setTimeout(() => {
+                        document.getElementById(`voice-group-${g.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }, 100);
+                    }}
+                  >
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-theme-surface text-theme-tertiary border border-theme-border">
+                      {VOICE_CATEGORIES.find((c) => c.value === g.category)?.label ?? "メモ"}
+                    </span>
+                    <span className="text-xs font-medium text-theme-primary truncate">{g.label}</span>
+                    <span className="text-[10px] text-theme-muted font-mono ml-1">
+                      {g.createdAt.toLocaleDateString("ja-JP")}
+                    </span>
+                    <span className="text-[10px] text-theme-muted truncate ml-auto max-w-48">
+                      {g.text.slice(0, 40)}...
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 py-4 space-y-3">
@@ -596,12 +791,14 @@ export default function VoiceRecorderMode() {
             const isSelected = selectedIds.has(group.id);
             const isProcessing = processingId === group.id;
             const orgResult = organizeResults[group.id];
+            const chatResult = chatReformatResults[group.id];
             const sumResult = summarizeResults[group.id];
             const isSplitting = splitTarget === group.id;
 
             return (
               <div
                 key={group.id}
+                id={`voice-group-${group.id}`}
                 className={`rounded-xl border transition-all ${
                   isSelected
                     ? "border-teal-400 dark:border-teal-600 bg-teal-50/50 dark:bg-teal-950/30 shadow-md"
@@ -654,6 +851,11 @@ export default function VoiceRecorderMode() {
                         整理済
                       </span>
                     )}
+                    {chatResult && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-100 dark:bg-teal-900 text-teal-600 dark:text-teal-300">
+                        整形済
+                      </span>
+                    )}
                     {sumResult && (
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300">
                         要約済
@@ -675,6 +877,31 @@ export default function VoiceRecorderMode() {
                 {/* Expanded content */}
                 {isExpanded && (
                   <div className="border-t border-theme-border px-4 py-3 space-y-3">
+                    {/* ラベル・カテゴリ編集 */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={group.label}
+                        onChange={(e) => updateLabel(group.id, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs bg-theme-surface border border-theme-border rounded-md px-2 py-1 text-theme-primary flex-1 min-w-0"
+                        placeholder="ラベル"
+                      />
+                      <select
+                        value={group.category}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          updateCategory(group.id, e.target.value as VoiceCategory);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[11px] bg-theme-surface border border-theme-border rounded-md px-2 py-1 text-theme-tertiary"
+                      >
+                        {VOICE_CATEGORIES.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
                     {/* Original text */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
@@ -724,6 +951,14 @@ export default function VoiceRecorderMode() {
                         >
                           <SparklesIcon className="w-3.5 h-3.5" />
                           要約
+                        </button>
+                        <button
+                          onClick={() => formatGroup(group.id, "chat-reformat")}
+                          disabled={isProcessing}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900 disabled:opacity-50 transition-all"
+                        >
+                          <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+                          伝わる文に整形
                         </button>
                         <button
                           onClick={() => {
@@ -830,6 +1065,41 @@ export default function VoiceRecorderMode() {
                       </div>
                     )}
 
+
+                    {/* Chat reformat result */}
+                    {chatResult && (
+                      <div className="bg-teal-50 dark:bg-teal-950/50 rounded-lg p-3 border border-teal-200 dark:border-teal-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-teal-600 dark:text-teal-300">
+                            整形結果
+                          </span>
+                          <button
+                            onClick={() => copyText(chatResult.formatted, `chat-${group.id}`)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-500 text-white hover:bg-teal-600 transition-all shadow-sm"
+                          >
+                            {copiedId === `chat-${group.id}` ? (
+                              <>
+                                <CheckCircleIcon className="w-3.5 h-3.5" />
+                                コピー済
+                              </>
+                            ) : (
+                              <>
+                                <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+                                コピー
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <div className="text-sm text-theme-primary whitespace-pre-wrap bg-white dark:bg-gray-900 rounded-lg p-3 border border-teal-100 dark:border-teal-900">
+                          {chatResult.formatted}
+                        </div>
+                        {chatResult.changes.length > 0 && (
+                          <div className="text-[11px] text-teal-500 dark:text-teal-400">
+                            変更点: {chatResult.changes.join("、")}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {/* Summarize result */}
                     {sumResult && (
                       <div className="bg-purple-50 dark:bg-purple-950/50 rounded-lg p-3 border border-purple-200 dark:border-purple-800 space-y-2">

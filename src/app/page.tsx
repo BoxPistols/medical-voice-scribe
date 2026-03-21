@@ -57,6 +57,16 @@ import { cycleTheme, getLayoutPresetWidth, buildCopySectionS, buildCopySectionO,
 import ModeSwitcher, { type AppMode } from "./components/ModeSwitcher";
 import ClockMode from "./components/ClockMode";
 import VoiceRecorderMode from "./components/VoiceRecorderMode";
+import MentoringMode from "./components/MentoringMode";
+import SessionDrawer from "./components/SessionDrawer";
+import type { RecordStore as RecordStoreType } from "@/lib/recordStore";
+import {
+  loadStore,
+  createEmptySession,
+  addSession,
+  updateSession,
+  getActiveSession,
+} from "@/lib/recordStore";
 
 // Custom Keyboard Icon Component
 const KeyboardIcon = ({ className }: { className?: string }) => (
@@ -148,8 +158,8 @@ const SHORTCUT_DEFS: ShortcutDef[] = [
   {
     id: "toggleSpeech",
     label: "開始/停止",
-    default: { key: "v" },
-    modifierDefault: { key: "v", ctrl: true },
+    default: { key: "p" },
+    modifierDefault: { key: "p", ctrl: true },
     group: "speech",
   },
   {
@@ -360,6 +370,9 @@ const SAMPLE_INTERVIEWS = [
   },
 ];
 
+// モード切替ショートカット用の順序定義
+const MODE_ORDER: AppMode[] = ["medical", "clock", "voice", "mentoring"];
+
 export default function Home() {
   // App mode
   const [appMode, setAppMode] = useState<AppMode>("medical");
@@ -429,6 +442,10 @@ export default function Home() {
   // チャット開閉状態
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  // セッション管理
+  const [recordStore, setRecordStore] = useState<RecordStoreType>(() => loadStore());
+  const [isSessionDrawerOpen, setIsSessionDrawerOpen] = useState(false);
+
   // レート制限の使用状況
   const [usageStatus, setUsageStatus] = useState<Record<string, { count: number; limit: number; remaining: number }>>({});
 
@@ -477,6 +494,11 @@ export default function Home() {
     position: "top" | "bottom";
   } | null>(null);
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 前回保存した値を追跡するref（自動保存の変更検知用）
+  const lastSavedRef = useRef<{ transcript: string; result: SoapNote | null; tokenUsage: TokenUsage | null }>({
+    transcript: "", result: null, tokenUsage: null,
+  });
 
   // Help modal focus trap refs
   const helpModalRef = useRef<HTMLDivElement>(null);
@@ -585,6 +607,86 @@ export default function Home() {
     localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
 
+  // recordStore永続化は各操作関数(addSession, updateSession等)内で行われるため、
+  // ここでの重複保存は不要（削除済み）
+
+  // アクティブセッションに現在のデータを保存（functional updateでstale closure回避）
+  const saveCurrentSession = useCallback(() => {
+    setRecordStore((currentStore) => {
+      const active = getActiveSession(currentStore);
+      if (!active) return currentStore;
+      return updateSession(currentStore, active.id, {
+        transcript,
+        soapNote: result,
+        tokenUsage,
+      });
+    });
+  }, [transcript, result, tokenUsage]);
+
+  // セッション初期化: ストアが空なら初期セッションを作成
+  useEffect(() => {
+    if (recordStore.sessions.length === 0) {
+      const initial = createEmptySession("medical");
+      setRecordStore(addSession(recordStore, initial));
+      return;
+    }
+    // アクティブセッションのデータを復元
+    const active = getActiveSession(recordStore);
+    if (active) {
+      if (active.transcript && !transcript) setTranscript(active.transcript);
+      if (active.soapNote && !result) setResult(active.soapNote);
+      if (active.tokenUsage && !tokenUsage) setTokenUsage(active.tokenUsage);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount時のみ
+
+  // 自動保存: 変更検知にはrefを使い、stale closureを回避
+  useEffect(() => {
+    const prev = lastSavedRef.current;
+    if (prev.transcript === transcript && prev.result === result && prev.tokenUsage === tokenUsage) return;
+
+    const id = setTimeout(() => {
+      setRecordStore((currentStore) => {
+        const active = getActiveSession(currentStore);
+        if (!active) return currentStore;
+        const updated = updateSession(currentStore, active.id, {
+          transcript,
+          soapNote: result,
+          tokenUsage,
+        });
+        lastSavedRef.current = { transcript, result, tokenUsage };
+        return updated;
+      });
+    }, 1000);
+    return () => clearTimeout(id);
+  }, [transcript, result, tokenUsage]);
+
+  // セッション切り替え時のデータ復元
+  // TODO: chatHistoryの保存・復元はChatSupportWidget内部で管理されているため、
+  // コンポーネントからメッセージを公開するAPIが必要
+  const handleSessionSwitch = useCallback((newStore: RecordStoreType) => {
+    setRecordStore(newStore);
+    const active = getActiveSession(newStore);
+    if (active) {
+      setTranscript(active.transcript);
+      setResult(active.soapNote);
+      setTokenUsage(active.tokenUsage);
+      setError(null);
+      setStreamingText("");
+      // lastSavedRefも更新して不要な自動保存を防止
+      lastSavedRef.current = {
+        transcript: active.transcript,
+        result: active.soapNote,
+        tokenUsage: active.tokenUsage,
+      };
+    } else {
+      setTranscript("");
+      setResult(null);
+      setTokenUsage(null);
+      lastSavedRef.current = { transcript: "", result: null, tokenUsage: null };
+    }
+  }, []);
+
   // マウント時に使用状況を取得
   useEffect(() => {
     fetchUsageStatus();
@@ -606,6 +708,8 @@ export default function Home() {
         setRecordingStartTime(null);
         setRecordingElapsed(0);
       }
+      // 診療サポートチャットを閉じる
+      setIsChatOpen(false);
     }
   }, [appMode]);
 
@@ -1422,6 +1526,24 @@ export default function Home() {
       });
   }, [editingShortcutId]);
 
+  // モード切替ショートカット: Cmd/Ctrl + 1〜4
+  useEffect(() => {
+    const handleModeShortcut = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey) return;
+      // 入力フィールド内では発火しない
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= MODE_ORDER.length) {
+        e.preventDefault();
+        setAppMode(MODE_ORDER[num - 1]);
+      }
+    };
+    window.addEventListener("keydown", handleModeShortcut);
+    return () => window.removeEventListener("keydown", handleModeShortcut);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Keyboard shortcuts listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1432,8 +1554,21 @@ export default function Home() {
         target.tagName === "TEXTAREA" ||
         target.isContentEditable;
 
+      // 医療モード専用ショートカットは医療モード以外では無効
+      const medicalOnlyActions: ActionId[] = [
+        "toggleRecording", "analyze", "clear", "toggleSpeech",
+        "increaseSpeechRate", "decreaseSpeechRate",
+        "import", "exportJson", "exportCsv", "toggleChat",
+      ];
+
       // Ignore if editing a shortcut
       if (editingShortcutId) return;
+
+      // ブラウザ標準操作（コピー/ペースト/切取/全選択/取消）は常にスルー
+      const browserKeys = ["v", "c", "x", "a", "z"];
+      if ((e.metaKey || e.ctrlKey) && browserKeys.includes(e.key.toLowerCase()) && !e.altKey && !e.shiftKey) {
+        return;
+      }
 
       // Find matching shortcut
       const actionId = (Object.keys(shortcuts) as ActionId[]).find((id) => {
@@ -1448,6 +1583,13 @@ export default function Home() {
       });
 
       if (actionId) {
+        // 医療モード専用のショートカットは他モードではアクションを実行しないが、
+        // ブラウザデフォルト動作（Cmd+Rのリロード等）は防止する
+        if (appMode !== "medical" && medicalOnlyActions.includes(actionId)) {
+          e.preventDefault();
+          return;
+        }
+
         // Validation for input fields:
         // If in input/textarea, ONLY allow shortcuts that use modifiers (Ctrl/Alt/Meta)
         // AND specifically allow the user's requested actions even in inputs
@@ -1538,6 +1680,7 @@ export default function Home() {
   }, [
     shortcuts,
     editingShortcutId,
+    appMode,
     isRecording,
     transcript,
     loading,
@@ -1696,6 +1839,19 @@ export default function Home() {
 
               {/* Icon buttons - unified grid */}
               <div className="flex items-center flex-shrink-0">
+                {/* セッション管理ボタン（medicalモードのみ表示） */}
+                {appMode === "medical" && (
+                <button
+                  onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
+                  className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                  title="セッション管理"
+                  aria-label="セッション管理"
+                  data-tooltip-bottom="セッション"
+                >
+                  <Bars3Icon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
+                </button>
+                )}
+
                 {/* Shortcut settings button */}
                 <button
                   onClick={() => setShowShortcutsModal(true)}
@@ -1781,6 +1937,18 @@ export default function Home() {
                 </div>
               )}
 
+              {/* セッション管理ボタン (Mobile)（medicalモードのみ表示） */}
+              {appMode === "medical" && (
+              <button
+                onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                title="セッション管理"
+                aria-label="セッション管理"
+              >
+                <Bars3Icon className="w-5 h-5" aria-hidden="true" />
+              </button>
+              )}
+
               {/* Theme toggle button (Mobile) */}
               <button
                 onClick={handleThemeCycle}
@@ -1829,6 +1997,9 @@ export default function Home() {
 
         {/* Voice Recorder Mode */}
         {appMode === "voice" && <VoiceRecorderMode />}
+
+        {/* Mentoring Mode */}
+        {appMode === "mentoring" && <MentoringMode />}
 
         {/* Medical Mode */}
         {appMode === "medical" && (
@@ -3276,15 +3447,26 @@ export default function Home() {
         aria-label="JSONファイルを選択"
       />
 
-      {/* Chat Support Widget */}
-      <ChatSupportWidget
-        soapNote={result}
-        transcript={transcript}
-        selectedModel={selectedModel}
-        isRecording={isRecording}
-        isAnalyzing={loading || isStreaming}
-        isOpen={isChatOpen}
-        onToggle={setIsChatOpen}
+      {/* 診療サポートウィジェット（医療モード専用） */}
+      {appMode === "medical" && (
+        <ChatSupportWidget
+          soapNote={result}
+          transcript={transcript}
+          selectedModel={selectedModel}
+          isRecording={isRecording}
+          isAnalyzing={loading || isStreaming}
+          isOpen={isChatOpen}
+          onToggle={setIsChatOpen}
+        />
+      )}
+
+      {/* セッション管理ドロワー */}
+      <SessionDrawer
+        open={isSessionDrawerOpen}
+        onClose={() => setIsSessionDrawerOpen(false)}
+        store={recordStore}
+        onStoreChange={handleSessionSwitch}
+        onBeforeSwitch={saveCurrentSession}
       />
 
       {/* Portal Sample Menu (renders at document.body to escape overflow:hidden) */}
