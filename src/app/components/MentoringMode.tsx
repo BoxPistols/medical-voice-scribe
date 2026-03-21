@@ -90,6 +90,8 @@ export default function MentoringMode() {
   speechRateRef.current = speechRate;
   const skipCancelRef = useRef(false); // スキップ時のcancel→onend誤発火を防止
   const [speechVolume, setSpeechVolume] = useState(1.0);
+  const speechVolumeRef = useRef(speechVolume);
+  speechVolumeRef.current = speechVolume;
 
   // アンマウント時のクリーンアップ（音声認識 + TTS）
   useEffect(() => {
@@ -134,7 +136,7 @@ export default function MentoringMode() {
     const utterance = new SpeechSynthesisUtterance(sentences[index]);
     utterance.lang = "ja-JP";
     utterance.rate = speechRateRef.current;
-    utterance.volume = speechVolume;
+    utterance.volume = speechVolumeRef.current;
     const voices = speechSynthesis.getVoices();
     const voice = getVoiceForLanguage(voices, "ja-JP");
     if (voice) utterance.voice = voice;
@@ -157,7 +159,8 @@ export default function MentoringMode() {
     };
     setSpeechIndex(index);
     speechSynthesis.speak(utterance);
-  }, [speechVolume]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // TTS読み上げ（トグル）
   const speakMessage = useCallback((msgId: string, text: string) => {
@@ -209,8 +212,19 @@ export default function MentoringMode() {
   const changeSpeechRate = useCallback((rate: number) => {
     setSpeechRate(rate);
     if (speakingId && speechSentences.length > 0) {
-      // 速度変更を反映するため、現在の文から再開
       setTimeout(() => speakFrom(speechSentences, speechIndex, speakingId), 50);
+    }
+  }, [speakingId, speechSentences, speechIndex, speakFrom]);
+
+  // 音量変更（デバウンス付きで再生し直し）
+  const volumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const changeSpeechVolume = useCallback((vol: number) => {
+    setSpeechVolume(vol);
+    if (volumeTimerRef.current) clearTimeout(volumeTimerRef.current);
+    if (speakingId && speechSentences.length > 0) {
+      volumeTimerRef.current = setTimeout(() => {
+        speakFrom(speechSentences, speechIndex, speakingId);
+      }, 300);
     }
   }, [speakingId, speechSentences, speechIndex, speakFrom]);
 
@@ -503,7 +517,7 @@ export default function MentoringMode() {
                             <SpeakerWaveIcon className="w-3 h-3 text-theme-tertiary" />
                             <input
                               type="range" min="0" max="1" step="0.1" value={speechVolume}
-                              onChange={(e) => setSpeechVolume(parseFloat(e.target.value))}
+                              onChange={(e) => changeSpeechVolume(parseFloat(e.target.value))}
                               className="w-12 h-1 accent-teal-500"
                               title={`音量 ${Math.round(speechVolume * 100)}%`}
                             />
