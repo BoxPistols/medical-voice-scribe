@@ -55,16 +55,39 @@ interface IWindow extends Window {
 const generateId = () =>
   Date.now().toString() + Math.random().toString(36).substring(2);
 
+const MENTORING_STORAGE_KEY = "mentoring-messages";
+
+/** localStorageからメッセージ履歴を復元 */
+function loadMessages(): MentoringMessage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(MENTORING_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((m: MentoringMessage) => ({
+      ...m,
+      timestamp: new Date(m.timestamp),
+    }));
+  } catch { return []; }
+}
+
 export default function MentoringMode() {
-  const [messages, setMessages] = useState<MentoringMessage[]>([]);
+  const [messages, setMessages] = useState<MentoringMessage[]>(() => loadMessages());
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelId>(DEFAULT_MODEL);
   const [isListening, setIsListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [speechRate, setSpeechRate] = useState(1.0);
+  const [speechIndex, setSpeechIndex] = useState(0);
+  const [speechSentences, setSpeechSentences] = useState<string[]>([]);
+  const [isPaused, setIsPaused] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const speechRateRef = useRef(speechRate);
+  speechRateRef.current = speechRate;
 
   // アンマウント時のクリーンアップ（音声認識 + TTS）
   useEffect(() => {
@@ -75,32 +98,115 @@ export default function MentoringMode() {
     };
   }, []);
 
-  // TTS読み上げ
+  // マークダウンをプレーンテキストに変換
+  const toPlainText = (text: string) =>
+    text
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/[#*_`~]/g, "")
+      .trim();
+
+  // テキストを文単位に分割
+  const splitSentences = (text: string): string[] => {
+    const plain = toPlainText(text);
+    return plain
+      .split(/(?<=[。！？\n])\s*/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  };
+
+  // 指定位置から読み上げ開始
+  const speakFrom = useCallback((sentences: string[], index: number, msgId: string) => {
+    speechSynthesis.cancel();
+    if (index >= sentences.length) {
+      setSpeakingId(null);
+      setSpeechIndex(0);
+      setIsPaused(false);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(sentences[index]);
+    utterance.lang = "ja-JP";
+    utterance.rate = speechRateRef.current;
+    const voices = speechSynthesis.getVoices();
+    const voice = getVoiceForLanguage(voices, "ja-JP");
+    if (voice) utterance.voice = voice;
+    utterance.onend = () => {
+      const next = index + 1;
+      setSpeechIndex(next);
+      if (next < sentences.length) {
+        speakFrom(sentences, next, msgId);
+      } else {
+        setSpeakingId(null);
+        setSpeechIndex(0);
+        setIsPaused(false);
+      }
+    };
+    utterance.onerror = () => {
+      setSpeakingId(null);
+      setIsPaused(false);
+    };
+    setSpeechIndex(index);
+    speechSynthesis.speak(utterance);
+  }, []);
+
+  // TTS読み上げ（トグル）
   const speakMessage = useCallback((msgId: string, text: string) => {
     if (speakingId === msgId) {
       speechSynthesis.cancel();
       setSpeakingId(null);
+      setSpeechSentences([]);
+      setSpeechIndex(0);
+      setIsPaused(false);
       return;
     }
-    speechSynthesis.cancel();
-    // マークダウン記法を除去してプレーンテキストに
-    const plain = text
-      .replace(/\*\*(.*?)\*\*/g, "$1")
-      .replace(/\*(.*?)\*/g, "$1")
-      .replace(/[#*_`~]/g, "")
-      .replace(/\n{2,}/g, "。\n")
-      .trim();
-    const utterance = new SpeechSynthesisUtterance(plain);
-    utterance.lang = "ja-JP";
-    utterance.rate = 1.0;
-    const voices = speechSynthesis.getVoices();
-    const voice = getVoiceForLanguage(voices, "ja-JP");
-    if (voice) utterance.voice = voice;
-    utterance.onend = () => setSpeakingId(null);
-    utterance.onerror = () => setSpeakingId(null);
+    const sentences = splitSentences(text);
+    if (sentences.length === 0) return;
+    setSpeechSentences(sentences);
     setSpeakingId(msgId);
-    speechSynthesis.speak(utterance);
-  }, [speakingId]);
+    setIsPaused(false);
+    speakFrom(sentences, 0, msgId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speakingId, speakFrom]);
+
+  // 前の文へ
+  const skipBack = useCallback(() => {
+    if (!speakingId || speechSentences.length === 0) return;
+    const prev = Math.max(0, speechIndex - 1);
+    speakFrom(speechSentences, prev, speakingId);
+  }, [speakingId, speechSentences, speechIndex, speakFrom]);
+
+  // 次の文へ
+  const skipForward = useCallback(() => {
+    if (!speakingId || speechSentences.length === 0) return;
+    const next = Math.min(speechSentences.length - 1, speechIndex + 1);
+    speakFrom(speechSentences, next, speakingId);
+  }, [speakingId, speechSentences, speechIndex, speakFrom]);
+
+  // 一時停止/再開
+  const togglePause = useCallback(() => {
+    if (isPaused) {
+      speechSynthesis.resume();
+      setIsPaused(false);
+    } else {
+      speechSynthesis.pause();
+      setIsPaused(true);
+    }
+  }, [isPaused]);
+
+  // 速度変更（変更後、現在の文を再生し直す）
+  const changeSpeechRate = useCallback((rate: number) => {
+    setSpeechRate(rate);
+    if (speakingId && speechSentences.length > 0) {
+      // 速度変更を反映するため、現在の文から再開
+      setTimeout(() => speakFrom(speechSentences, speechIndex, speakingId), 50);
+    }
+  }, [speakingId, speechSentences, speechIndex, speakFrom]);
+
+  // メッセージをlocalStorageに自動保存
+  useEffect(() => {
+    if (messages.length === 0) return;
+    try { localStorage.setItem(MENTORING_STORAGE_KEY, JSON.stringify(messages)); } catch { /* 容量超過時は無視 */ }
+  }, [messages]);
 
   // 自動スクロール
   useEffect(() => {
@@ -256,9 +362,24 @@ export default function MentoringMode() {
           <p className="text-sm text-theme-secondary mt-1">
             ポジティブな視点で考えを整理するメンタルコーチング
           </p>
-          <p className="text-xs text-theme-tertiary mt-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded px-2 py-1 inline-block">
-            このモードは医療行為ではありません
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-xs text-theme-tertiary bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded px-2 py-1 inline-block">
+              このモードは医療行為ではありません
+            </p>
+            {messages.length > 0 && (
+              <button
+                onClick={() => {
+                  speechSynthesis.cancel();
+                  setSpeakingId(null);
+                  setMessages([]);
+                  localStorage.removeItem(MENTORING_STORAGE_KEY);
+                }}
+                className="text-[11px] text-theme-tertiary hover:text-red-500 transition-colors cursor-pointer px-2 py-1 rounded border border-theme-border hover:border-red-300"
+              >
+                履歴クリア
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -315,20 +436,61 @@ export default function MentoringMode() {
                     <div className={`flex items-center gap-2 mt-1 ${
                       msg.role === "user" ? "justify-end" : "justify-between"
                     }`}>
-                      {msg.role === "assistant" && (
+                      {msg.role === "assistant" && speakingId !== msg.id && (
                         <button
                           onClick={() => speakMessage(msg.id, msg.content)}
-                          className={`flex items-center gap-1 text-[10px] transition-colors cursor-pointer ${
-                            speakingId === msg.id
-                              ? "text-teal-500"
-                              : "text-theme-tertiary hover:text-teal-500"
-                          }`}
-                          title={speakingId === msg.id ? "読み上げ停止" : "読み上げ"}
-                          aria-label={speakingId === msg.id ? "読み上げ停止" : "読み上げ"}
+                          className="flex items-center gap-1 text-[10px] text-theme-tertiary hover:text-teal-500 transition-colors cursor-pointer"
+                          title="読み上げ"
+                          aria-label="読み上げ"
                         >
-                          <SpeakerWaveIcon className={`w-3.5 h-3.5 ${speakingId === msg.id ? "animate-pulse" : ""}`} />
-                          {speakingId === msg.id ? "停止" : "読み上げ"}
+                          <SpeakerWaveIcon className="w-3.5 h-3.5" />
+                          読み上げ
                         </button>
+                      )}
+                      {msg.role === "assistant" && speakingId === msg.id && (
+                        <div className="flex items-center gap-1.5">
+                          {/* 巻き戻し */}
+                          <button onClick={skipBack} disabled={speechIndex === 0}
+                            className="w-5 h-5 flex items-center justify-center text-teal-500 hover:text-teal-400 disabled:text-theme-tertiary disabled:opacity-40 transition-colors cursor-pointer" title="前の文" aria-label="前の文">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                          </button>
+                          {/* 一時停止/再開 */}
+                          <button onClick={togglePause}
+                            className="w-6 h-6 flex items-center justify-center rounded-full bg-teal-500 text-white hover:bg-teal-600 transition-colors cursor-pointer" title={isPaused ? "再開" : "一時停止"} aria-label={isPaused ? "再開" : "一時停止"}>
+                            {isPaused ? (
+                              <svg className="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            ) : (
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+                            )}
+                          </button>
+                          {/* 早送り */}
+                          <button onClick={skipForward} disabled={speechIndex >= speechSentences.length - 1}
+                            className="w-5 h-5 flex items-center justify-center text-teal-500 hover:text-teal-400 disabled:text-theme-tertiary disabled:opacity-40 transition-colors cursor-pointer" title="次の文" aria-label="次の文">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                          </button>
+                          {/* 停止 */}
+                          <button onClick={() => speakMessage(msg.id, msg.content)}
+                            className="w-5 h-5 flex items-center justify-center text-red-400 hover:text-red-500 transition-colors cursor-pointer" title="停止" aria-label="停止">
+                            <StopIcon className="w-3.5 h-3.5" />
+                          </button>
+                          {/* 速度 */}
+                          <div className="flex items-center gap-0.5 ml-1">
+                            {[0.75, 1.0, 1.25, 1.5].map((r) => (
+                              <button key={r} onClick={() => changeSpeechRate(r)}
+                                className={`px-1 py-0.5 rounded text-[9px] font-medium transition-colors cursor-pointer ${
+                                  speechRate === r ? "bg-teal-500 text-white" : "text-theme-tertiary hover:text-teal-500"
+                                }`}
+                                title={`${r}x`}
+                              >
+                                {r}x
+                              </button>
+                            ))}
+                          </div>
+                          {/* 進捗 */}
+                          <span className="text-[9px] text-theme-tertiary tabular-nums ml-0.5">
+                            {speechIndex + 1}/{speechSentences.length}
+                          </span>
+                        </div>
                       )}
                       <span className={`text-[10px] ${
                         msg.role === "user" ? "text-teal-200" : "text-theme-tertiary"
