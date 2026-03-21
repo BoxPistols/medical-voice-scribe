@@ -1530,6 +1530,9 @@ export default function Home() {
   useEffect(() => {
     const handleModeShortcut = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey) return;
+      // 入力フィールド内では発火しない
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
       const num = parseInt(e.key);
       if (num >= 1 && num <= MODE_ORDER.length) {
         e.preventDefault();

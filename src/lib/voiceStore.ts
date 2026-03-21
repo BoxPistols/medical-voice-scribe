@@ -39,14 +39,23 @@ export function loadVoiceGroups(): PersistentVoiceGroup[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    // 最低限のバリデーション
-    return parsed.filter(
-      (g: unknown) =>
-        typeof g === "object" &&
-        g !== null &&
-        typeof (g as PersistentVoiceGroup).id === "string" &&
-        typeof (g as PersistentVoiceGroup).text === "string",
-    ) as PersistentVoiceGroup[];
+    // バリデーションとデフォルト値の補完
+    return parsed
+      .filter(
+        (g: unknown) =>
+          typeof g === "object" &&
+          g !== null &&
+          typeof (g as PersistentVoiceGroup).id === "string" &&
+          typeof (g as PersistentVoiceGroup).text === "string",
+      )
+      .map((g: PersistentVoiceGroup) => ({
+        ...g,
+        category: g.category || "memo",
+        tags: g.tags || [],
+        createdAt: g.createdAt || new Date().toISOString(),
+        updatedAt: g.updatedAt || new Date().toISOString(),
+        label: g.label || "",
+      })) as PersistentVoiceGroup[];
   } catch {
     return [];
   }
