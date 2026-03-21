@@ -88,6 +88,8 @@ export default function MentoringMode() {
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const speechRateRef = useRef(speechRate);
   speechRateRef.current = speechRate;
+  const skipCancelRef = useRef(false); // スキップ時のcancel→onend誤発火を防止
+  const [speechVolume, setSpeechVolume] = useState(1.0);
 
   // アンマウント時のクリーンアップ（音声認識 + TTS）
   useEffect(() => {
@@ -117,7 +119,12 @@ export default function MentoringMode() {
 
   // 指定位置から読み上げ開始
   const speakFrom = useCallback((sentences: string[], index: number, msgId: string) => {
+    // スキップ・速度変更時のcancel→onend誤発火を防止
+    skipCancelRef.current = true;
     speechSynthesis.cancel();
+    // cancelのonendが同期発火する場合があるのでフラグを即戻す
+    requestAnimationFrame(() => { skipCancelRef.current = false; });
+
     if (index >= sentences.length) {
       setSpeakingId(null);
       setSpeechIndex(0);
@@ -127,10 +134,12 @@ export default function MentoringMode() {
     const utterance = new SpeechSynthesisUtterance(sentences[index]);
     utterance.lang = "ja-JP";
     utterance.rate = speechRateRef.current;
+    utterance.volume = speechVolume;
     const voices = speechSynthesis.getVoices();
     const voice = getVoiceForLanguage(voices, "ja-JP");
     if (voice) utterance.voice = voice;
     utterance.onend = () => {
+      if (skipCancelRef.current) return; // スキップ時は無視
       const next = index + 1;
       setSpeechIndex(next);
       if (next < sentences.length) {
@@ -142,17 +151,20 @@ export default function MentoringMode() {
       }
     };
     utterance.onerror = () => {
+      if (skipCancelRef.current) return;
       setSpeakingId(null);
       setIsPaused(false);
     };
     setSpeechIndex(index);
     speechSynthesis.speak(utterance);
-  }, []);
+  }, [speechVolume]);
 
   // TTS読み上げ（トグル）
   const speakMessage = useCallback((msgId: string, text: string) => {
     if (speakingId === msgId) {
+      skipCancelRef.current = true;
       speechSynthesis.cancel();
+      skipCancelRef.current = false;
       setSpeakingId(null);
       setSpeechSentences([]);
       setSpeechIndex(0);
@@ -485,6 +497,16 @@ export default function MentoringMode() {
                                 {r}x
                               </button>
                             ))}
+                          </div>
+                          {/* 音量 */}
+                          <div className="flex items-center gap-1 ml-1">
+                            <SpeakerWaveIcon className="w-3 h-3 text-theme-tertiary" />
+                            <input
+                              type="range" min="0" max="1" step="0.1" value={speechVolume}
+                              onChange={(e) => setSpeechVolume(parseFloat(e.target.value))}
+                              className="w-12 h-1 accent-teal-500"
+                              title={`音量 ${Math.round(speechVolume * 100)}%`}
+                            />
                           </div>
                           {/* 進捗 */}
                           <span className="text-[9px] text-theme-tertiary tabular-nums ml-0.5">
