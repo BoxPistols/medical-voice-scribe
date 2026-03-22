@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import ModeSwitcher from "./ModeSwitcher";
-import { fn } from "@storybook/test";
+import { fn } from "storybook/test";
 
 const meta: Meta<typeof ModeSwitcher> = {
   title: "Components/ModeSwitcher",

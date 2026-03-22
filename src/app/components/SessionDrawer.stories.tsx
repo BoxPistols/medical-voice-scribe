@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import SessionDrawer from "./SessionDrawer";
-import { fn } from "@storybook/test";
+import { fn } from "storybook/test";
 import type { RecordStore } from "@/lib/recordStore";
 
 const mockStore: RecordStore = {
