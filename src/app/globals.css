@@ -1554,6 +1554,7 @@ body::after {
   overflow: hidden;
   z-index: 999;
   animation: chatWindowSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overscroll-behavior: contain;
 }
 
 .chat-support-window.is-resizing {
@@ -1712,6 +1713,7 @@ body::after {
   flex-direction: column;
   overflow-y: auto;
   min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .chat-support-recommendations,
@@ -1866,6 +1868,8 @@ body::after {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .chat-support-message {
@@ -2265,6 +2269,10 @@ body::after {
     left: 0.75rem;
     width: auto;
     max-height: calc(100vh - 6rem);
+  }
+
+  .chat-support-resize-btn {
+    display: none;
   }
 }
 
