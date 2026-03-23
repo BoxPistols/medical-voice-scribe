@@ -12,7 +12,8 @@
     "remotion:studio": "npx remotion studio src/remotion/index.ts",
     "remotion:render": "npx remotion render src/remotion/index.ts ProductVideo public/video.mp4",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "generate:embeddings": "npx tsx scripts/generateEmbeddings.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -51,6 +52,7 @@
     "playwright": "^1.58.2",
     "storybook": "^10.2.8",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"

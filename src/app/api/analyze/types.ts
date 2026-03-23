@@ -66,6 +66,26 @@ export interface SoapNote {
   };
 }
 
+// 医療用語エントリ（embedding付き）
+export interface MedicalTermEntry {
+  icd10: string;
+  name_ja: string;
+  name_en: string;
+  aliases: string[];
+  category: string;
+  keywords: string[];
+  embedding: number[];
+}
+
+// 医療用語検索結果
+export interface MedicalSearchResult {
+  icd10: string;
+  name_ja: string;
+  name_en: string;
+  keywords: string[];
+  similarity: number;
+}
+
 // チャットメッセージの型
 export interface ChatMessage {
   id: string;

@@ -5,6 +5,10 @@ import type { SoapNote, ModelId, TokenUsage } from './types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from './types';
 import { validateModel } from '@/lib/helpers';
 import { checkAndIncrementRateLimit } from '@/lib/rateLimiter';
+import { searchMedicalTerms, buildMedicalContext } from '@/lib/medicalDictionary';
+
+const EMBEDDING_MODEL = "text-embedding-3-small";
+const EMBEDDING_DIMENSIONS = 256;
 
 // USD/JPY レート（概算）
 const USD_TO_JPY = 150;
@@ -69,12 +73,30 @@ export async function POST(req: Request) {
     // GPT-5.4系のトークン上限（nanoは4000、miniは16000）
     const maxCompletionTokens = model.includes('nano') ? 4000 : 16000;
 
+    // セマンティック医療辞書検索（失敗時はフォールバック）
+    let medicalContext = "";
+    try {
+      const queryText = text.slice(0, 1000);
+      const embeddingRes = await openai.embeddings.create({
+        model: EMBEDDING_MODEL,
+        input: queryText,
+        dimensions: EMBEDDING_DIMENSIONS,
+      });
+      const queryEmbedding = embeddingRes.data[0].embedding;
+      const searchResults = searchMedicalTerms(queryEmbedding);
+      medicalContext = buildMedicalContext(searchResults);
+    } catch (e) {
+      console.warn("医療辞書検索スキップ:", (e as Error).message);
+    }
+
+    const systemPrompt = SYSTEM_PROMPT + medicalContext;
+
     // ストリーミングモード
     if (useStream) {
       const stream = await openai.chat.completions.create({
         model,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           { role: "user", content: text },
         ],
         response_format: { type: "json_object" },
@@ -124,7 +146,7 @@ export async function POST(req: Request) {
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: text },
       ],
       response_format: { type: "json_object" },
