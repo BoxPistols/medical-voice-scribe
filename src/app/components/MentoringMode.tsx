@@ -124,13 +124,12 @@ export default function MentoringMode() {
     // スキップ・速度変更時のcancel→onend誤発火を防止
     skipCancelRef.current = true;
     speechSynthesis.cancel();
-    // cancelのonendが同期発火する場合があるのでフラグを即戻す
-    requestAnimationFrame(() => { skipCancelRef.current = false; });
 
     if (index >= sentences.length) {
       setSpeakingId(null);
       setSpeechIndex(0);
       setIsPaused(false);
+      skipCancelRef.current = false;
       return;
     }
     const utterance = new SpeechSynthesisUtterance(sentences[index]);
@@ -157,6 +156,9 @@ export default function MentoringMode() {
       setSpeakingId(null);
       setIsPaused(false);
     };
+    // cancelされた旧utteranceのonendが非同期発火してもブロックされるよう、
+    // 新utteranceのspeak直前にフラグをリセット
+    skipCancelRef.current = false;
     setSpeechIndex(index);
     speechSynthesis.speak(utterance);
   // eslint-disable-next-line react-hooks/exhaustive-deps
