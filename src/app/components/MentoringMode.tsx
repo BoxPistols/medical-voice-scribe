@@ -119,17 +119,12 @@ export default function MentoringMode() {
       .filter((s) => s.length > 0);
   };
 
-  // 指定位置から読み上げ開始
-  const speakFrom = useCallback((sentences: string[], index: number, msgId: string) => {
-    // スキップ・速度変更時のcancel→onend誤発火を防止
-    skipCancelRef.current = true;
-    speechSynthesis.cancel();
-
+  // 1文を読み上げ（cancelなし、文→文の通常遷移用）
+  const speakSentence = useCallback((sentences: string[], index: number, msgId: string) => {
     if (index >= sentences.length) {
       setSpeakingId(null);
       setSpeechIndex(0);
       setIsPaused(false);
-      skipCancelRef.current = false;
       return;
     }
     const utterance = new SpeechSynthesisUtterance(sentences[index]);
@@ -140,29 +135,44 @@ export default function MentoringMode() {
     const voice = getVoiceForLanguage(voices, "ja-JP");
     if (voice) utterance.voice = voice;
     utterance.onend = () => {
-      if (skipCancelRef.current) return; // スキップ時は無視
+      if (skipCancelRef.current) return;
       const next = index + 1;
       setSpeechIndex(next);
       if (next < sentences.length) {
-        speakFrom(sentences, next, msgId);
+        speakSentence(sentences, next, msgId);
       } else {
         setSpeakingId(null);
         setSpeechIndex(0);
         setIsPaused(false);
       }
     };
-    utterance.onerror = () => {
+    utterance.onerror = (ev) => {
       if (skipCancelRef.current) return;
-      setSpeakingId(null);
-      setIsPaused(false);
+      // "interrupted" や "canceled" はスキップ操作由来なので無視
+      if (ev.error === "interrupted" || ev.error === "canceled") return;
+      // それ以外のエラーは次の文で再試行
+      const next = index + 1;
+      if (next < sentences.length) {
+        setSpeechIndex(next);
+        speakSentence(sentences, next, msgId);
+      } else {
+        setSpeakingId(null);
+        setSpeechIndex(0);
+        setIsPaused(false);
+      }
     };
-    // cancelされた旧utteranceのonendが非同期発火してもブロックされるよう、
-    // 新utteranceのspeak直前にフラグをリセット
-    skipCancelRef.current = false;
     setSpeechIndex(index);
     speechSynthesis.speak(utterance);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 指定位置から読み上げ開始（cancel付き、スキップ・速度変更用）
+  const speakFrom = useCallback((sentences: string[], index: number, msgId: string) => {
+    skipCancelRef.current = true;
+    speechSynthesis.cancel();
+    skipCancelRef.current = false;
+    speakSentence(sentences, index, msgId);
+  }, [speakSentence]);
 
   // TTS読み上げ（トグル）
   const speakMessage = useCallback((msgId: string, text: string) => {
