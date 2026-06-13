@@ -113,11 +113,10 @@ export default function MoveMode() {
   const detectorRef = useRef<PoseDetector | null>(null);
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
-  const startupTokenRef = useRef<number | null>(null);
   const activityRef = useRef<Activity>(activity);
   const repStateRef = useRef<RepState>(initRepState());
   const targetRef = useRef<GameTarget | null>(null);
-  const sessionStartRef = useRef<number>(0);
+  const sessionStartRef = useRef<number>(0); // 0:停止, -1:起動中, >0:走行中
   const gameEndRef = useRef<number>(0);
   const fpsRef = useRef<{ last: number; frames: number; acc: number }>({ last: 0, frames: 0, acc: 0 });
   // detectForVideo に渡すタイムスタンプの単調増加保証（同一フレーム/カメラ復帰時の例外を防ぐ）
@@ -148,7 +147,7 @@ export default function MoveMode() {
   // ── 完全クリーンアップ（カメラ・ループ・ランドマーカー・タイマー解放） ──
   const teardown = useCallback(() => {
     runningRef.current = false;
-    startupTokenRef.current = null;
+    sessionStartRef.current = 0;
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -451,8 +450,7 @@ export default function MoveMode() {
       return;
     }
 
-    const token = Math.random();
-    startupTokenRef.current = token;
+    sessionStartRef.current = -1; // 起動中フラグ
 
     setStatus("loading");
     // 状態リセット
@@ -478,14 +476,14 @@ export default function MoveMode() {
       });
     } catch {
       // 権限拒否 / デバイス無し
-      if (startupTokenRef.current === token) {
+      if (sessionStartRef.current === -1) {
         setStatus("denied");
       }
       return;
     }
 
-    // 中断チェック
-    if (startupTokenRef.current !== token) {
+    // 中断チェック（await の間に teardown が呼ばれたか）
+    if (sessionStartRef.current !== -1) {
       stream.getTracks().forEach((t) => t.stop());
       return;
     }
@@ -509,7 +507,7 @@ export default function MoveMode() {
     }
 
     // 再度中断チェック（play() の await 後）
-    if (startupTokenRef.current !== token) {
+    if (sessionStartRef.current !== -1) {
       teardown();
       return;
     }
@@ -520,7 +518,7 @@ export default function MoveMode() {
       detector = await loadPoseLandmarker();
     } catch {
       // 読込失敗 → 中断されていなければカメラを解放してフォールバック表示
-      if (startupTokenRef.current === token) {
+      if (sessionStartRef.current === -1) {
         teardown();
         setStatus("model-error");
       }
@@ -528,7 +526,7 @@ export default function MoveMode() {
     }
 
     // 最終中断チェック
-    if (startupTokenRef.current !== token) {
+    if (sessionStartRef.current !== -1) {
       try {
         detector.close();
       } catch {
