@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { openai } from '@/lib/openai';
 import OpenAI from 'openai';
 import type { ModelId, TokenUsage } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
@@ -41,13 +42,6 @@ function calculateTokenCost(modelId: ModelId, promptTokens: number, completionTo
     estimatedCostUSD: totalCostUSD,
     estimatedCostJPY: totalCostUSD * USD_TO_JPY,
   };
-}
-
-function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY環境変数が設定されていません');
-  }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 }
 
 // ── システムプロンプト（保守的トリアージ補助・診断ではない） ────────────────
@@ -159,8 +153,14 @@ function validateSymptomResult(parsed: unknown): SymptomResult | null {
 // ── ハンドラ ──────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  let body: unknown;
   try {
-    const body: unknown = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'リクエストの形式（JSON）が正しくありません' }, { status: 400 });
+  }
+
+  try {
     if (body === null || typeof body !== 'object') {
       return NextResponse.json({ error: 'リクエスト形式が不正です' }, { status: 400 });
     }
@@ -192,8 +192,6 @@ export async function POST(req: Request) {
 
     const model: ModelId =
       typeof requestedModel === 'string' && isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
-
-    const openai = getOpenAIClient();
 
     const userPrompt = buildUserPrompt({
       description,
@@ -243,7 +241,7 @@ export async function POST(req: Request) {
       if (error.status === 429) {
         return NextResponse.json(
           { error: 'APIレート制限に達しました。しばらく待ってから再試行してください' },
-          { status: 429 }
+          { status: 429 },
         );
       }
       return NextResponse.json({ error: `OpenAI APIエラー: ${error.message}` }, { status: 500 });

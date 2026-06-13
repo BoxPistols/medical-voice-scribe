@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { openai } from '@/lib/openai';
 import OpenAI from 'openai';
-import type { SoapNote, ModelId, ChatMessage } from '../analyze/types';
+import type { SoapNote, ModelId } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
 import { buildChatTuning } from '@/lib/openaiChat';
 
@@ -44,15 +45,6 @@ const CHAT_SUPPORT_PROMPT = `あなたは医療従事者向けの診療支援AI�
 // モデルIDの検証
 function isValidModel(model: string): model is ModelId {
   return AVAILABLE_MODELS.some(m => m.id === model);
-}
-
-function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY環境変数が設定されていません');
-  }
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
 }
 
 // SOAPノートをコンテキスト文字列に変換
@@ -105,10 +97,27 @@ ${safeStr(summary)}
 `;
 }
 
+interface HistoryItem {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 export async function POST(req: Request) {
+  let body: unknown;
   try {
-    const body = await req.json();
-    const { message, soapNote, transcript, model: requestedModel, conversationHistory } = body;
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'リクエストの形式（JSON）が正しくありません' }, { status: 400 });
+  }
+
+  try {
+    const { message, soapNote, transcript, model: requestedModel, conversationHistory } = body as {
+      message?: string;
+      soapNote?: SoapNote;
+      transcript?: string;
+      model?: string;
+      conversationHistory?: unknown[];
+    };
 
     // 基本的な入力検証
     if (!message || typeof message !== 'string') {
@@ -135,24 +144,23 @@ export async function POST(req: Request) {
     // モデルの検証とフォールバック
     const model = requestedModel && isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
 
-    const openai = getOpenAIClient();
-
     // コンテキストの構築
-    const soapContext = formatSoapContext(soapNote);
+    const soapContext = formatSoapContext(soapNote ?? null);
     const transcriptContext = transcript ? `\n## 元のトランスクリプト\n${transcript.slice(0, 5000)}` : ''; // コンテキスト制限のため切り詰め
 
     // 会話履歴の検証と構築
     const validRoles = ['user', 'assistant', 'system'];
     const historyMessages: OpenAI.Chat.ChatCompletionMessageParam[] = Array.isArray(conversationHistory) 
       ? conversationHistory
-          .filter((msg: any) => 
-            msg && 
+          .filter((msg): msg is HistoryItem => 
+            !!msg && 
             typeof msg === 'object' && 
-            validRoles.includes(msg.role) && 
-            typeof msg.content === 'string'
+            validRoles.includes((msg as Record<string, unknown>).role as string) && 
+            typeof (msg as Record<string, unknown>).content === 'string'
           )
+
           .slice(-10)
-          .map((msg: any) => ({
+          .map((msg) => ({
             role: msg.role as 'user' | 'assistant',
             content: msg.content.slice(0, 1000), // 各メッセージの長さも制限
           }))

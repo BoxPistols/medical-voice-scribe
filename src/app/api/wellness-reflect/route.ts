@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { openai } from '@/lib/openai';
 import OpenAI from 'openai';
 import type { ModelId, TokenUsage } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
@@ -78,13 +79,6 @@ function calculateTokenCost(modelId: ModelId, promptTokens: number, completionTo
   };
 }
 
-function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY環境変数が設定されていません');
-  }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-}
-
 /** 入力エントリの最小限の構造検証（unknown を安全に narrow する） */
 function isValidEntry(value: unknown): value is MoodEntry {
   if (typeof value !== 'object' || value === null) return false;
@@ -144,8 +138,14 @@ function validateResult(parsed: unknown): ReflectResult | null {
 }
 
 export async function POST(req: Request) {
+  let body: unknown;
   try {
-    const body = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'リクエストの形式（JSON）が正しくありません' }, { status: 400 });
+  }
+
+  try {
     const { entries, model: requestedModel } = body as { entries?: unknown; model?: unknown };
 
     // ── 入力検証 ───────────────────────────────────────────────
@@ -181,7 +181,6 @@ export async function POST(req: Request) {
     const model =
       typeof requestedModel === 'string' && isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
 
-    const openai = getOpenAIClient();
     const userContent = `最近の気分ログ（新しい順）:\n${formatEntriesForPrompt(validEntries)}\n\n上記をふまえて、あたたかくふりかえってください。`;
 
     const response = await openai.chat.completions.create({

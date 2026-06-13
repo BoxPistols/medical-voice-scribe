@@ -113,6 +113,7 @@ export default function MoveMode() {
   const detectorRef = useRef<PoseDetector | null>(null);
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
+  const startupTokenRef = useRef<number | null>(null);
   const activityRef = useRef<Activity>(activity);
   const repStateRef = useRef<RepState>(initRepState());
   const targetRef = useRef<GameTarget | null>(null);
@@ -147,6 +148,7 @@ export default function MoveMode() {
   // ── 完全クリーンアップ（カメラ・ループ・ランドマーカー・タイマー解放） ──
   const teardown = useCallback(() => {
     runningRef.current = false;
+    startupTokenRef.current = null;
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -449,6 +451,9 @@ export default function MoveMode() {
       return;
     }
 
+    const token = Math.random();
+    startupTokenRef.current = token;
+
     setStatus("loading");
     // 状態リセット
     repStateRef.current = initRepState();
@@ -473,7 +478,15 @@ export default function MoveMode() {
       });
     } catch {
       // 権限拒否 / デバイス無し
-      setStatus("denied");
+      if (startupTokenRef.current === token) {
+        setStatus("denied");
+      }
+      return;
+    }
+
+    // 中断チェック
+    if (startupTokenRef.current !== token) {
+      stream.getTracks().forEach((t) => t.stop());
       return;
     }
     streamRef.current = stream;
@@ -495,25 +508,36 @@ export default function MoveMode() {
       // 自動再生制限。srcObject はセット済みなので続行を試みる。
     }
 
+    // 再度中断チェック（play() の await 後）
+    if (startupTokenRef.current !== token) {
+      teardown();
+      return;
+    }
+
     // 2) モデル読込（GPU→CPU フォールバックは pose.ts 内）
     let detector: PoseDetector;
     try {
       detector = await loadPoseLandmarker();
     } catch {
-      // 読込失敗 → カメラを解放してフォールバック表示
-      teardown();
-      setStatus("model-error");
+      // 読込失敗 → 中断されていなければカメラを解放してフォールバック表示
+      if (startupTokenRef.current === token) {
+        teardown();
+        setStatus("model-error");
+      }
       return;
     }
-    // 読込中にユーザーが離脱していた場合は破棄
-    if (!streamRef.current) {
+
+    // 最終中断チェック
+    if (startupTokenRef.current !== token) {
       try {
         detector.close();
       } catch {
         // 無視
       }
+      teardown();
       return;
     }
+
     detectorRef.current = detector;
     setDelegate(detector.delegate);
 

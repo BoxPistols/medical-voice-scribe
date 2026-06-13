@@ -387,9 +387,9 @@ export default function SymptomCheckerMode() {
     const synth = window.speechSynthesis;
     const loadVoices = () => setVoices(synth.getVoices());
     loadVoices();
-    synth.addEventListener("voiceschanged", loadVoices);
+    synth.onvoiceschanged = loadVoices;
     return () => {
-      synth.removeEventListener("voiceschanged", loadVoices);
+      synth.onvoiceschanged = null;
     };
   }, [speechSupported]);
 

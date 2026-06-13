@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { openai } from "@/lib/openai";
 import OpenAI from "openai";
 import type { ModelId } from "../analyze/types";
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from "../analyze/types";
@@ -51,13 +52,6 @@ function isValidModel(model: unknown): model is ModelId {
   return typeof model === "string" && AVAILABLE_MODELS.some((m) => m.id === model);
 }
 
-function getOpenAIClient(): OpenAI {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY環境変数が設定されていません");
-  }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-}
-
 // 会話履歴を検証して直近 MAX_HISTORY_ITEMS 件に整形
 function sanitizeHistory(raw: unknown): HistoryItem[] {
   if (!Array.isArray(raw)) return [];
@@ -103,8 +97,14 @@ function classifyResponse(content: string): CoachResponseType {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  let body: unknown;
   try {
-    const body: unknown = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "リクエストの形式（JSON）が正しくありません" }, { status: 400 });
+  }
+
+  try {
     const {
       message,
       conversationHistory,
@@ -144,8 +144,6 @@ export async function POST(req: Request): Promise<Response> {
       typeof wellnessContext === "string" && wellnessContext.trim().length > 0
         ? `\n\n## ユーザーの最近の記録（参考。診断には使わないこと）\n${wellnessContext.trim()}`
         : "\n\n## ユーザーの最近の記録\n（記録はまだありません）";
-
-    const openai = getOpenAIClient();
 
     const completion = await openai.chat.completions.create({
       model,

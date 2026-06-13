@@ -158,11 +158,20 @@ export default function HealthCoachMode() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const speakEnabledRef = useRef(speakEnabled);
+  const wasNearBottomRef = useRef(true);
 
   // 読み上げ ON/OFF の最新値を ref に同期（コールバック内で参照するため）
   useEffect(() => {
     speakEnabledRef.current = speakEnabled;
   }, [speakEnabled]);
+
+  // スクロール位置を監視し、自動スクロールすべきか（底付近にいるか）を保持
+  const handleScroll = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    // 判定しきい値はメッセージ1件分程度の余裕を持たせる
+    wasNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
+  }, []);
 
   // 横断コンテキストを集計し、ストア変更を購読して更新
   useEffect(() => {
@@ -200,12 +209,9 @@ export default function HealthCoachMode() {
   }, []);
 
   // メッセージ追加時に自動スクロール。
-  // ユーザーが上方履歴を読んでいる間は妨げないよう、ほぼ最下部のときのみ追従する。
+  // ユーザーが上方履歴を読んでいる間は妨げないよう、更新前に最下部にいたときのみ追従する。
   useEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-    if (!nearBottom) return;
+    if (!wasNearBottomRef.current) return;
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -465,6 +471,7 @@ export default function HealthCoachMode() {
         {/* メッセージリスト */}
         <div
           ref={listRef}
+          onScroll={handleScroll}
           className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
           role="log"
           aria-live="polite"
