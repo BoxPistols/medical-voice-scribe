@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import { openai } from '@/lib/openai';
 import OpenAI from 'openai';
-import type { SoapNote, ModelId, ChatMessage } from '../analyze/types';
+import type { SoapNote, ModelId } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
+import { buildChatTuning } from '@/lib/openaiChat';
 import { checkAndIncrementRateLimit } from '@/lib/rateLimiter';
 
 // チャットサポート用システムプロンプト
@@ -56,15 +58,6 @@ function isValidModel(model: string): model is ModelId {
   return AVAILABLE_MODELS.some(m => m.id === model);
 }
 
-function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY環境変数が設定されていません');
-  }
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-}
-
 // SOAPノートをコンテキスト文字列に変換
 function formatSoapContext(soapNote: SoapNote | null): string {
   if (!soapNote || !soapNote.soap) return '（カルテデータなし）';
@@ -115,13 +108,34 @@ ${safeStr(summary)}
 `;
 }
 
+interface HistoryItem {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 export async function POST(req: Request) {
+  let body: unknown;
   try {
-    const body = await req.json();
-    const { message, soapNote, transcript, model: requestedModel, conversationHistory } = body;
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'リクエストの形式（JSON）が正しくありません' }, { status: 400 });
+  }
+
+  try {
+    if (typeof body !== 'object' || body === null) {
+      return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 });
+    }
+
+    const { message, soapNote, transcript, model: requestedModel, conversationHistory } = body as {
+      message?: unknown;
+      soapNote?: unknown;
+      transcript?: unknown;
+      model?: unknown;
+      conversationHistory?: unknown;
+    };
 
     // 基本的な入力検証
-    if (!message || typeof message !== 'string') {
+    if (typeof message !== 'string' || message.trim().length === 0) {
       return NextResponse.json(
         { error: 'メッセージが無効です' },
         { status: 400 }
@@ -135,7 +149,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (transcript && typeof transcript === 'string' && transcript.length > 20000) {
+    if (transcript !== undefined && (typeof transcript !== 'string' || transcript.length > 20000)) {
       return NextResponse.json(
         { error: 'トランスクリプトが長すぎます' },
         { status: 400 }
@@ -143,7 +157,8 @@ export async function POST(req: Request) {
     }
 
     // モデルの検証とフォールバック
-    const model = requestedModel && isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
+    const requestedModelStr = typeof requestedModel === 'string' ? requestedModel : undefined;
+    const model = requestedModelStr && isValidModel(requestedModelStr) ? requestedModelStr : DEFAULT_MODEL;
 
     // レート制限チェック
     const rateLimit = checkAndIncrementRateLimit(model);
@@ -153,25 +168,25 @@ export async function POST(req: Request) {
         { status: 429 }
       );
     }
-
-    const openai = getOpenAIClient();
-
     // コンテキストの構築
-    const soapContext = formatSoapContext(soapNote);
-    const transcriptContext = transcript ? `\n## 元のトランスクリプト\n${transcript.slice(0, 5000)}` : ''; // コンテキスト制限のため切り詰め
+    const soapNoteData = soapNote as SoapNote | null;
+    const transcriptText = typeof transcript === 'string' ? transcript : undefined;
+    const soapContext = formatSoapContext(soapNoteData);
+    const transcriptContext = transcriptText ? `\n## 元のトランスクリプト\n${transcriptText.slice(0, 5000)}` : ''; // コンテキスト制限のため切り詰め
 
-    // 会話履歴の検証と構築
-    const validRoles = ['user', 'assistant', 'system'];
+    // 会話履歴の検証と構築（クライアントからの system ロール注入を防止）
+    const allowedRoles = ['user', 'assistant'];
     const historyMessages: OpenAI.Chat.ChatCompletionMessageParam[] = Array.isArray(conversationHistory) 
       ? conversationHistory
-          .filter((msg: any) => 
-            msg && 
+          .filter((msg): msg is HistoryItem => 
+            !!msg && 
             typeof msg === 'object' && 
-            validRoles.includes(msg.role) && 
-            typeof msg.content === 'string'
+            allowedRoles.includes((msg as Record<string, unknown>).role as string) && 
+            typeof (msg as Record<string, unknown>).content === 'string'
           )
           .slice(-10)
-          .map((msg: any) => ({
+
+          .map((msg) => ({
             role: msg.role as 'user' | 'assistant',
             content: msg.content.slice(0, 1000), // 各メッセージの長さも制限
           }))
@@ -187,7 +202,8 @@ export async function POST(req: Request) {
         ...historyMessages,
         { role: "user", content: message },
       ],
-      max_completion_tokens: 1000,
+      // GPT-5系は temperature非対応・max_completion_tokens必須のためモデル系統に応じて付与
+      ...buildChatTuning(model, { temperature: 0.7, maxTokens: 1000 }),
     });
 
     const content = completion.choices[0].message.content;

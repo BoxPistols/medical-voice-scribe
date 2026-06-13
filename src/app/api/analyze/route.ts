@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { openai } from '@/lib/openai';
 import OpenAI from 'openai';
 import { SYSTEM_PROMPT } from './prompt';
 import type { SoapNote, ModelId, TokenUsage } from './types';
@@ -36,20 +37,22 @@ function calculateTokenCost(modelId: ModelId, promptTokens: number, completionTo
   };
 }
 
-function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY環境変数が設定されていません');
-  }
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-}
-
 export async function POST(req: Request) {
+  let body: unknown;
   try {
-    const { text, stream: useStream, model: requestedModel } = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'リクエストの形式（JSON）が正しくありません' }, { status: 400 });
+  }
 
-    if (!text) {
+  try {
+    if (typeof body !== 'object' || body === null) {
+      return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 });
+    }
+
+    const { text, stream: useStream, model: requestedModel } = body as { text?: unknown; stream?: unknown; model?: unknown };
+
+    if (typeof text !== 'string' || text.trim().length === 0) {
       return NextResponse.json(
         { error: 'テキストがありません' },
         { status: 400 }
@@ -57,7 +60,7 @@ export async function POST(req: Request) {
     }
 
     // モデルの検証とフォールバック
-    const model = validateModel(requestedModel, VALID_MODEL_IDS, DEFAULT_MODEL) as ModelId;
+    const model = validateModel(typeof requestedModel === 'string' ? requestedModel : undefined, VALID_MODEL_IDS, DEFAULT_MODEL) as ModelId;
 
     // レート制限チェック
     const rateLimit = checkAndIncrementRateLimit(model);
@@ -67,8 +70,6 @@ export async function POST(req: Request) {
         { status: 429 }
       );
     }
-
-    const openai = getOpenAIClient();
 
     // GPT-5.4系のトークン上限（nanoは4000、miniは16000）
     const maxCompletionTokens = model.includes('nano') ? 4000 : 16000;

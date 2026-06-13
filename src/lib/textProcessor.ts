@@ -341,7 +341,7 @@ export function structureForSlack(text: string): string {
   if (!text) return text;
 
   // Normalize line breaks and trim
-  let result = text.replace(/\r\n/g, "\n").trim();
+  const result = text.replace(/\r\n/g, "\n").trim();
 
   // Split on sentence-ending markers (。！？) while keeping the delimiter
   const sentences = result

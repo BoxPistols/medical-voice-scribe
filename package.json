@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@mediapipe/tasks-vision": "^0.10.35",
     "@remotion/google-fonts": "4.0.261",
     "@remotion/player": "4.0.261",
     "next": "16.1.6",
