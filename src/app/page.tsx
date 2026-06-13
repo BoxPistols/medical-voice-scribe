@@ -555,14 +555,16 @@ export default function Home() {
       const x = Math.max(TOOLTIP_EDGE_PADDING, Math.min(window.innerWidth - TOOLTIP_EDGE_PADDING, rect.left + rect.width / 2));
 
       // Determine position with boundary clamping
-      let position: "top" | "bottom" = preferBottom ? "bottom" : "top";
-      let y: number;
-      if (position === "top" && rect.top - TOOLTIP_VERTICAL_OFFSET - TOOLTIP_ESTIMATED_HEIGHT < TOOLTIP_VERTICAL_OFFSET) {
-        position = "bottom";
-      } else if (position === "bottom" && rect.bottom + TOOLTIP_VERTICAL_OFFSET + TOOLTIP_ESTIMATED_HEIGHT > window.innerHeight - TOOLTIP_VERTICAL_OFFSET) {
-        position = "top";
-      }
-      y = position === "bottom" ? rect.bottom + TOOLTIP_VERTICAL_OFFSET : rect.top - TOOLTIP_VERTICAL_OFFSET;
+      const position: "top" | "bottom" = (function() {
+        const initial = preferBottom ? "bottom" : "top";
+        if (initial === "top" && rect.top - TOOLTIP_VERTICAL_OFFSET - TOOLTIP_ESTIMATED_HEIGHT < TOOLTIP_VERTICAL_OFFSET) {
+          return "bottom";
+        } else if (initial === "bottom" && rect.bottom + TOOLTIP_VERTICAL_OFFSET + TOOLTIP_ESTIMATED_HEIGHT > window.innerHeight - TOOLTIP_VERTICAL_OFFSET) {
+          return "top";
+        }
+        return initial;
+      })();
+      const y = position === "bottom" ? rect.bottom + TOOLTIP_VERTICAL_OFFSET : rect.top - TOOLTIP_VERTICAL_OFFSET;
 
       setTooltip({ text, x, y, position });
     };
@@ -2021,7 +2023,6 @@ export default function Home() {
         {/* Voice Recorder Mode */}
         {appMode === "voice" && <VoiceRecorderMode />}
 
-<<<<<<< HEAD
         {/* 各新モードは縦に伸びるため、main(overflow-hidden)内でスクロール領域を与える */}
         {/* 気分ジャーナル（メンタル） */}
         {appMode === "mood" && (
@@ -2057,10 +2058,13 @@ export default function Home() {
             <MoveMode />
           </div>
         )}
-=======
+
         {/* Mentoring Mode */}
-        {appMode === "mentoring" && <MentoringMode />}
->>>>>>> origin/main
+        {appMode === "mentoring" && (
+          <div className="flex-1 min-h-0 overflow-y-auto w-full">
+            <MentoringMode />
+          </div>
+        )}
 
         {/* Medical Mode */}
         {appMode === "medical" && (

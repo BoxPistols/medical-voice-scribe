@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { openai } from '@/lib/openai';
 import OpenAI from 'openai';
 import { SYSTEM_PROMPT } from './prompt';
 import type { SoapNote, ModelId, TokenUsage } from './types';
@@ -36,18 +37,16 @@ function calculateTokenCost(modelId: ModelId, promptTokens: number, completionTo
   };
 }
 
-function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY環境変数が設定されていません');
-  }
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-}
-
 export async function POST(req: Request) {
+  let body: unknown;
   try {
-    const { text, stream: useStream, model: requestedModel } = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'リクエストの形式（JSON）が正しくありません' }, { status: 400 });
+  }
+
+  try {
+    const { text, stream: useStream, model: requestedModel } = body as { text?: string; stream?: boolean; model?: string };
 
     if (!text) {
       return NextResponse.json(
@@ -67,8 +66,6 @@ export async function POST(req: Request) {
         { status: 429 }
       );
     }
-
-    const openai = getOpenAIClient();
 
     // GPT-5.4系のトークン上限（nanoは4000、miniは16000）
     const maxCompletionTokens = model.includes('nano') ? 4000 : 16000;
