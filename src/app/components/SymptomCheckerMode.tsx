@@ -486,9 +486,12 @@ export default function SymptomCheckerMode() {
         if (err instanceof DOMException && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "症状チェックに失敗しました");
       } finally {
-        if (abortRef.current === controller) abortRef.current = null;
-        setLoading(false);
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+          setLoading(false);
+        }
       }
+
     },
     [description, loading, bodyPart, duration, severity, model, stopSpeech]
   );

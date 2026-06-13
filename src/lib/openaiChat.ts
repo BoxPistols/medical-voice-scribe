@@ -25,8 +25,8 @@ export function buildChatTuning(
   const out: { temperature?: number; max_tokens?: number; max_completion_tokens?: number } = {};
 
   if (isRestricted(model)) {
-    // reasoning 余地を確保するため床でクランプ（呼び出し側が大きい値を指定したらそちらを優先）
-    out.max_completion_tokens = Math.max(opts.maxTokens ?? 0, RESTRICTED_TOKEN_FLOOR);
+    // 呼び出し側が指定した値を優先し、指定がなければ床（RESTRICTED_TOKEN_FLOOR）を使用
+    out.max_completion_tokens = opts.maxTokens ?? RESTRICTED_TOKEN_FLOOR;
     // temperature は既定(1)のみ許容のため付与しない
   } else {
     if (typeof opts.maxTokens === "number") out.max_tokens = opts.maxTokens;

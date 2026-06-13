@@ -105,12 +105,16 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   try {
+    if (typeof body !== 'object' || body === null) {
+      return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 });
+    }
+
     const {
       message,
       conversationHistory,
       wellnessContext,
       model: requestedModel,
-    } = (body ?? {}) as {
+    } = body as {
       message?: unknown;
       conversationHistory?: unknown;
       wellnessContext?: unknown;
@@ -118,7 +122,7 @@ export async function POST(req: Request): Promise<Response> {
     };
 
     // 入力検証
-    if (!message || typeof message !== "string" || message.trim().length === 0) {
+    if (typeof message !== "string" || message.trim().length === 0) {
       return NextResponse.json({ error: "メッセージが無効です" }, { status: 400 });
     }
     if (message.length > MAX_MESSAGE_LENGTH) {
@@ -137,18 +141,19 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    const model: ModelId = isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
+    const model: ModelId = isValidModel(requestedModel) ? (requestedModel as ModelId) : DEFAULT_MODEL;
     const history = sanitizeHistory(conversationHistory);
 
-    const contextBlock =
+    const contextData =
       typeof wellnessContext === "string" && wellnessContext.trim().length > 0
-        ? `\n\n## ユーザーの最近の記録（参考。診断には使わないこと）\n${wellnessContext.trim()}`
-        : "\n\n## ユーザーの最近の記録\n（記録はまだありません）";
+        ? `## ユーザーの最近の記録（参考。診断には使わないこと）\n${wellnessContext.trim()}`
+        : "## ユーザーの最近の記録\n（記録はまだありません）";
 
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: HEALTH_COACH_PROMPT + contextBlock },
+        { role: "system", content: HEALTH_COACH_PROMPT },
+        { role: "user", content: `[Context Data]\n${contextData}` },
         ...history.map((h) => ({ role: h.role, content: h.content })),
         { role: "user", content: message },
       ],

@@ -394,7 +394,17 @@ const SAMPLE_INTERVIEWS = [
 ];
 
 // モード切替ショートカット用の順序定義
-const MODE_ORDER: AppMode[] = ["medical", "clock", "voice", "mentoring"];
+const MODE_ORDER: AppMode[] = [
+  "medical",
+  "symptom",
+  "coach",
+  "mood",
+  "breathe",
+  "move",
+  "voice",
+  "mentoring",
+  "clock",
+];
 
 export default function Home() {
   // App mode

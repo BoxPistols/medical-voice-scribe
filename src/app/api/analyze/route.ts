@@ -46,9 +46,13 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { text, stream: useStream, model: requestedModel } = body as { text?: string; stream?: boolean; model?: string };
+    if (typeof body !== 'object' || body === null) {
+      return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 });
+    }
 
-    if (!text) {
+    const { text, stream: useStream, model: requestedModel } = body as { text?: unknown; stream?: unknown; model?: unknown };
+
+    if (typeof text !== 'string' || text.trim().length === 0) {
       return NextResponse.json(
         { error: 'テキストがありません' },
         { status: 400 }
@@ -56,7 +60,7 @@ export async function POST(req: Request) {
     }
 
     // モデルの検証とフォールバック
-    const model = validateModel(requestedModel, VALID_MODEL_IDS, DEFAULT_MODEL) as ModelId;
+    const model = validateModel(typeof requestedModel === 'string' ? requestedModel : undefined, VALID_MODEL_IDS, DEFAULT_MODEL) as ModelId;
 
     // レート制限チェック
     const rateLimit = checkAndIncrementRateLimit(model);

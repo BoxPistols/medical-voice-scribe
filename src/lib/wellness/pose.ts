@@ -206,7 +206,12 @@ export function assessPosture(landmarks: PoseLandmark[]): PostureAssessment {
     };
   }
 
-  const shoulderTiltDeg = Math.abs(lineAngleDeg(ls, rs));
+  let angle = lineAngleDeg(ls, rs);
+  // 左右が入れ替わっている場合（180度付近）を補正して、水平からの差分(-90..90)にする
+  if (angle > 90) angle -= 180;
+  else if (angle < -90) angle += 180;
+
+  const shoulderTiltDeg = Math.abs(angle);
   const shoulderWidth = Math.max(1e-4, Math.hypot(rs.x - ls.x, rs.y - ls.y));
   const midShoulder: Vec2 = { x: (ls.x + rs.x) / 2, y: (ls.y + rs.y) / 2 };
   // 鼻が肩の中点よりどれだけ下（=前傾でうつむき）に出ているかを肩幅で正規化。

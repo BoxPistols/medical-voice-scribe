@@ -52,8 +52,9 @@ function writeJSON<T>(key: string, value: T): void {
 
 /** 配列ストアの先頭に1件追加し、最大件数で切り詰めて保存。保存後の配列を返す。 */
 function prependCapped<T>(key: string, item: T, cap: number): T[] {
-  const list = readJSON<T[]>(key, []);
-  const next = [item, ...list].slice(0, cap);
+  const list = readJSON<unknown>(key, []);
+  const arr = Array.isArray(list) ? (list as T[]) : [];
+  const next = [item, ...arr].slice(0, cap);
   writeJSON(key, next);
   return next;
 }

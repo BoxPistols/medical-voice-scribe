@@ -122,16 +122,20 @@ export async function POST(req: Request) {
   }
 
   try {
+    if (typeof body !== 'object' || body === null) {
+      return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 });
+    }
+
     const { message, soapNote, transcript, model: requestedModel, conversationHistory } = body as {
-      message?: string;
-      soapNote?: SoapNote;
-      transcript?: string;
-      model?: string;
-      conversationHistory?: unknown[];
+      message?: unknown;
+      soapNote?: unknown;
+      transcript?: unknown;
+      model?: unknown;
+      conversationHistory?: unknown;
     };
 
     // 基本的な入力検証
-    if (!message || typeof message !== 'string') {
+    if (typeof message !== 'string' || message.trim().length === 0) {
       return NextResponse.json(
         { error: 'メッセージが無効です' },
         { status: 400 }
@@ -145,7 +149,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (transcript && typeof transcript === 'string' && transcript.length > 20000) {
+    if (transcript !== undefined && (typeof transcript !== 'string' || transcript.length > 20000)) {
       return NextResponse.json(
         { error: 'トランスクリプトが長すぎます' },
         { status: 400 }
@@ -153,7 +157,8 @@ export async function POST(req: Request) {
     }
 
     // モデルの検証とフォールバック
-    const model = requestedModel && isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
+    const requestedModelStr = typeof requestedModel === 'string' ? requestedModel : undefined;
+    const model = requestedModelStr && isValidModel(requestedModelStr) ? requestedModelStr : DEFAULT_MODEL;
 
     // レート制限チェック
     const rateLimit = checkAndIncrementRateLimit(model);
@@ -164,21 +169,23 @@ export async function POST(req: Request) {
       );
     }
     // コンテキストの構築
-    const soapContext = formatSoapContext(soapNote ?? null);
-    const transcriptContext = transcript ? `\n## 元のトランスクリプト\n${transcript.slice(0, 5000)}` : ''; // コンテキスト制限のため切り詰め
+    const soapNoteData = soapNote as SoapNote | null;
+    const transcriptText = typeof transcript === 'string' ? transcript : undefined;
+    const soapContext = formatSoapContext(soapNoteData);
+    const transcriptContext = transcriptText ? `\n## 元のトランスクリプト\n${transcriptText.slice(0, 5000)}` : ''; // コンテキスト制限のため切り詰め
 
-    // 会話履歴の検証と構築
-    const validRoles = ['user', 'assistant', 'system'];
+    // 会話履歴の検証と構築（クライアントからの system ロール注入を防止）
+    const allowedRoles = ['user', 'assistant'];
     const historyMessages: OpenAI.Chat.ChatCompletionMessageParam[] = Array.isArray(conversationHistory) 
       ? conversationHistory
           .filter((msg): msg is HistoryItem => 
             !!msg && 
             typeof msg === 'object' && 
-            validRoles.includes((msg as Record<string, unknown>).role as string) && 
+            allowedRoles.includes((msg as Record<string, unknown>).role as string) && 
             typeof (msg as Record<string, unknown>).content === 'string'
           )
-
           .slice(-10)
+
           .map((msg) => ({
             role: msg.role as 'user' | 'assistant',
             content: msg.content.slice(0, 1000), // 各メッセージの長さも制限

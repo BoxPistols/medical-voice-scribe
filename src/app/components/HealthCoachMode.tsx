@@ -75,7 +75,8 @@ interface WellnessSnapshot {
 const MOOD_LABELS = ["", "とても悪い", "悪い", "普通", "良い", "とても良い"];
 
 function withinRecentDays(timestamp: number, days: number): boolean {
-  return Date.now() - timestamp <= days * 24 * 60 * 60 * 1000;
+  const diff = Date.now() - timestamp;
+  return diff >= 0 && diff <= days * 24 * 60 * 60 * 1000;
 }
 
 /** 直近の記録を要約して API に渡す wellnessContext 文字列を組み立てる */

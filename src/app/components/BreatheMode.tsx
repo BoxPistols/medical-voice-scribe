@@ -339,6 +339,15 @@ export default function BreatheMode() {
     }
   }, []);
 
+  const pauseSound = useCallback(() => {
+    // WebAudio (pad) は一旦破棄（リソース節約のため。再開時は新エンジンで再開）
+    padRef.current?.dispose();
+    padRef.current = null;
+    if (bgmRef.current) {
+      bgmRef.current.pause();
+    }
+  }, []);
+
   const stopSound = useCallback(() => {
     padRef.current?.dispose();
     padRef.current = null;
@@ -470,8 +479,8 @@ export default function BreatheMode() {
     pausedAtRef.current += performance.now() - startTsRef.current;
     setRunning(false);
     cancelSpeech();
-    stopSound();
-  }, [cancelSpeech, stopSound]);
+    pauseSound();
+  }, [cancelSpeech, pauseSound]);
 
   // ── 再開 ──
   const handleResume = useCallback(() => {

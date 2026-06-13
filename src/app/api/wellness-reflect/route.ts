@@ -146,6 +146,10 @@ export async function POST(req: Request) {
   }
 
   try {
+    if (typeof body !== 'object' || body === null) {
+      return NextResponse.json({ error: 'リクエストボディが不正です' }, { status: 400 });
+    }
+
     const { entries, model: requestedModel } = body as { entries?: unknown; model?: unknown };
 
     // ── 入力検証 ───────────────────────────────────────────────
