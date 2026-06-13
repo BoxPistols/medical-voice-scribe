@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import ReactMarkdown from "react-markdown";
 import {
   ChatBubbleLeftRightIcon,
   XMarkIcon,
@@ -51,6 +52,8 @@ interface ChatSupportWidgetProps {
   selectedModel: ModelId;
   isRecording: boolean;
   isAnalyzing: boolean;
+  isOpen?: boolean;
+  onToggle?: (open: boolean) => void;
 }
 
 // ヘルプトピック定義
@@ -80,7 +83,7 @@ const HELP_TOPICS: HelpTopic[] = [
     id: "analysis-model",
     question: "AIモデルの違いは何ですか？",
     answer:
-      "・GPT-4.1 Mini: バランス型（推奨）\n・GPT-4.1 Nano: 最速・最安\n・GPT-5 Mini: 最高品質（複雑な症例向け）\n・GPT-5 Nano: 高速かつ高品質\n症例の複雑さに応じて選択してください。",
+      "・GPT-5.4 Mini: 高品質・バランス型（複雑な症例向け）\n・GPT-5.4 Nano: 高速・コスパ最強（デフォルト）\n症例の複雑さに応じて選択してください。",
     category: "analysis",
   },
   {
@@ -246,8 +249,15 @@ export default function ChatSupportWidget({
   selectedModel,
   isRecording,
   isAnalyzing,
+  isOpen: isOpenProp,
+  onToggle,
 }: ChatSupportWidgetProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenInternal, setIsOpenInternal] = useState(false);
+  const isOpen = isOpenProp !== undefined ? isOpenProp : isOpenInternal;
+  const setIsOpen = (val: boolean) => {
+    setIsOpenInternal(val);
+    onToggle?.(val);
+  };
   const [activeTab, setActiveTab] = useState<
     "chat" | "recommendations" | "help"
   >("recommendations");
@@ -268,6 +278,31 @@ export default function ChatSupportWidget({
     startWidth: number;
     startHeight: number;
   } | null>(null);
+
+  // モバイルでチャットが開いている時、背景スクロールを防止
+  useEffect(() => {
+    if (!isOpen) return;
+    const isMobile = window.innerWidth <= 640;
+    if (!isMobile) return;
+
+    const originalOverflow = document.body.style.overflow;
+    const originalPosition = document.body.style.position;
+    const originalTop = document.body.style.top;
+    const scrollY = window.scrollY;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.position = originalPosition;
+      document.body.style.top = originalTop;
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
 
   // レコメンドを生成（メモ化）
   const recommendations = useMemo(
@@ -750,8 +785,8 @@ export default function ChatSupportWidget({
                           key={msg.id}
                           className={`chat-support-message ${msg.role === "user" ? "user" : "assistant"}`}
                         >
-                          <div className="chat-support-message-content group/msg relative">
-                            {msg.content}
+                          <div className="chat-support-message-content group/msg relative chat-markdown">
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
                             <button
                               onClick={() =>
                                 copyMessageToClipboard(msg.id, msg.content)

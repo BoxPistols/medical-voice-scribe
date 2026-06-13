@@ -19,20 +19,22 @@ export type AppMode =
   | "breathe"
   | "move"
   | "voice"
-  | "clock";
+  | "clock"
+  | "mentoring";
 
 interface ModeSwitcherProps {
   currentMode: AppMode;
   onModeChange: (mode: AppMode) => void;
 }
 
-const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof ClockIcon; description: string }[] = [
+const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof ClockIcon; description: string; shortcutKey: number }[] = [
   {
     id: "medical",
     label: "医療カルテ",
     shortLabel: "医療",
     icon: DocumentTextIcon,
     description: "AI問診・SOAP自動生成",
+    shortcutKey: 1,
   },
   {
     id: "symptom",
@@ -40,6 +42,7 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "症状",
     icon: ShieldExclamationIcon,
     description: "AI症状トリアージ・受診の目安（参考情報）",
+    shortcutKey: 2,
   },
   {
     id: "coach",
@@ -47,6 +50,7 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "コーチ",
     icon: HeartIcon,
     description: "からだ・こころ・生活習慣を横断するAIコーチ",
+    shortcutKey: 3,
   },
   {
     id: "mood",
@@ -54,6 +58,7 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "気分",
     icon: FaceSmileIcon,
     description: "気分・活力の記録とAIふりかえり",
+    shortcutKey: 4,
   },
   {
     id: "breathe",
@@ -61,6 +66,7 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "呼吸",
     icon: CloudIcon,
     description: "ガイド付き呼吸・瞑想（デスクワーク中も可）",
+    shortcutKey: 5,
   },
   {
     id: "move",
@@ -68,6 +74,7 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "運動",
     icon: BoltIcon,
     description: "カメラ姿勢トラッキングでストレッチ・運動",
+    shortcutKey: 6,
   },
   {
     id: "voice",
@@ -75,6 +82,15 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "音声",
     icon: MicrophoneIcon,
     description: "録音・整理・要約",
+    shortcutKey: 7,
+  },
+  {
+    id: "mentoring",
+    label: "メンタリング",
+    shortLabel: "メンタ",
+    icon: HeartIcon,
+    description: "ポジティブ心理学ベースのメンタルコーチング",
+    shortcutKey: 8,
   },
   {
     id: "clock",
@@ -82,6 +98,7 @@ const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof Cloc
     shortLabel: "時計",
     icon: ClockIcon,
     description: "フルスクリーン時計",
+    shortcutKey: 9,
   },
 ];
 
@@ -107,7 +124,7 @@ export default function ModeSwitcher({
                   : "text-theme-tertiary hover:text-theme-secondary hover:bg-theme-card"
               }
             `}
-            title={`${mode.label} — ${mode.description}`}
+            title={`${mode.description}（⌘${mode.shortcutKey}）`}
             aria-label={`${mode.label}モードに切替`}
             aria-pressed={isActive}
           >

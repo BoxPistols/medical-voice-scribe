@@ -2,8 +2,10 @@ import React from "react";
 import {
   ArrowUpTrayIcon,
   ClipboardDocumentIcon,
+  ClockIcon,
   CommandLineIcon,
   DevicePhoneMobileIcon,
+  HeartIcon,
   MicrophoneIcon,
   MoonIcon,
 } from "@heroicons/react/24/solid";
@@ -18,9 +20,11 @@ import {
 const highlights = [
   { label: "リアルタイム音声認識", Icon: MicrophoneIcon },
   { label: "SOAP形式カルテ自動生成", Icon: ClipboardDocumentIcon },
-  { label: "JSON / CSV エクスポート", Icon: ArrowUpTrayIcon },
+  { label: "ポモドーロタイマー", Icon: ClockIcon },
+  { label: "AIメンタリング", Icon: HeartIcon },
+  { label: "音声メモ & AI整形", Icon: ArrowUpTrayIcon },
+  { label: "JSON / CSV エクスポート", Icon: CommandLineIcon },
   { label: "ダークモード対応", Icon: MoonIcon },
-  { label: "キーボードショートカット", Icon: CommandLineIcon },
   { label: "PWA対応", Icon: DevicePhoneMobileIcon },
 ];
 

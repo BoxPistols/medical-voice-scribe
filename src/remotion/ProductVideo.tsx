@@ -4,16 +4,24 @@ import { TitleScene } from "./components/TitleScene";
 import { ProblemScene } from "./components/ProblemScene";
 import { SolutionScene } from "./components/SolutionScene";
 import { FeaturesScene } from "./components/FeaturesScene";
+import { AppModesScene } from "./components/AppModesScene";
+import { PomodoroScene } from "./components/PomodoroScene";
+import { VoiceRecorderScene } from "./components/VoiceRecorderScene";
+import { MentoringScene } from "./components/MentoringScene";
 import { HowItWorksScene } from "./components/HowItWorksScene";
 import { CtaScene } from "./components/CtaScene";
 import { FONT_FAMILY } from "./fonts";
 
-// 30fps, total ~40 seconds (1200 frames)
+// 30fps, total ~70 seconds (2100 frames)
 // Scene durations in frames:
 const TITLE_DURATION = 150; // 5s
 const PROBLEM_DURATION = 210; // 7s
 const SOLUTION_DURATION = 210; // 7s
 const FEATURES_DURATION = 240; // 8s
+const APPMODES_DURATION = 210; // 7s
+const POMODORO_DURATION = 210; // 7s
+const VOICERECORDER_DURATION = 210; // 7s
+const MENTORING_DURATION = 210; // 7s
 const HOWITWORKS_DURATION = 210; // 7s
 const CTA_DURATION = 180; // 6s
 
@@ -22,6 +30,10 @@ export const TOTAL_DURATION =
   PROBLEM_DURATION +
   SOLUTION_DURATION +
   FEATURES_DURATION +
+  APPMODES_DURATION +
+  POMODORO_DURATION +
+  VOICERECORDER_DURATION +
+  MENTORING_DURATION +
   HOWITWORKS_DURATION +
   CTA_DURATION;
 
@@ -30,6 +42,10 @@ const scenes = [
   { Component: ProblemScene, duration: PROBLEM_DURATION },
   { Component: SolutionScene, duration: SOLUTION_DURATION },
   { Component: FeaturesScene, duration: FEATURES_DURATION },
+  { Component: AppModesScene, duration: APPMODES_DURATION },
+  { Component: PomodoroScene, duration: POMODORO_DURATION },
+  { Component: VoiceRecorderScene, duration: VOICERECORDER_DURATION },
+  { Component: MentoringScene, duration: MENTORING_DURATION },
   { Component: HowItWorksScene, duration: HOWITWORKS_DURATION },
   { Component: CtaScene, duration: CTA_DURATION },
 ];

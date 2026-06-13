@@ -43,7 +43,7 @@ export default function SOAPSectionWrapper({
           aria-label={`${badge}セクションをコピー`}
           data-tooltip="コピー"
         >
-          <ClipboardDocumentIcon className="w-4 h-4 opacity-60 hover:opacity-100" />
+          <ClipboardDocumentIcon className="w-5 h-5 opacity-70 hover:opacity-100" />
         </button>
       </div>
       <div className="space-y-3 text-sm">{children}</div>

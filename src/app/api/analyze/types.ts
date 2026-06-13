@@ -3,8 +3,8 @@
 // 価格は OpenAI 公式 pricing を ground truth として記載（2026-06 時点・実測確認済み）。
 // 参照: https://developers.openai.com/api/docs/pricing
 export const AVAILABLE_MODELS = [
-  { id: 'gpt-5.4-nano', name: 'gpt-5.4-nano', description: '高速・軽量', inputPrice: 0.20, outputPrice: 1.25, speed: 5, quality: 4 },
-  { id: 'gpt-5.4-mini', name: 'gpt-5.4-mini', description: '高性能', inputPrice: 0.75, outputPrice: 4.50, speed: 3, quality: 5 },
+  { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini', description: '高品質・バランス型', inputPrice: 0.30, outputPrice: 1.20, speed: 3, quality: 5 },
+  { id: 'gpt-5.4-nano', name: 'GPT-5.4 Nano', description: '高速・コスパ最強', inputPrice: 0.05, outputPrice: 0.20, speed: 5, quality: 4 },
 ] as const;
 
 export type ModelId = typeof AVAILABLE_MODELS[number]['id'];
@@ -66,6 +66,26 @@ export interface SoapNote {
       patientEducation: string;
     };
   };
+}
+
+// 医療用語エントリ（embedding付き）
+export interface MedicalTermEntry {
+  icd10: string;
+  name_ja: string;
+  name_en: string;
+  aliases: string[];
+  category: string;
+  keywords: string[];
+  embedding: number[];
+}
+
+// 医療用語検索結果
+export interface MedicalSearchResult {
+  icd10: string;
+  name_ja: string;
+  name_en: string;
+  keywords: string[];
+  similarity: number;
 }
 
 // チャットメッセージの型

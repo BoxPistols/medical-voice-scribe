@@ -1,0 +1,402 @@
+[
+  {
+    "icd10": "J06.9",
+    "name_ja": "急性上気道炎",
+    "name_en": "Acute upper respiratory infection",
+    "aliases": ["風邪", "かぜ", "感冒", "上気道感染", "普通感冒"],
+    "category": "respiratory",
+    "keywords": ["発熱", "咽頭痛", "鼻汁", "咳嗽", "倦怠感", "くしゃみ", "鼻閉"]
+  },
+  {
+    "icd10": "J20.9",
+    "name_ja": "急性気管支炎",
+    "name_en": "Acute bronchitis",
+    "aliases": ["気管支炎"],
+    "category": "respiratory",
+    "keywords": ["咳嗽", "喀痰", "発熱", "胸部不快感", "喘鳴"]
+  },
+  {
+    "icd10": "J18.9",
+    "name_ja": "肺炎",
+    "name_en": "Pneumonia",
+    "aliases": ["はいえん", "市中肺炎"],
+    "category": "respiratory",
+    "keywords": ["発熱", "咳嗽", "喀痰", "呼吸困難", "胸痛", "悪寒", "頻呼吸"]
+  },
+  {
+    "icd10": "J45.9",
+    "name_ja": "気管支喘息",
+    "name_en": "Asthma",
+    "aliases": ["喘息", "ぜんそく", "アレルギー性喘息"],
+    "category": "respiratory",
+    "keywords": ["喘鳴", "呼吸困難", "咳嗽", "胸苦しい", "発作", "夜間咳嗽"]
+  },
+  {
+    "icd10": "J30.4",
+    "name_ja": "アレルギー性鼻炎",
+    "name_en": "Allergic rhinitis",
+    "aliases": ["花粉症", "鼻アレルギー", "季節性鼻炎"],
+    "category": "respiratory",
+    "keywords": ["くしゃみ", "鼻汁", "鼻閉", "目のかゆみ", "花粉"]
+  },
+  {
+    "icd10": "J01.9",
+    "name_ja": "急性副鼻腔炎",
+    "name_en": "Acute sinusitis",
+    "aliases": ["副鼻腔炎", "蓄膿症", "ちくのう"],
+    "category": "respiratory",
+    "keywords": ["鼻閉", "膿性鼻汁", "顔面痛", "頭重感", "後鼻漏"]
+  },
+  {
+    "icd10": "J10.1",
+    "name_ja": "インフルエンザ",
+    "name_en": "Influenza",
+    "aliases": ["インフル", "流行性感冒"],
+    "category": "infectious",
+    "keywords": ["高熱", "関節痛", "筋肉痛", "頭痛", "倦怠感", "悪寒", "急性発症"]
+  },
+  {
+    "icd10": "U07.1",
+    "name_ja": "新型コロナウイルス感染症",
+    "name_en": "COVID-19",
+    "aliases": ["コロナ", "COVID", "新型コロナ", "SARS-CoV-2"],
+    "category": "infectious",
+    "keywords": ["発熱", "咳嗽", "倦怠感", "味覚障害", "嗅覚障害", "咽頭痛", "呼吸困難"]
+  },
+  {
+    "icd10": "A08.1",
+    "name_ja": "ノロウイルス感染症",
+    "name_en": "Norovirus infection",
+    "aliases": ["ノロ", "感染性胃腸炎", "ウイルス性胃腸炎"],
+    "category": "infectious",
+    "keywords": ["嘔吐", "下痢", "腹痛", "発熱", "脱水", "悪心"]
+  },
+  {
+    "icd10": "B02.9",
+    "name_ja": "帯状疱疹",
+    "name_en": "Herpes zoster",
+    "aliases": ["帯状ヘルペス", "たいじょうほうしん"],
+    "category": "infectious",
+    "keywords": ["水疱", "皮疹", "神経痛", "片側性疼痛", "発疹", "灼熱感"]
+  },
+  {
+    "icd10": "K52.9",
+    "name_ja": "急性胃腸炎",
+    "name_en": "Acute gastroenteritis",
+    "aliases": ["胃腸炎", "おなかの風邪", "お腹の風邪", "胃腸風邪"],
+    "category": "gastrointestinal",
+    "keywords": ["下痢", "嘔吐", "腹痛", "悪心", "発熱", "脱水"]
+  },
+  {
+    "icd10": "K21.0",
+    "name_ja": "逆流性食道炎",
+    "name_en": "Gastroesophageal reflux disease",
+    "aliases": ["GERD", "胃食道逆流症", "胸やけ"],
+    "category": "gastrointestinal",
+    "keywords": ["胸やけ", "呑酸", "嚥下困難", "胸痛", "咳嗽", "胃酸逆流"]
+  },
+  {
+    "icd10": "K25.9",
+    "name_ja": "胃潰瘍",
+    "name_en": "Gastric ulcer",
+    "aliases": ["胃かいよう", "いかいよう"],
+    "category": "gastrointestinal",
+    "keywords": ["心窩部痛", "食後腹痛", "悪心", "嘔吐", "吐血", "黒色便"]
+  },
+  {
+    "icd10": "K58.9",
+    "name_ja": "過敏性腸症候群",
+    "name_en": "Irritable bowel syndrome",
+    "aliases": ["IBS", "過敏性大腸", "過敏性腸"],
+    "category": "gastrointestinal",
+    "keywords": ["腹痛", "下痢", "便秘", "腹部膨満感", "排便で改善", "ストレス"]
+  },
+  {
+    "icd10": "K80.2",
+    "name_ja": "胆石症",
+    "name_en": "Cholelithiasis",
+    "aliases": ["胆石", "たんせき"],
+    "category": "gastrointestinal",
+    "keywords": ["右季肋部痛", "心窩部痛", "悪心", "嘔吐", "食後疼痛", "脂肪食"]
+  },
+  {
+    "icd10": "I10",
+    "name_ja": "本態性高血圧症",
+    "name_en": "Essential hypertension",
+    "aliases": ["高血圧", "高血圧症", "HT"],
+    "category": "cardiovascular",
+    "keywords": ["血圧上昇", "頭痛", "めまい", "動悸", "肩こり", "無症状"]
+  },
+  {
+    "icd10": "I20.9",
+    "name_ja": "狭心症",
+    "name_en": "Angina pectoris",
+    "aliases": ["きょうしんしょう", "AP"],
+    "category": "cardiovascular",
+    "keywords": ["胸痛", "胸部圧迫感", "労作時胸痛", "息切れ", "左肩放散痛"]
+  },
+  {
+    "icd10": "I50.9",
+    "name_ja": "心不全",
+    "name_en": "Heart failure",
+    "aliases": ["うっ血性心不全", "CHF"],
+    "category": "cardiovascular",
+    "keywords": ["呼吸困難", "浮腫", "起座呼吸", "夜間発作性呼吸困難", "倦怠感", "体重増加"]
+  },
+  {
+    "icd10": "I48.9",
+    "name_ja": "心房細動",
+    "name_en": "Atrial fibrillation",
+    "aliases": ["AF", "Af", "しんぼうさいどう"],
+    "category": "cardiovascular",
+    "keywords": ["動悸", "不整脈", "脈不整", "息切れ", "めまい", "胸部不快感"]
+  },
+  {
+    "icd10": "I63.9",
+    "name_ja": "脳梗塞",
+    "name_en": "Cerebral infarction",
+    "aliases": ["脳卒中", "ストローク", "脳血管障害"],
+    "category": "cardiovascular",
+    "keywords": ["片麻痺", "構音障害", "失語", "顔面麻痺", "突然発症", "意識障害"]
+  },
+  {
+    "icd10": "E11.9",
+    "name_ja": "2型糖尿病",
+    "name_en": "Type 2 diabetes mellitus",
+    "aliases": ["糖尿病", "DM", "とうにょうびょう"],
+    "category": "endocrine",
+    "keywords": ["口渇", "多飲", "多尿", "体重減少", "倦怠感", "HbA1c上昇", "血糖上昇"]
+  },
+  {
+    "icd10": "E78.5",
+    "name_ja": "脂質異常症",
+    "name_en": "Dyslipidemia",
+    "aliases": ["高脂血症", "高コレステロール血症", "コレステロール"],
+    "category": "endocrine",
+    "keywords": ["LDL上昇", "中性脂肪上昇", "HDL低下", "無症状", "動脈硬化"]
+  },
+  {
+    "icd10": "E03.9",
+    "name_ja": "甲状腺機能低下症",
+    "name_en": "Hypothyroidism",
+    "aliases": ["橋本病", "甲状腺低下"],
+    "category": "endocrine",
+    "keywords": ["倦怠感", "体重増加", "寒がり", "便秘", "浮腫", "徐脈", "皮膚乾燥"]
+  },
+  {
+    "icd10": "E05.9",
+    "name_ja": "甲状腺機能亢進症",
+    "name_en": "Hyperthyroidism",
+    "aliases": ["バセドウ病", "甲状腺亢進"],
+    "category": "endocrine",
+    "keywords": ["動悸", "体重減少", "発汗", "手指振戦", "眼球突出", "頻脈", "イライラ"]
+  },
+  {
+    "icd10": "E66.9",
+    "name_ja": "肥満症",
+    "name_en": "Obesity",
+    "aliases": ["肥満", "メタボ", "メタボリックシンドローム"],
+    "category": "endocrine",
+    "keywords": ["BMI上昇", "体重増加", "腹囲増大", "生活習慣病", "内臓脂肪"]
+  },
+  {
+    "icd10": "M54.5",
+    "name_ja": "腰痛症",
+    "name_en": "Low back pain",
+    "aliases": ["腰痛", "ぎっくり腰", "腰が痛い", "急性腰痛"],
+    "category": "musculoskeletal",
+    "keywords": ["腰部痛", "動作時痛", "筋緊張", "前屈制限", "坐骨神経痛"]
+  },
+  {
+    "icd10": "M17.9",
+    "name_ja": "変形性膝関節症",
+    "name_en": "Osteoarthritis of knee",
+    "aliases": ["膝関節症", "膝OA", "膝が痛い"],
+    "category": "musculoskeletal",
+    "keywords": ["膝関節痛", "歩行時痛", "階段昇降時痛", "関節腫脹", "可動域制限"]
+  },
+  {
+    "icd10": "M47.8",
+    "name_ja": "頸椎症",
+    "name_en": "Cervical spondylosis",
+    "aliases": ["首の痛み", "頸部痛", "ストレートネック"],
+    "category": "musculoskeletal",
+    "keywords": ["頸部痛", "肩こり", "上肢しびれ", "頭痛", "可動域制限"]
+  },
+  {
+    "icd10": "M79.3",
+    "name_ja": "四肢痛",
+    "name_en": "Panniculitis",
+    "aliases": ["手足の痛み", "四肢の痛み"],
+    "category": "musculoskeletal",
+    "keywords": ["四肢疼痛", "関節痛", "筋肉痛", "しびれ"]
+  },
+  {
+    "icd10": "M75.1",
+    "name_ja": "肩関節周囲炎",
+    "name_en": "Rotator cuff syndrome",
+    "aliases": ["五十肩", "四十肩", "肩が上がらない", "凍結肩"],
+    "category": "musculoskeletal",
+    "keywords": ["肩関節痛", "挙上制限", "夜間痛", "可動域制限", "結帯動作困難"]
+  },
+  {
+    "icd10": "G43.9",
+    "name_ja": "片頭痛",
+    "name_en": "Migraine",
+    "aliases": ["偏頭痛", "へんずつう", "マイグレン"],
+    "category": "neurological",
+    "keywords": ["拍動性頭痛", "片側性頭痛", "悪心", "嘔吐", "光過敏", "音過敏", "前兆"]
+  },
+  {
+    "icd10": "G47.0",
+    "name_ja": "不眠症",
+    "name_en": "Insomnia",
+    "aliases": ["眠れない", "睡眠障害", "入眠困難"],
+    "category": "neurological",
+    "keywords": ["入眠困難", "中途覚醒", "早朝覚醒", "日中眠気", "倦怠感"]
+  },
+  {
+    "icd10": "G40.9",
+    "name_ja": "てんかん",
+    "name_en": "Epilepsy",
+    "aliases": ["癲癇", "けいれん発作"],
+    "category": "neurological",
+    "keywords": ["けいれん", "意識消失", "発作", "反復性", "脳波異常"]
+  },
+  {
+    "icd10": "F32.9",
+    "name_ja": "うつ病",
+    "name_en": "Major depressive disorder",
+    "aliases": ["鬱病", "抑うつ", "気分が落ち込む", "うつ状態"],
+    "category": "psychiatric",
+    "keywords": ["抑うつ気分", "興味喪失", "不眠", "食欲低下", "倦怠感", "集中力低下", "自殺念慮"]
+  },
+  {
+    "icd10": "F41.1",
+    "name_ja": "全般性不安障害",
+    "name_en": "Generalized anxiety disorder",
+    "aliases": ["不安障害", "不安症", "GAD", "不安が強い"],
+    "category": "psychiatric",
+    "keywords": ["不安", "緊張", "動悸", "発汗", "振戦", "集中困難", "不眠"]
+  },
+  {
+    "icd10": "F41.0",
+    "name_ja": "パニック障害",
+    "name_en": "Panic disorder",
+    "aliases": ["パニック発作", "パニック症"],
+    "category": "psychiatric",
+    "keywords": ["突然の恐怖", "動悸", "呼吸困難", "胸痛", "めまい", "発汗", "死の恐怖"]
+  },
+  {
+    "icd10": "L50.9",
+    "name_ja": "蕁麻疹",
+    "name_en": "Urticaria",
+    "aliases": ["じんましん", "じんま疹"],
+    "category": "dermatological",
+    "keywords": ["膨疹", "かゆみ", "皮疹", "発赤", "一過性", "アレルギー"]
+  },
+  {
+    "icd10": "L30.9",
+    "name_ja": "湿疹",
+    "name_en": "Eczema",
+    "aliases": ["皮膚炎", "かぶれ"],
+    "category": "dermatological",
+    "keywords": ["かゆみ", "紅斑", "丘疹", "水疱", "鱗屑", "皮膚乾燥"]
+  },
+  {
+    "icd10": "L20.9",
+    "name_ja": "アトピー性皮膚炎",
+    "name_en": "Atopic dermatitis",
+    "aliases": ["アトピー", "アトピー性湿疹"],
+    "category": "dermatological",
+    "keywords": ["かゆみ", "乾燥肌", "紅斑", "苔癬化", "左右対称", "慢性経過"]
+  },
+  {
+    "icd10": "N30.9",
+    "name_ja": "膀胱炎",
+    "name_en": "Cystitis",
+    "aliases": ["ぼうこうえん", "尿路感染症", "UTI"],
+    "category": "urological",
+    "keywords": ["頻尿", "排尿痛", "残尿感", "血尿", "下腹部痛", "尿混濁"]
+  },
+  {
+    "icd10": "N40",
+    "name_ja": "前立腺肥大症",
+    "name_en": "Benign prostatic hyperplasia",
+    "aliases": ["BPH", "前立腺肥大"],
+    "category": "urological",
+    "keywords": ["排尿困難", "頻尿", "夜間頻尿", "残尿感", "尿線細小"]
+  },
+  {
+    "icd10": "D50.9",
+    "name_ja": "鉄欠乏性貧血",
+    "name_en": "Iron deficiency anemia",
+    "aliases": ["貧血", "鉄欠乏"],
+    "category": "hematological",
+    "keywords": ["倦怠感", "動悸", "息切れ", "顔色不良", "めまい", "爪変形"]
+  },
+  {
+    "icd10": "M10.9",
+    "name_ja": "痛風",
+    "name_en": "Gout",
+    "aliases": ["つうふう", "高尿酸血症"],
+    "category": "musculoskeletal",
+    "keywords": ["足趾関節痛", "母趾MTP関節", "急性関節炎", "発赤腫脹", "尿酸値上昇"]
+  },
+  {
+    "icd10": "H10.9",
+    "name_ja": "結膜炎",
+    "name_en": "Conjunctivitis",
+    "aliases": ["目が赤い", "充血", "ものもらい"],
+    "category": "ophthalmological",
+    "keywords": ["充血", "眼脂", "流涙", "異物感", "かゆみ"]
+  },
+  {
+    "icd10": "H66.9",
+    "name_ja": "中耳炎",
+    "name_en": "Otitis media",
+    "aliases": ["ちゅうじえん", "耳が痛い"],
+    "category": "otolaryngological",
+    "keywords": ["耳痛", "難聴", "耳漏", "発熱", "耳閉感"]
+  },
+  {
+    "icd10": "R50.9",
+    "name_ja": "発熱",
+    "name_en": "Fever",
+    "aliases": ["熱がある", "熱が出た", "高熱", "微熱"],
+    "category": "symptoms",
+    "keywords": ["体温上昇", "悪寒", "倦怠感", "頭痛", "筋肉痛"]
+  },
+  {
+    "icd10": "R07.9",
+    "name_ja": "胸痛",
+    "name_en": "Chest pain",
+    "aliases": ["胸が痛い", "胸部痛", "胸苦しい"],
+    "category": "symptoms",
+    "keywords": ["胸部疼痛", "圧迫感", "呼吸困難", "放散痛", "労作時増悪"]
+  },
+  {
+    "icd10": "R10.4",
+    "name_ja": "腹痛",
+    "name_en": "Abdominal pain",
+    "aliases": ["お腹が痛い", "おなかが痛い", "腹部痛"],
+    "category": "symptoms",
+    "keywords": ["腹部疼痛", "悪心", "嘔吐", "下痢", "便秘"]
+  },
+  {
+    "icd10": "R42",
+    "name_ja": "めまい",
+    "name_en": "Dizziness",
+    "aliases": ["ふらつき", "眩暈", "ぐるぐる回る", "立ちくらみ"],
+    "category": "symptoms",
+    "keywords": ["回転性めまい", "浮動性めまい", "悪心", "嘔吐", "耳鳴り", "難聴"]
+  },
+  {
+    "icd10": "R51",
+    "name_ja": "頭痛",
+    "name_en": "Headache",
+    "aliases": ["頭が痛い", "ずつう", "頭重感"],
+    "category": "symptoms",
+    "keywords": ["頭部疼痛", "拍動性", "締め付け感", "悪心", "嘔吐", "光過敏"]
+  }
+]

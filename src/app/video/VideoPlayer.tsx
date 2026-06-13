@@ -74,7 +74,7 @@ export const VideoPlayer: React.FC = () => {
         <span>|</span>
         <span>{Math.round(TOTAL_DURATION / 30)}秒</span>
         <span>|</span>
-        <span>6シーン</span>
+        <span>10シーン</span>
       </div>
 
       {/* Instructions */}

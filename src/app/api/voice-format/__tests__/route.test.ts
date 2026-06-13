@@ -285,8 +285,8 @@ describe('/api/voice-format', () => {
       const res = await POST(makeRequest({ text: 'テスト', mode: 'organize' }))
       const data = await res.json()
 
-      // デフォルトモデル gpt-5.4-nano: input $0.20/1M, output $1.25/1M
-      const expectedUSD = 0.20 + 1.25
+      // デフォルトモデル gpt-5.4-nano: input $0.05/1M, output $0.20/1M
+      const expectedUSD = 0.05 + 0.20
       expect(data.tokenUsage.estimatedCostUSD).toBeCloseTo(expectedUSD, 4)
       expect(data.tokenUsage.estimatedCostJPY).toBeCloseTo(expectedUSD * 150, 2)
     })

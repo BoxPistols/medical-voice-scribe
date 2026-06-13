@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+import ServiceWorkerRegistrar from "./components/ServiceWorkerRegistrar";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -53,6 +54,7 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSans.variable} ${jetBrainsMono.variable} ${notoSansJP.variable} antialiased`}
       >
+        <ServiceWorkerRegistrar />
         {children}
       </body>
     </html>

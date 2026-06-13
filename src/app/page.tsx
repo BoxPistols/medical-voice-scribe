@@ -52,6 +52,7 @@ import PatientInfoCard from "./components/PatientInfoCard";
 import SOAPSectionWrapper from "./components/SOAPSectionWrapper";
 import { formatElapsedTime as formatElapsedTimeHelper, buildSpeechText, getVoiceForLanguage } from "@/lib/audioHelpers";
 import { buildCsvContent, validateImportFile, validateImportData } from "@/lib/fileHelpers";
+import { processRecognizedText } from "@/lib/textProcessor";
 import { cycleTheme, getLayoutPresetWidth, buildCopySectionS, buildCopySectionO, buildCopySectionA, buildCopySectionP } from "@/lib/uiHelpers";
 import ModeSwitcher, { type AppMode } from "./components/ModeSwitcher";
 import ClockMode from "./components/ClockMode";
@@ -61,6 +62,16 @@ import BreatheMode from "./components/BreatheMode";
 import SymptomCheckerMode from "./components/SymptomCheckerMode";
 import HealthCoachMode from "./components/HealthCoachMode";
 import MoveMode from "./components/MoveMode";
+import MentoringMode from "./components/MentoringMode";
+import SessionDrawer from "./components/SessionDrawer";
+import type { RecordStore as RecordStoreType } from "@/lib/recordStore";
+import {
+  loadStore,
+  createEmptySession,
+  addSession,
+  updateSession,
+  getActiveSession,
+} from "@/lib/recordStore";
 
 // 各モードのヘッダー見出し（タイトル・サブタイトル）— AppMode を網羅
 const MODE_HEADER: Record<AppMode, { title: string; subtitle: string }> = {
@@ -71,6 +82,7 @@ const MODE_HEADER: Record<AppMode, { title: string; subtitle: string }> = {
   breathe: { title: "呼吸・瞑想", subtitle: "ガイド付き呼吸・瞑想タイマー" },
   move: { title: "体を動かす", subtitle: "カメラ姿勢トラッキング・運動" },
   voice: { title: "Voice Memo", subtitle: "録音・整理・要約" },
+  mentoring: { title: "Mentoring", subtitle: "ポジティブ心理学メンタルコーチング" },
   clock: { title: "Clock", subtitle: "フルスクリーン時計" },
 };
 
@@ -112,7 +124,8 @@ type ActionId =
   | "layoutEqual"
   | "layoutRight"
   | "toggleSettings"
-  | "toggleHelp";
+  | "toggleHelp"
+  | "toggleChat";
 
 interface ShortcutKey {
   key: string;
@@ -168,8 +181,8 @@ const SHORTCUT_DEFS: ShortcutDef[] = [
   {
     id: "toggleSpeech",
     label: "開始/停止",
-    default: { key: "v" },
-    modifierDefault: { key: "v", ctrl: true },
+    default: { key: "p" },
+    modifierDefault: { key: "p", ctrl: true },
     group: "speech",
   },
   {
@@ -205,6 +218,12 @@ const SHORTCUT_DEFS: ShortcutDef[] = [
     group: "other",
   },
   { id: "toggleHelp", label: "ヘルプ", default: { key: "h" }, group: "other" },
+  {
+    id: "toggleChat",
+    label: "チャット開閉",
+    default: { key: "k", ctrl: true, shift: true },
+    group: "other",
+  },
 ];
 
 // Constants
@@ -374,6 +393,9 @@ const SAMPLE_INTERVIEWS = [
   },
 ];
 
+// モード切替ショートカット用の順序定義
+const MODE_ORDER: AppMode[] = ["medical", "clock", "voice", "mentoring"];
+
 export default function Home() {
   // App mode
   const [appMode, setAppMode] = useState<AppMode>("medical");
@@ -440,6 +462,29 @@ export default function Home() {
   // AI Model selection state
   const [selectedModel, setSelectedModel] = useState<ModelId>(DEFAULT_MODEL);
 
+  // チャット開閉状態
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // セッション管理
+  const [recordStore, setRecordStore] = useState<RecordStoreType>(() => loadStore());
+  const [isSessionDrawerOpen, setIsSessionDrawerOpen] = useState(false);
+
+  // レート制限の使用状況
+  const [usageStatus, setUsageStatus] = useState<Record<string, { count: number; limit: number; remaining: number }>>({});
+
+  const fetchUsageStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/usage-status');
+      if (!res.ok) return;
+      const data: { modelId: string; count: number; limit: number; remaining: number }[] = await res.json();
+      const map: Record<string, { count: number; limit: number; remaining: number }> = {};
+      data.forEach((d) => { map[d.modelId] = { count: d.count, limit: d.limit, remaining: d.remaining }; });
+      setUsageStatus(map);
+    } catch {
+      // 取得失敗時は無視
+    }
+  }, []);
+
   // Shortcuts state
   const [useModifiers, setUseModifiers] = useState(true); // Default to true (Command+R etc)
   const [shortcuts, setShortcuts] = useState<Record<ActionId, ShortcutKey>>(
@@ -472,6 +517,11 @@ export default function Home() {
     position: "top" | "bottom";
   } | null>(null);
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 前回保存した値を追跡するref（自動保存の変更検知用）
+  const lastSavedRef = useRef<{ transcript: string; result: SoapNote | null; tokenUsage: TokenUsage | null }>({
+    transcript: "", result: null, tokenUsage: null,
+  });
 
   // Help modal focus trap refs
   const helpModalRef = useRef<HTMLDivElement>(null);
@@ -580,6 +630,91 @@ export default function Home() {
     localStorage.setItem("medical-scribe-model", selectedModel);
   }, [selectedModel]);
 
+  // recordStore永続化は各操作関数(addSession, updateSession等)内で行われるため、
+  // ここでの重複保存は不要（削除済み）
+
+  // アクティブセッションに現在のデータを保存（functional updateでstale closure回避）
+  const saveCurrentSession = useCallback(() => {
+    setRecordStore((currentStore) => {
+      const active = getActiveSession(currentStore);
+      if (!active) return currentStore;
+      return updateSession(currentStore, active.id, {
+        transcript,
+        soapNote: result,
+        tokenUsage,
+      });
+    });
+  }, [transcript, result, tokenUsage]);
+
+  // セッション初期化: ストアが空なら初期セッションを作成
+  useEffect(() => {
+    if (recordStore.sessions.length === 0) {
+      const initial = createEmptySession("medical");
+      setRecordStore(addSession(recordStore, initial));
+      return;
+    }
+    // アクティブセッションのデータを復元
+    const active = getActiveSession(recordStore);
+    if (active) {
+      if (active.transcript && !transcript) setTranscript(active.transcript);
+      if (active.soapNote && !result) setResult(active.soapNote);
+      if (active.tokenUsage && !tokenUsage) setTokenUsage(active.tokenUsage);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount時のみ
+
+  // 自動保存: 変更検知にはrefを使い、stale closureを回避
+  useEffect(() => {
+    const prev = lastSavedRef.current;
+    if (prev.transcript === transcript && prev.result === result && prev.tokenUsage === tokenUsage) return;
+
+    const id = setTimeout(() => {
+      setRecordStore((currentStore) => {
+        const active = getActiveSession(currentStore);
+        if (!active) return currentStore;
+        const updated = updateSession(currentStore, active.id, {
+          transcript,
+          soapNote: result,
+          tokenUsage,
+        });
+        lastSavedRef.current = { transcript, result, tokenUsage };
+        return updated;
+      });
+    }, 1000);
+    return () => clearTimeout(id);
+  }, [transcript, result, tokenUsage]);
+
+  // セッション切り替え時のデータ復元
+  // TODO: chatHistoryの保存・復元はChatSupportWidget内部で管理されているため、
+  // コンポーネントからメッセージを公開するAPIが必要
+  const handleSessionSwitch = useCallback((newStore: RecordStoreType) => {
+    setRecordStore(newStore);
+    const active = getActiveSession(newStore);
+    if (active) {
+      setTranscript(active.transcript);
+      setResult(active.soapNote);
+      setTokenUsage(active.tokenUsage);
+      setError(null);
+      setStreamingText("");
+      // lastSavedRefも更新して不要な自動保存を防止
+      lastSavedRef.current = {
+        transcript: active.transcript,
+        result: active.soapNote,
+        tokenUsage: active.tokenUsage,
+      };
+    } else {
+      setTranscript("");
+      setResult(null);
+      setTokenUsage(null);
+      lastSavedRef.current = { transcript: "", result: null, tokenUsage: null };
+    }
+  }, []);
+
+  // マウント時に使用状況を取得
+  useEffect(() => {
+    fetchUsageStatus();
+  }, [fetchUsageStatus]);
+
   // Save app mode setting & stop medical recognition when leaving medical mode
   const isRecordingRef = useRef(isRecording);
   isRecordingRef.current = isRecording;
@@ -596,6 +731,8 @@ export default function Home() {
         setRecordingStartTime(null);
         setRecordingElapsed(0);
       }
+      // 診療サポートチャットを閉じる
+      setIsChatOpen(false);
     }
   }, [appMode]);
 
@@ -769,7 +906,8 @@ export default function Home() {
           }
         }
         if (finalTranscript) {
-          setTranscript((prev) => prev + finalTranscript + "。\n");
+          const processed = processRecognizedText(finalTranscript);
+          setTranscript((prev) => prev + processed + "。\n");
         }
       };
 
@@ -1036,6 +1174,7 @@ export default function Home() {
     } finally {
       setIsStreaming(false);
       setLoading(false);
+      fetchUsageStatus();
     }
   };
 
@@ -1410,6 +1549,24 @@ export default function Home() {
       });
   }, [editingShortcutId]);
 
+  // モード切替ショートカット: Cmd/Ctrl + 1〜4
+  useEffect(() => {
+    const handleModeShortcut = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey) return;
+      // 入力フィールド内では発火しない
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= MODE_ORDER.length) {
+        e.preventDefault();
+        setAppMode(MODE_ORDER[num - 1]);
+      }
+    };
+    window.addEventListener("keydown", handleModeShortcut);
+    return () => window.removeEventListener("keydown", handleModeShortcut);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Keyboard shortcuts listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1420,8 +1577,21 @@ export default function Home() {
         target.tagName === "TEXTAREA" ||
         target.isContentEditable;
 
+      // 医療モード専用ショートカットは医療モード以外では無効
+      const medicalOnlyActions: ActionId[] = [
+        "toggleRecording", "analyze", "clear", "toggleSpeech",
+        "increaseSpeechRate", "decreaseSpeechRate",
+        "import", "exportJson", "exportCsv", "toggleChat",
+      ];
+
       // Ignore if editing a shortcut
       if (editingShortcutId) return;
+
+      // ブラウザ標準操作（コピー/ペースト/切取/全選択/取消）は常にスルー
+      const browserKeys = ["v", "c", "x", "a", "z"];
+      if ((e.metaKey || e.ctrlKey) && browserKeys.includes(e.key.toLowerCase()) && !e.altKey && !e.shiftKey) {
+        return;
+      }
 
       // Find matching shortcut
       const actionId = (Object.keys(shortcuts) as ActionId[]).find((id) => {
@@ -1436,6 +1606,13 @@ export default function Home() {
       });
 
       if (actionId) {
+        // 医療モード専用のショートカットは他モードではアクションを実行しないが、
+        // ブラウザデフォルト動作（Cmd+Rのリロード等）は防止する
+        if (appMode !== "medical" && medicalOnlyActions.includes(actionId)) {
+          e.preventDefault();
+          return;
+        }
+
         // Validation for input fields:
         // If in input/textarea, ONLY allow shortcuts that use modifiers (Ctrl/Alt/Meta)
         // AND specifically allow the user's requested actions even in inputs
@@ -1514,6 +1691,9 @@ export default function Home() {
           case "toggleHelp":
             setShowHelp((prev) => !prev);
             break;
+          case "toggleChat":
+            setIsChatOpen((prev) => !prev);
+            break;
         }
       }
     };
@@ -1523,6 +1703,7 @@ export default function Home() {
   }, [
     shortcuts,
     editingShortcutId,
+    appMode,
     isRecording,
     transcript,
     loading,
@@ -1654,15 +1835,19 @@ export default function Home() {
                   aria-hidden="true"
                 />
                 {/* Model info tooltip */}
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-theme-card border border-theme-border rounded-lg shadow-lg text-xs">
+                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-white dark:bg-gray-900 border border-theme-border rounded-lg shadow-xl text-xs">
                   <div className="font-medium text-theme-secondary text-[11px] mb-2">モデル比較</div>
                   <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1.5 text-left">
                     <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">モデル</div>
                     <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">速度</div>
                     <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">品質</div>
-                    {AVAILABLE_MODELS.flatMap((m) => [
+                    {AVAILABLE_MODELS.flatMap((m) => {
+                      const usage = usageStatus[m.id];
+                      const usageColor = usage && usage.count / usage.limit >= 1 ? 'text-red-500' : usage && usage.count / usage.limit >= 0.8 ? 'text-amber-500' : 'text-theme-muted';
+                      return [
                       <div key={`${m.id}-name`} className={`py-0.5 ${m.id === selectedModel ? 'text-theme-primary font-medium' : 'text-theme-secondary'}`}>
-                        {m.name.replace('GPT-', '')}
+                        <span>{m.name.replace('GPT-', '')}</span>
+                        {usage && <span className={`ml-1.5 text-[9px] tabular-nums ${usageColor}`}>残り{usage.remaining}/{usage.limit}</span>}
                       </div>,
                       <div key={`${m.id}-speed`} className={`py-0.5 text-amber-500 ${m.id === selectedModel ? 'opacity-100' : 'opacity-70'}`}>
                         {'⚡'.repeat(m.speed)}
@@ -1670,19 +1855,32 @@ export default function Home() {
                       <div key={`${m.id}-quality`} className={`py-0.5 ${m.id === selectedModel ? 'text-amber-500' : 'text-theme-tertiary'}`}>
                         {'★'.repeat(m.quality)}{'☆'.repeat(5 - m.quality)}
                       </div>,
-                    ])}
+                    ];})}
                   </div>
                 </div>
               </div>
 
               {/* Icon buttons - unified grid */}
               <div className="flex items-center flex-shrink-0">
+                {/* セッション管理ボタン（medicalモードのみ表示） */}
+                {appMode === "medical" && (
+                <button
+                  onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
+                  className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                  title="セッション管理"
+                  aria-label="セッション管理"
+                  data-tooltip-bottom="セッション"
+                >
+                  <Bars3Icon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
+                </button>
+                )}
+
                 {/* Shortcut settings button */}
                 <button
                   onClick={() => setShowShortcutsModal(true)}
                   className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="キーボード設定"
-                  data-tooltip-bottom="ショートカット設定"
+                  data-tooltip-bottom="ショートカット"
                 >
                   <KeyboardIcon className="w-5 h-5 lg:w-6 lg:h-6" aria-hidden="true" />
                 </button>
@@ -1692,7 +1890,7 @@ export default function Home() {
                   onClick={handleThemeCycle}
                   className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="テーマ切り替え"
-                  data-tooltip-bottom={`テーマ: ${
+                  data-tooltip-bottom={`テーマ:\n${
                     theme === "system"
                       ? "自動"
                       : theme === "light"
@@ -1762,12 +1960,24 @@ export default function Home() {
                 </div>
               )}
 
+              {/* セッション管理ボタン (Mobile)（medicalモードのみ表示） */}
+              {appMode === "medical" && (
+              <button
+                onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
+                title="セッション管理"
+                aria-label="セッション管理"
+              >
+                <Bars3Icon className="w-5 h-5" aria-hidden="true" />
+              </button>
+              )}
+
               {/* Theme toggle button (Mobile) */}
               <button
                 onClick={handleThemeCycle}
                 className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="テーマ切り替え"
-                data-tooltip-bottom={`テーマ: ${
+                data-tooltip-bottom={`テーマ:\n${
                   theme === "system"
                     ? "自動"
                     : theme === "light"
@@ -1811,6 +2021,7 @@ export default function Home() {
         {/* Voice Recorder Mode */}
         {appMode === "voice" && <VoiceRecorderMode />}
 
+<<<<<<< HEAD
         {/* 各新モードは縦に伸びるため、main(overflow-hidden)内でスクロール領域を与える */}
         {/* 気分ジャーナル（メンタル） */}
         {appMode === "mood" && (
@@ -1846,6 +2057,10 @@ export default function Home() {
             <MoveMode />
           </div>
         )}
+=======
+        {/* Mentoring Mode */}
+        {appMode === "mentoring" && <MentoringMode />}
+>>>>>>> origin/main
 
         {/* Medical Mode */}
         {appMode === "medical" && (
@@ -2369,7 +2584,7 @@ export default function Home() {
                             aria-label="カルテ全体をコピー"
                             data-tooltip="コピー"
                           >
-                            <ClipboardDocumentIcon className="w-4 h-4" aria-hidden="true" />
+                            <ClipboardDocumentIcon className="w-5 h-5" aria-hidden="true" />
                           </button>
                         </div>
                       </div>
@@ -3293,13 +3508,26 @@ export default function Home() {
         aria-label="JSONファイルを選択"
       />
 
-      {/* Chat Support Widget */}
-      <ChatSupportWidget
-        soapNote={result}
-        transcript={transcript}
-        selectedModel={selectedModel}
-        isRecording={isRecording}
-        isAnalyzing={loading || isStreaming}
+      {/* 診療サポートウィジェット（医療モード専用） */}
+      {appMode === "medical" && (
+        <ChatSupportWidget
+          soapNote={result}
+          transcript={transcript}
+          selectedModel={selectedModel}
+          isRecording={isRecording}
+          isAnalyzing={loading || isStreaming}
+          isOpen={isChatOpen}
+          onToggle={setIsChatOpen}
+        />
+      )}
+
+      {/* セッション管理ドロワー */}
+      <SessionDrawer
+        open={isSessionDrawerOpen}
+        onClose={() => setIsSessionDrawerOpen(false)}
+        store={recordStore}
+        onStoreChange={handleSessionSwitch}
+        onBeforeSwitch={saveCurrentSession}
       />
 
       {/* Portal Sample Menu (renders at document.body to escape overflow:hidden) */}
