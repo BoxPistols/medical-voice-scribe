@@ -22,11 +22,11 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "Medical Scribe Flow | AI問診・カルテ自動生成",
-  description: "リアルタイム音声認識とSOAPカルテ自動生成 - 医療従事者向けAI問診記録システム",
+  title: "Vital Flow | 医療・こころ・からだのAIスーパーアプリ",
+  description: "AI問診・SOAPカルテ生成に加え、気分ジャーナル・呼吸瞑想・AI症状チェック・AIヘルスコーチ・カメラ姿勢トラッキングを1つに。医療×メンタル×フィジカルのセルフケア・スーパーアプリ。",
   appleWebApp: {
     capable: true,
-    title: "Medical Scribe Flow",
+    title: "Vital Flow",
     statusBarStyle: "default",
   },
   manifest: "/manifest.webmanifest",

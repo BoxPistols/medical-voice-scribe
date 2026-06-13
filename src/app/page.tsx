@@ -56,6 +56,28 @@ import { cycleTheme, getLayoutPresetWidth, buildCopySectionS, buildCopySectionO,
 import ModeSwitcher, { type AppMode } from "./components/ModeSwitcher";
 import ClockMode from "./components/ClockMode";
 import VoiceRecorderMode from "./components/VoiceRecorderMode";
+import MoodJournalMode from "./components/MoodJournalMode";
+import BreatheMode from "./components/BreatheMode";
+import SymptomCheckerMode from "./components/SymptomCheckerMode";
+import HealthCoachMode from "./components/HealthCoachMode";
+import MoveMode from "./components/MoveMode";
+
+// 各モードのヘッダー見出し（タイトル・サブタイトル）— AppMode を網羅
+const MODE_HEADER: Record<AppMode, { title: string; subtitle: string }> = {
+  medical: { title: "Medical Voice Scribe", subtitle: "AI音声問診・カルテ自動生成" },
+  symptom: { title: "症状チェッカー", subtitle: "AI症状トリアージ・受診の目安" },
+  coach: { title: "ヘルスコーチ", subtitle: "からだ・こころのAIウェルネスコーチ" },
+  mood: { title: "気分ジャーナル", subtitle: "気分・活力の記録とAIふりかえり" },
+  breathe: { title: "呼吸・瞑想", subtitle: "ガイド付き呼吸・瞑想タイマー" },
+  move: { title: "体を動かす", subtitle: "カメラ姿勢トラッキング・運動" },
+  voice: { title: "Voice Memo", subtitle: "録音・整理・要約" },
+  clock: { title: "Clock", subtitle: "フルスクリーン時計" },
+};
+
+// ヘルプ本文が用意されているモード（新モードはここに無いので medical にフォールバック）
+const HELP_TAB_MODES: AppMode[] = ["medical", "clock", "voice"];
+const helpTabFor = (mode: AppMode): AppMode =>
+  HELP_TAB_MODES.includes(mode) ? mode : "medical";
 
 // Custom Keyboard Icon Component
 const KeyboardIcon = ({ className }: { className?: string }) => (
@@ -535,7 +557,7 @@ export default function Home() {
 
     // Load app mode setting
     const savedMode = localStorage.getItem("medical-scribe-app-mode") as AppMode | null;
-    if (savedMode && ["medical", "clock", "voice"].includes(savedMode)) {
+    if (savedMode && Object.prototype.hasOwnProperty.call(MODE_HEADER, savedMode)) {
       setAppMode(savedMode);
     }
 
@@ -1573,10 +1595,10 @@ export default function Home() {
                 </div>
                 <div className="min-w-0 hidden lg:block">
                   <h1 className="text-base font-bold text-theme-primary leading-none truncate">
-                    {appMode === "medical" ? "Medical Voice Scribe" : appMode === "clock" ? "Clock" : "Voice Memo"}
+                    {MODE_HEADER[appMode].title}
                   </h1>
                   <p className="text-[11px] text-theme-secondary font-medium mt-0.5 truncate">
-                    {appMode === "medical" ? "AI音声問診・カルテ自動生成" : appMode === "clock" ? "フルスクリーン時計" : "録音・整理・要約"}
+                    {MODE_HEADER[appMode].subtitle}
                   </p>
                 </div>
               </div>
@@ -1694,7 +1716,7 @@ export default function Home() {
 
                 {/* Help button */}
                 <button
-                  onClick={() => { setHelpTab(appMode); setShowHelp(true); }}
+                  onClick={() => { setHelpTab(helpTabFor(appMode)); setShowHelp(true); }}
                   className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                   aria-label="ヘルプを表示"
                   data-tooltip-bottom="ヘルプ"
@@ -1765,7 +1787,7 @@ export default function Home() {
               </button>
 
               <button
-                onClick={() => { setHelpTab(appMode); setShowHelp(true); }}
+                onClick={() => { setHelpTab(helpTabFor(appMode)); setShowHelp(true); }}
                 className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
                 aria-label="ヘルプ"
                 data-tooltip-bottom="ヘルプ"
@@ -1788,6 +1810,42 @@ export default function Home() {
 
         {/* Voice Recorder Mode */}
         {appMode === "voice" && <VoiceRecorderMode />}
+
+        {/* 各新モードは縦に伸びるため、main(overflow-hidden)内でスクロール領域を与える */}
+        {/* 気分ジャーナル（メンタル） */}
+        {appMode === "mood" && (
+          <div className="flex-1 min-h-0 overflow-y-auto w-full">
+            <MoodJournalMode />
+          </div>
+        )}
+
+        {/* 呼吸・瞑想（メンタル・デスクワーク対応） */}
+        {appMode === "breathe" && (
+          <div className="flex-1 min-h-0 overflow-y-auto w-full">
+            <BreatheMode />
+          </div>
+        )}
+
+        {/* AI症状チェッカー（医療トリアージ） */}
+        {appMode === "symptom" && (
+          <div className="flex-1 min-h-0 overflow-y-auto w-full">
+            <SymptomCheckerMode />
+          </div>
+        )}
+
+        {/* AIヘルスコーチ（横断チャット） */}
+        {appMode === "coach" && (
+          <div className="flex-1 min-h-0 overflow-y-auto w-full">
+            <HealthCoachMode />
+          </div>
+        )}
+
+        {/* 体を動かす（カメラ姿勢トラッキング） */}
+        {appMode === "move" && (
+          <div className="flex-1 min-h-0 overflow-y-auto w-full">
+            <MoveMode />
+          </div>
+        )}
 
         {/* Medical Mode */}
         {appMode === "medical" && (

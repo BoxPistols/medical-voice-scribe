@@ -74,7 +74,7 @@ export const Default: Story = {
   args: {
     soapNote: null,
     transcript: "",
-    selectedModel: "gpt-4.1-mini",
+    selectedModel: "gpt-5.4-nano",
     isRecording: false,
     isAnalyzing: false,
   },
@@ -84,7 +84,7 @@ export const WithSoapNote: Story = {
   args: {
     soapNote: mockSoapNote,
     transcript: "右足の親指が昨日の夜からものすごく痛くなって...",
-    selectedModel: "gpt-4.1-mini",
+    selectedModel: "gpt-5.4-nano",
     isRecording: false,
     isAnalyzing: false,
   },
@@ -94,7 +94,7 @@ export const Recording: Story = {
   args: {
     soapNote: null,
     transcript: "現在患者さんとお話ししています...",
-    selectedModel: "gpt-4.1-mini",
+    selectedModel: "gpt-5.4-nano",
     isRecording: true,
     isAnalyzing: false,
   },
@@ -104,7 +104,7 @@ export const Analyzing: Story = {
   args: {
     soapNote: null,
     transcript: "先ほどの会話を分析してカルテを作成しています...",
-    selectedModel: "gpt-4.1-mini",
+    selectedModel: "gpt-5.4-nano",
     isRecording: false,
     isAnalyzing: true,
   },

@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Medical Scribe Flow - AI問診・カルテ自動生成',
-    short_name: 'Medical Scribe',
-    description: 'リアルタイム音声認識とSOAPカルテ自動生成 - 医療従事者向けAI問診記録システム',
+    name: 'Vital Flow — 医療・こころ・からだのAIスーパーアプリ',
+    short_name: 'Vital Flow',
+    description: 'AI問診・SOAPカルテ生成に加え、気分ジャーナル・呼吸瞑想・AI症状チェック・AIヘルスコーチ・カメラ姿勢トラッキングを1つに。医療×メンタル×フィジカルのセルフケア・スーパーアプリ。',
     start_url: '/',
     display: 'standalone',
     background_color: '#fafbfc',

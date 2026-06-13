@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { SoapNote, ModelId, ChatMessage } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
+import { buildChatTuning } from '@/lib/openaiChat';
 
 // チャットサポート用システムプロンプト
 const CHAT_SUPPORT_PROMPT = `あなたは医療従事者向けの診療支援AIアシスタントです。医師や看護師が診療を行う際のサポートを行います。
@@ -167,8 +168,8 @@ export async function POST(req: Request) {
         ...historyMessages,
         { role: "user", content: message },
       ],
-      max_tokens: 1000,
-      temperature: 0.7,
+      // GPT-5系は temperature非対応・max_completion_tokens必須のためモデル系統に応じて付与
+      ...buildChatTuning(model, { temperature: 0.7, maxTokens: 1000 }),
     });
 
     const content = completion.choices[0].message.content;
