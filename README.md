@@ -371,7 +371,7 @@ http://localhost:3000
 1. **入力検証**
    - テキストの存在確認
    - モデルIDの検証とフォールバック
-   - レート制限チェック（gpt-5.4-mini: 30回/日、gpt-5.4-nano: 50回/日）
+   - レート制限チェック（gpt-5.6-luna: 50回/日）
 
 2. **セマンティック医療辞書検索**
    - 入力テキスト（先頭1000文字）を `text-embedding-3-small` でベクトル化
@@ -385,9 +385,9 @@ http://localhost:3000
    - ストリーミング/非ストリーミング両対応
 
 4. **OpenAI API呼び出し**
-   - モデル: `gpt-5.4-mini` または `gpt-5.4-nano`
+   - モデル: `gpt-5.6-luna`
    - レスポンス形式: `json_object`
-   - トークン上限: mini=16000、nano=4000
+   - トークン上限: 16000
 
 5. **レスポンス処理**
    - JSON パース
@@ -434,7 +434,7 @@ Next.js API Route (/api/analyze)
     ↓
 System Prompt + Medical Context + User Text
     ↓
-OpenAI API (GPT-5.4-mini/nano)
+OpenAI API (GPT-5.6 Luna)
     ↓
 JSON Response
     ↓

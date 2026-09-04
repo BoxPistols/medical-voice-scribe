@@ -90,7 +90,7 @@ describe('/api/voice-format', () => {
 
   describe('モデル選択', () => {
     it('有効なモデルが指定された場合そのモデルを使用する', async () => {
-      const targetModel = AVAILABLE_MODELS[1].id
+      const targetModel = AVAILABLE_MODELS[0].id
       mockCreate.mockResolvedValueOnce(
         makeOpenAIResponse(JSON.stringify({ formatted: 'テスト', changes: [] }))
       )
@@ -285,8 +285,8 @@ describe('/api/voice-format', () => {
       const res = await POST(makeRequest({ text: 'テスト', mode: 'organize' }))
       const data = await res.json()
 
-      // デフォルトモデル gpt-5.4-nano: input $0.05/1M, output $0.20/1M
-      const expectedUSD = 0.05 + 0.20
+      // デフォルトモデル gpt-5.6-luna: input $0.20/1M, output $1.20/1M
+      const expectedUSD = 0.20 + 1.20
       expect(data.tokenUsage.estimatedCostUSD).toBeCloseTo(expectedUSD, 4)
       expect(data.tokenUsage.estimatedCostJPY).toBeCloseTo(expectedUSD * 150, 2)
     })

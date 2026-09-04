@@ -1,7 +1,7 @@
 // モデル別の1日あたり使用回数制限
 const DAILY_LIMITS: Record<string, number> = {
-  'gpt-5.4-mini': 30,
-  'gpt-5.4-nano': 50,
+  // gpt-5.4系（nano / mini）は提供終了。単価がほぼ同じ nano 枠の上限を luna が引き継ぐ
+  'gpt-5.6-luna': 50,
 };
 
 interface UsageRecord {

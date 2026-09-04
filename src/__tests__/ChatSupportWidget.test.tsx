@@ -23,7 +23,7 @@ Element.prototype.scrollIntoView = vi.fn();
 const defaultProps = {
   soapNote: null,
   transcript: '',
-  selectedModel: 'gpt-5.4-nano' as const,
+  selectedModel: 'gpt-5.6-luna' as const,
   isRecording: false,
   isAnalyzing: false,
 };

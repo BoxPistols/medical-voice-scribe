@@ -3,13 +3,12 @@
 // 価格は OpenAI 公式 pricing を ground truth として記載（2026-06 時点・実測確認済み）。
 // 参照: https://developers.openai.com/api/docs/pricing
 export const AVAILABLE_MODELS = [
-  { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini', description: '高品質・バランス型', inputPrice: 0.30, outputPrice: 1.20, speed: 3, quality: 5 },
-  { id: 'gpt-5.4-nano', name: 'GPT-5.4 Nano', description: '高速・コスパ最強', inputPrice: 0.05, outputPrice: 0.20, speed: 5, quality: 4 },
+  { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', description: '高速・コスパ最強', inputPrice: 0.20, outputPrice: 1.20, speed: 5, quality: 4 },
 ] as const;
 
 export type ModelId = typeof AVAILABLE_MODELS[number]['id'];
 
-export const DEFAULT_MODEL: ModelId = 'gpt-5.4-nano';
+export const DEFAULT_MODEL: ModelId = 'gpt-5.6-luna';
 
 // トークン使用量
 export interface TokenUsage {
