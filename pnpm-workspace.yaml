@@ -1,0 +1,5 @@
+# pnpm 10+ はpostinstallを承認制にするため、ビルドが必要な依存を明示する
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
