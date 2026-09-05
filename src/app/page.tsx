@@ -1726,7 +1726,7 @@ export default function Home() {
                   <h1 className="text-base font-bold text-theme-primary leading-none truncate">
                     {MODE_HEADER[appMode].title}
                   </h1>
-                  <p className="text-[11px] text-theme-secondary font-medium mt-0.5 truncate">
+                  <p className="text-xs text-theme-secondary font-medium mt-0.5 truncate">
                     {MODE_HEADER[appMode].subtitle}
                   </p>
                 </div>
@@ -1765,7 +1765,7 @@ export default function Home() {
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-7 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-info"
+                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-7 py-1.5 text-xs text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-info"
                   aria-label="AIモデル選択"
                   title={(() => {
                     const m = AVAILABLE_MODELS.find(m => m.id === selectedModel);
@@ -1784,18 +1784,18 @@ export default function Home() {
                 />
                 {/* Model info tooltip */}
                 <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-white bg-surface-raised border border-theme-border rounded-lg shadow-xl text-xs">
-                  <div className="font-medium text-theme-secondary text-[11px] mb-2">モデル比較</div>
+                  <div className="font-medium text-theme-secondary text-xs mb-2">モデル比較</div>
                   <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1.5 text-left">
-                    <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">モデル</div>
-                    <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">速度</div>
-                    <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">品質</div>
+                    <div className="text-theme-tertiary text-xs font-medium pb-1 border-b border-theme-border">モデル</div>
+                    <div className="text-theme-tertiary text-xs font-medium pb-1 border-b border-theme-border">速度</div>
+                    <div className="text-theme-tertiary text-xs font-medium pb-1 border-b border-theme-border">品質</div>
                     {AVAILABLE_MODELS.flatMap((m) => {
                       const usage = usageStatus[m.id];
                       const usageColor = usage && usage.count / usage.limit >= 1 ? 'text-danger-fg' : usage && usage.count / usage.limit >= 0.8 ? 'text-warning-fg' : 'text-theme-muted';
                       return [
                       <div key={`${m.id}-name`} className={`py-0.5 ${m.id === selectedModel ? 'text-theme-primary font-medium' : 'text-theme-secondary'}`}>
                         <span>{m.name.replace('GPT-', '')}</span>
-                        {usage && <span className={`ml-1.5 text-[9px] tabular-nums ${usageColor}`}>残り{usage.remaining}/{usage.limit}</span>}
+                        {usage && <span className={`ml-1.5 text-xs tabular-nums ${usageColor}`}>残り{usage.remaining}/{usage.limit}</span>}
                       </div>,
                       <div key={`${m.id}-speed`} className={`py-0.5 text-warning-fg ${m.id === selectedModel ? 'opacity-100' : 'opacity-70'}`}>
                         {'⚡'.repeat(m.speed)}

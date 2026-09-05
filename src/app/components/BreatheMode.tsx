@@ -795,14 +795,14 @@ export default function BreatheMode() {
                         <div className="text-sm font-medium text-theme-primary">
                           {p.name}
                         </div>
-                        <div className="text-[11px] text-theme-tertiary leading-snug">
+                        <div className="text-xs text-theme-tertiary leading-snug">
                           {p.description}
                         </div>
                       </button>
                     );
                   })}
                 </div>
-                <p className="mt-2 text-[11px] text-theme-muted">
+                <p className="mt-2 text-xs text-theme-muted">
                   1サイクル {cycleDurationSec(pattern)} 秒
                 </p>
               </fieldset>

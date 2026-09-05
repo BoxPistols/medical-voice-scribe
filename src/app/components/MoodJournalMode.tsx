@@ -152,7 +152,7 @@ function MoodDotCalendar({ points }: { points: DayTrendPoint[] }) {
               }}
               aria-hidden="true"
             />
-            <span className="text-[9px] leading-none text-theme-muted tabular-nums">{p.label.split("/")[1]}</span>
+            <span className="text-xs leading-none text-theme-muted tabular-nums">{p.label.split("/")[1]}</span>
           </div>
         );
       })}
@@ -347,7 +347,7 @@ export default function MoodJournalMode() {
                   <span className={`text-2xl sm:text-3xl transition-transform ${active ? "scale-110" : ""}`} aria-hidden="true">
                     {lv.emoji}
                   </span>
-                  <span className={`text-[10px] sm:text-xs leading-tight ${active ? "text-theme-primary font-semibold" : "text-theme-tertiary"}`}>
+                  <span className={`text-xs sm:text-xs leading-tight ${active ? "text-theme-primary font-semibold" : "text-theme-tertiary"}`}>
                     {lv.label}
                   </span>
                 </button>
@@ -432,7 +432,7 @@ export default function MoodJournalMode() {
               placeholder="今日あったこと、感じたことを自由に…"
               className="w-full rounded-xl border border-theme-light bg-theme-surface px-3 py-2.5 text-sm text-theme-primary placeholder:text-theme-muted resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus:border-brand transition-colors"
             />
-            <div className="mt-1 text-right text-[11px] text-theme-muted tabular-nums">
+            <div className="mt-1 text-right text-xs text-theme-muted tabular-nums">
               {note.length} / {NOTE_MAX}
             </div>
           </div>
@@ -502,15 +502,15 @@ export default function MoodJournalMode() {
                 <div className="text-xl font-bold text-theme-primary tabular-nums">
                   {hydrated && avg7 != null ? avg7.toFixed(1) : "—"}
                 </div>
-                <div className="text-[10px] text-theme-tertiary mt-0.5">7日平均</div>
+                <div className="text-xs text-theme-tertiary mt-0.5">7日平均</div>
               </div>
               <div className="rounded-xl bg-theme-surface border border-theme-light px-2 py-3 text-center">
                 <div className="text-xl font-bold text-theme-primary tabular-nums">{hydrated ? entries.length : "—"}</div>
-                <div className="text-[10px] text-theme-tertiary mt-0.5">記録数</div>
+                <div className="text-xs text-theme-tertiary mt-0.5">記録数</div>
               </div>
               <div className="rounded-xl bg-theme-surface border border-theme-light px-2 py-3 text-center">
                 <div className="text-xl font-bold text-theme-primary tabular-nums">{hydrated ? `${streak}日` : "—"}</div>
-                <div className="text-[10px] text-theme-tertiary mt-0.5">連続記録</div>
+                <div className="text-xs text-theme-tertiary mt-0.5">連続記録</div>
               </div>
             </div>
 
@@ -609,12 +609,12 @@ export default function MoodJournalMode() {
                 )}
 
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <p className="text-[11px] text-theme-muted flex items-center gap-1">
+                  <p className="text-xs text-theme-muted flex items-center gap-1">
                     <ChatBubbleBottomCenterTextIcon className="w-3.5 h-3.5" strokeWidth={2} aria-hidden="true" />
                     これは医療・診断ではありません。あくまで気づきのきっかけとしてご利用ください。
                   </p>
                   {tokenUsage && (
-                    <span className="text-[10px] text-theme-muted tabular-nums">
+                    <span className="text-xs text-theme-muted tabular-nums">
                       {tokenUsage.totalTokens.toLocaleString()} tokens / ¥{tokenUsage.estimatedCostJPY.toFixed(4)}
                     </span>
                   )}
@@ -680,7 +680,7 @@ export default function MoodJournalMode() {
                       <span className="text-sm font-medium text-theme-primary">{meta.label}</span>
                       <span className="text-xs text-theme-muted tabular-nums">{formatDateTime(e.timestamp)}</span>
                       {typeof e.energy === "number" && (
-                        <span className="text-[11px] text-theme-tertiary">活力 {e.energy}/5</span>
+                        <span className="text-xs text-theme-tertiary">活力 {e.energy}/5</span>
                       )}
                     </div>
                     {e.tags.length > 0 && (
@@ -688,7 +688,7 @@ export default function MoodJournalMode() {
                         {e.tags.map((t) => (
                           <span
                             key={t}
-                            className="px-2 py-0.5 rounded-full bg-theme-surface border border-theme-light text-[11px] text-theme-secondary"
+                            className="px-2 py-0.5 rounded-full bg-theme-surface border border-theme-light text-xs text-theme-secondary"
                           >
                             {t}
                           </span>

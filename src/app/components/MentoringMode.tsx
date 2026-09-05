@@ -412,7 +412,7 @@ export default function MentoringMode() {
                   setMessages([]);
                   localStorage.removeItem(MENTORING_STORAGE_KEY);
                 }}
-                className="text-[11px] text-theme-tertiary hover:text-danger-fg transition-colors cursor-pointer px-2 py-1 rounded border border-theme-border hover:border-danger-line"
+                className="text-xs text-theme-tertiary hover:text-danger-fg transition-colors cursor-pointer px-2 py-1 rounded border border-theme-border hover:border-danger-line"
               >
                 履歴クリア
               </button>
@@ -477,7 +477,7 @@ export default function MentoringMode() {
                       {msg.role === "assistant" && speakingId !== msg.id && (
                         <button
                           onClick={() => speakMessage(msg.id, msg.content)}
-                          className="flex items-center gap-1 text-[10px] text-theme-tertiary hover:text-brand-fg transition-colors cursor-pointer"
+                          className="flex items-center gap-1 text-xs text-theme-tertiary hover:text-brand-fg transition-colors cursor-pointer"
                           title="読み上げ"
                           aria-label="読み上げ"
                         >
@@ -515,7 +515,7 @@ export default function MentoringMode() {
                           <div className="flex items-center gap-0.5 ml-1">
                             {[0.75, 1.0, 1.25, 1.5].map((r) => (
                               <button key={r} onClick={() => changeSpeechRate(r)}
-                                className={`px-1 py-0.5 rounded text-[9px] font-medium transition-colors cursor-pointer ${
+                                className={`px-1 py-0.5 rounded text-xs font-medium transition-colors cursor-pointer ${
                                   speechRate === r ? "bg-brand text-white" : "text-theme-tertiary hover:text-brand-fg"
                                 }`}
                                 title={`${r}x`}
@@ -535,12 +535,12 @@ export default function MentoringMode() {
                             />
                           </div>
                           {/* 進捗 */}
-                          <span className="text-[9px] text-theme-tertiary tabular-nums ml-0.5">
+                          <span className="text-xs text-theme-tertiary tabular-nums ml-0.5">
                             {speechIndex + 1}/{speechSentences.length}
                           </span>
                         </div>
                       )}
-                      <span className={`text-[10px] ${
+                      <span className={`text-xs ${
                         msg.role === "user" ? "text-brand-soft" : "text-theme-tertiary"
                       }`}>
                         {msg.timestamp.toLocaleTimeString("ja-JP", {
@@ -599,7 +599,7 @@ export default function MentoringMode() {
                 disabled={isLoading}
                 rows={2}
               />
-              <span className="absolute right-3 bottom-1.5 text-[10px] text-theme-tertiary pointer-events-none">
+              <span className="absolute right-3 bottom-1.5 text-xs text-theme-tertiary pointer-events-none">
                 {typeof navigator !== "undefined" &&
                 /Mac|iPhone|iPad|iPod/.test(navigator.userAgent)
                   ? "⌘+Enter"

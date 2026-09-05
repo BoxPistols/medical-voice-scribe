@@ -696,7 +696,7 @@ export default function ClockMode() {
               <div className="w-full space-y-1">
                 {/* Current task */}
                 <div className="w-full rounded-lg border border-brand-line bg-brand-soft px-3 py-2 flex items-center gap-2 min-w-0">
-                  <span className="text-[10px] font-bold text-brand-fg shrink-0">NOW</span>
+                  <span className="text-xs font-bold text-brand-fg shrink-0">NOW</span>
                   <span className="flex-1 text-sm font-medium text-theme-primary truncate">{activeTask.title}</span>
                   {activeTask.deadline && activeTaskDeadlineInfo && (
                     <span className={`text-xs font-mono shrink-0 ${
@@ -712,7 +712,7 @@ export default function ClockMode() {
                 {/* Next task */}
                 {nextTask && (
                   <div className="w-full rounded-lg border border-theme-border/50 px-3 py-1.5 flex items-center gap-2 opacity-60 min-w-0">
-                    <span className="text-[10px] font-bold text-theme-tertiary shrink-0">NEXT</span>
+                    <span className="text-xs font-bold text-theme-tertiary shrink-0">NEXT</span>
                     <span className="flex-1 text-xs text-theme-secondary truncate">{nextTask.title}</span>
                     {nextTask.deadline && (
                       <span className="text-xs font-mono text-theme-tertiary shrink-0">{nextTask.deadline}</span>
@@ -802,7 +802,7 @@ export default function ClockMode() {
               >
                 <ListIcon className="w-5 h-5" />
                 {activeTaskCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-brand text-white text-[9px] flex items-center justify-center font-bold leading-none">
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-brand text-white text-xs flex items-center justify-center font-bold leading-none">
                     {activeTaskCount}
                   </span>
                 )}
@@ -890,8 +890,8 @@ export default function ClockMode() {
                           </button>
 
                           {/* NOW / NEXT badge */}
-                          {isActive && <span className="text-[10px] font-bold text-brand-fg shrink-0">NOW</span>}
-                          {isNext   && <span className="text-[10px] font-bold text-theme-tertiary shrink-0">NEXT</span>}
+                          {isActive && <span className="text-xs font-bold text-brand-fg shrink-0">NOW</span>}
+                          {isNext   && <span className="text-xs font-bold text-theme-tertiary shrink-0">NEXT</span>}
 
                           {/* Title */}
                           <span className={`flex-1 truncate text-sm ${task.done ? "line-through text-theme-tertiary" : "text-theme-primary"}`}>
@@ -900,7 +900,7 @@ export default function ClockMode() {
 
                           {/* Deadline badge */}
                           {task.deadline && (
-                            <span className={`text-[11px] font-mono shrink-0 px-1.5 py-0.5 rounded ${
+                            <span className={`text-xs font-mono shrink-0 px-1.5 py-0.5 rounded ${
                               task.done ? "text-theme-tertiary" :
                               !info     ? "text-theme-tertiary" :
                               info.overdue ? "text-danger-fg bg-danger-soft" :

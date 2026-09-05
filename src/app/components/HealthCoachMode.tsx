@@ -535,7 +535,7 @@ export default function HealthCoachMode() {
                 type="button"
                 onClick={() => handleStarter(starter)}
                 disabled={isLoading}
-                className="rounded-full border border-theme-light bg-theme-glass px-3 py-1.5 text-[11px] text-theme-tertiary transition-colors hover:bg-theme-card hover:text-theme-secondary disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand"
+                className="rounded-full border border-theme-light bg-theme-glass px-3 py-1.5 text-xs text-theme-tertiary transition-colors hover:bg-theme-card hover:text-theme-secondary disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand"
               >
                 {starter}
               </button>
@@ -560,7 +560,7 @@ export default function HealthCoachMode() {
               disabled={isLoading}
               className="w-full resize-none rounded-xl border border-theme-light bg-theme-surface px-3 py-2.5 text-sm text-theme-primary placeholder:text-theme-muted focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-60"
             />
-            <p className="mt-1 px-1 text-[10px] text-theme-muted">
+            <p className="mt-1 px-1 text-xs text-theme-muted">
               Enter で送信 ／ Shift+Enter で改行。これは医療上の診断ではなく、一般的なセルフケアの情報です。
             </p>
           </div>
@@ -594,7 +594,7 @@ function ChatBubble({ message }: { message: CoachMessage }) {
           <div className="rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-sm text-white whitespace-pre-wrap break-words">
             {message.content}
           </div>
-          <div className="mt-1 text-right text-[10px] text-theme-muted">{time}</div>
+          <div className="mt-1 text-right text-xs text-theme-muted">{time}</div>
         </div>
       </div>
     );
@@ -633,7 +633,7 @@ function ChatBubble({ message }: { message: CoachMessage }) {
           )}
           {message.content}
         </div>
-        <div className="mt-1 text-left text-[10px] text-theme-muted">{time}</div>
+        <div className="mt-1 text-left text-xs text-theme-muted">{time}</div>
       </div>
     </div>
   );

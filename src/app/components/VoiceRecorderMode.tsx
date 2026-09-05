@@ -670,7 +670,7 @@ export default function VoiceRecorderMode() {
               <select
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-                className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-3 pr-7 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-info"
+                className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-3 pr-7 py-1.5 text-xs text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-info"
                 aria-label="AIモデル選択"
               >
                 {AVAILABLE_MODELS.map((model) => (
@@ -685,7 +685,7 @@ export default function VoiceRecorderMode() {
 
           {/* Token usage */}
           {tokenUsage && (
-            <div className="mt-2 text-[10px] text-theme-muted">
+            <div className="mt-2 text-xs text-theme-muted">
               Token: {tokenUsage.totalTokens.toLocaleString()} |
               ¥{tokenUsage.estimatedCostJPY.toFixed(4)}
             </div>
@@ -713,7 +713,7 @@ export default function VoiceRecorderMode() {
               <select
                 value={historyCategory}
                 onChange={(e) => setHistoryCategory(e.target.value as VoiceCategory | "")}
-                className="text-[11px] bg-theme-card border border-theme-border rounded-md px-2 py-1 text-theme-tertiary"
+                className="text-xs bg-theme-card border border-theme-border rounded-md px-2 py-1 text-theme-tertiary"
               >
                 <option value="">全カテゴリ</option>
                 {VOICE_CATEGORIES.map((c) => (
@@ -726,7 +726,7 @@ export default function VoiceRecorderMode() {
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
                 placeholder="検索..."
-                className="text-[11px] bg-theme-card border border-theme-border rounded-md px-2 py-1 text-theme-primary placeholder:text-theme-muted w-32"
+                className="text-xs bg-theme-card border border-theme-border rounded-md px-2 py-1 text-theme-primary placeholder:text-theme-muted w-32"
               />
               <button
                 onClick={() => setShowHistory(false)}
@@ -752,14 +752,14 @@ export default function VoiceRecorderMode() {
                       }, 100);
                     }}
                   >
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-theme-surface text-theme-tertiary border border-theme-border">
+                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-theme-surface text-theme-tertiary border border-theme-border">
                       {VOICE_CATEGORIES.find((c) => c.value === g.category)?.label ?? "メモ"}
                     </span>
                     <span className="text-xs font-medium text-theme-primary truncate">{g.label}</span>
-                    <span className="text-[10px] text-theme-muted font-mono ml-1">
+                    <span className="text-xs text-theme-muted font-mono ml-1">
                       {g.createdAt.toLocaleDateString("ja-JP")}
                     </span>
-                    <span className="text-[10px] text-theme-muted truncate ml-auto max-w-48">
+                    <span className="text-xs text-theme-muted truncate ml-auto max-w-48">
                       {g.text.slice(0, 40)}...
                     </span>
                   </div>
@@ -833,7 +833,7 @@ export default function VoiceRecorderMode() {
                   </span>
 
                   {/* Timestamp */}
-                  <span className="text-[11px] text-theme-muted font-mono ml-1">
+                  <span className="text-xs text-theme-muted font-mono ml-1">
                     {formatTimestamp(group.createdAt)}
                   </span>
 
@@ -847,17 +847,17 @@ export default function VoiceRecorderMode() {
                   {/* Result badges */}
                   <div className="flex items-center gap-1 ml-auto flex-shrink-0">
                     {orgResult && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-info-soft text-info-fg">
+                      <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-info-soft text-info-fg">
                         整理済
                       </span>
                     )}
                     {chatResult && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-brand-soft text-brand-fg">
+                      <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-brand-soft text-brand-fg">
                         整形済
                       </span>
                     )}
                     {sumResult && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-info-soft text-info-fg">
+                      <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-info-soft text-info-fg">
                         要約済
                       </span>
                     )}
@@ -894,7 +894,7 @@ export default function VoiceRecorderMode() {
                           updateCategory(group.id, e.target.value as VoiceCategory);
                         }}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-[11px] bg-theme-surface border border-theme-border rounded-md px-2 py-1 text-theme-tertiary"
+                        className="text-xs bg-theme-surface border border-theme-border rounded-md px-2 py-1 text-theme-tertiary"
                       >
                         {VOICE_CATEGORIES.map((c) => (
                           <option key={c.value} value={c.value}>{c.label}</option>
@@ -905,7 +905,7 @@ export default function VoiceRecorderMode() {
                     {/* Original text */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-medium text-theme-tertiary">
+                        <span className="text-xs font-medium text-theme-tertiary">
                           原文 ({group.text.length}文字)
                         </span>
                         <div className="flex items-center gap-1">
@@ -1037,7 +1037,7 @@ export default function VoiceRecorderMode() {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => applyOrganized(group.id)}
-                              className="px-2 py-1 rounded text-[10px] font-medium bg-info text-white hover:bg-info-strong transition-all"
+                              className="px-2 py-1 rounded text-xs font-medium bg-info text-white hover:bg-info-strong transition-all"
                               title="整理結果を原文に適用"
                             >
                               適用
@@ -1058,7 +1058,7 @@ export default function VoiceRecorderMode() {
                           {orgResult.formatted}
                         </div>
                         {orgResult.changes.length > 0 && (
-                          <div className="text-[11px] text-info-fg">
+                          <div className="text-xs text-info-fg">
                             変更点: {orgResult.changes.join("、")}
                           </div>
                         )}
@@ -1094,7 +1094,7 @@ export default function VoiceRecorderMode() {
                           {chatResult.formatted}
                         </div>
                         {chatResult.changes.length > 0 && (
-                          <div className="text-[11px] text-brand-fg">
+                          <div className="text-xs text-brand-fg">
                             変更点: {chatResult.changes.join("、")}
                           </div>
                         )}
@@ -1132,7 +1132,7 @@ export default function VoiceRecorderMode() {
                         {/* Key points */}
                         {sumResult.keyPoints.length > 0 && (
                           <div>
-                            <div className="text-[11px] font-medium text-info-fg mb-1">要点</div>
+                            <div className="text-xs font-medium text-info-fg mb-1">要点</div>
                             <ul className="space-y-0.5">
                               {sumResult.keyPoints.map((p, i) => (
                                 <li key={i} className="text-xs text-theme-secondary flex gap-1.5">
@@ -1146,7 +1146,7 @@ export default function VoiceRecorderMode() {
                         {/* Action items */}
                         {sumResult.actionItems.length > 0 && (
                           <div>
-                            <div className="text-[11px] font-medium text-info-fg mb-1">
+                            <div className="text-xs font-medium text-info-fg mb-1">
                               アクションアイテム
                             </div>
                             <ul className="space-y-0.5">
@@ -1165,7 +1165,7 @@ export default function VoiceRecorderMode() {
                             {sumResult.keywords.map((kw, i) => (
                               <span
                                 key={i}
-                                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-info-soft text-info-fg"
+                                className="px-2 py-0.5 rounded-full text-xs font-medium bg-info-soft text-info-fg"
                               >
                                 {kw}
                               </span>

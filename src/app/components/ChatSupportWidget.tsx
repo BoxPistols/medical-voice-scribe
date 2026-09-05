@@ -619,7 +619,7 @@ export default function ChatSupportWidget({
               <span className="font-semibold">診療サポート</span>
             </div>
             <div className="flex items-center gap-3 ml-auto">
-              <div className="flex items-center gap-1 text-[10px] opacity-80">
+              <div className="flex items-center gap-1 text-xs opacity-80">
                 {isRecording && (
                   <span className="flex items-center gap-1 text-danger-fg">
                     <span className="w-2 h-2 bg-danger rounded-full animate-pulse" />
