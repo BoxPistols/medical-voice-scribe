@@ -2,6 +2,7 @@
 // localStorage ベースでセッション（診察記録・メモ等）を永続化する
 
 import type { SoapNote, ChatMessage, TokenUsage } from "@/app/api/analyze/types";
+import { SAMPLE_INTERVIEWS } from "./sampleInterviews";
 
 // ── 型定義 ──────────────────────────────────────────────────────────────
 
@@ -18,6 +19,8 @@ export interface RecordSession {
   soapNote: SoapNote | null;
   chatHistory: ChatMessage[];
   tokenUsage: TokenUsage | null;
+  /** 初期投入したサンプル。一覧で「例」と表示し、復元の対象になる */
+  isSample?: boolean;
 }
 
 export interface RecordStore {
@@ -58,6 +61,64 @@ export function createEmptySession(
   };
 }
 
+// ── サンプル・初期化 ──────────────────────────────────────────────────────
+
+/** 初回起動時に投入するサンプルセッション。使い方が分かるよう3カテゴリに1件以上置く */
+export function createSampleSessions(): RecordSession[] {
+  const base = Date.now();
+  // 一覧が「新しい順」なので、先頭に置きたいものほどupdatedAtを新しくする
+  const at = (minutesAgo: number) => new Date(base - minutesAgo * 60_000).toISOString();
+  const interview = (id: string) => SAMPLE_INTERVIEWS.find((s) => s.id === id)?.text ?? "";
+
+  const mk = (
+    overrides: Partial<RecordSession> & Pick<RecordSession, "label" | "category">,
+    minutesAgo: number,
+  ): RecordSession => ({
+    ...createEmptySession(overrides.category, overrides.label),
+    createdAt: at(minutesAgo),
+    updatedAt: at(minutesAgo),
+    isSample: true,
+    ...overrides,
+  });
+
+  return [
+    mk({ label: "例: 内科 頭痛・倦怠感", category: "medical", patientTag: "患者A", transcript: interview("naika") }, 5),
+    mk({ label: "例: 整形外科 腰痛", category: "medical", patientTag: "患者B", transcript: interview("seikei") }, 60),
+    mk({ label: "例: 小児科 発熱・咳", category: "medical", patientTag: "患者C", transcript: interview("shouni") }, 180),
+    mk({
+      label: "例: 日常の体調メモ",
+      category: "daily",
+      transcript: "朝から軽い頭痛。睡眠5時間。コーヒー2杯。昼過ぎに改善。夕方に肩こりあり、ストレッチで少し楽になった。",
+    }, 24 * 60),
+    mk({
+      label: "例: 次回確認したいこと",
+      category: "memo",
+      transcript: "・血圧手帳を持参する\n・処方薬の飲み忘れが週2回あった\n・健診の結果票を見せる",
+    }, 2 * 24 * 60),
+  ];
+}
+
+/** 初期状態のストア。サンプルを投入し、先頭をアクティブにする */
+export function createInitialStore(): RecordStore {
+  const sessions = createSampleSessions();
+  return { version: STORE_VERSION, activeSessionId: sessions[0]?.id ?? null, sessions };
+}
+
+/** すべての記録を消し、空のセッション1件だけにする */
+export function clearAllSessions(): RecordStore {
+  const empty = createEmptySession("medical");
+  const store: RecordStore = { version: STORE_VERSION, activeSessionId: empty.id, sessions: [empty] };
+  saveStore(store);
+  return store;
+}
+
+/** 初期状態（サンプル入り）に戻す。ユーザーの記録はすべて消える */
+export function resetToInitialStore(): RecordStore {
+  const store = createInitialStore();
+  saveStore(store);
+  return store;
+}
+
 // ── ストア読み書き ──────────────────────────────────────────────────────
 
 /** ストア全体を読み込む。存在しなければ初期状態を返す */
@@ -67,7 +128,8 @@ export function loadStore(): RecordStore {
   }
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return { version: STORE_VERSION, activeSessionId: null, sessions: [] };
+    // 初回起動: サンプル入りの初期ストアを返す（保存は最初の操作時に行われる）
+    if (!raw) return createInitialStore();
     const parsed = JSON.parse(raw) as RecordStore;
     // バージョンマイグレーション（将来用）
     if (!parsed.version || parsed.version < STORE_VERSION) {

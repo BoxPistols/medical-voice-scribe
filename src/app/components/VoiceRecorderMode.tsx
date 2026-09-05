@@ -573,8 +573,8 @@ export default function VoiceRecorderMode() {
               onClick={isRecording ? stopRecording : startRecording}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm ${
                 isRecording
-                  ? "bg-red-500 hover:bg-red-600 text-white"
-                  : "bg-teal-500 hover:bg-teal-600 text-white"
+                  ? "bg-danger hover:bg-danger-strong text-white"
+                  : "bg-brand hover:bg-brand-strong text-white"
               }`}
             >
               {isRecording ? (
@@ -599,7 +599,7 @@ export default function VoiceRecorderMode() {
                 onClick={() => setFormatMode("organize")}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   formatMode === "organize"
-                    ? "bg-blue-500 text-white shadow-sm"
+                    ? "bg-info text-white shadow-sm"
                     : "text-theme-tertiary hover:text-theme-secondary"
                 }`}
               >
@@ -609,7 +609,7 @@ export default function VoiceRecorderMode() {
                 onClick={() => setFormatMode("chat-reformat")}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   formatMode === "chat-reformat"
-                    ? "bg-teal-500 text-white shadow-sm"
+                    ? "bg-brand text-white shadow-sm"
                     : "text-theme-tertiary hover:text-theme-secondary"
                 }`}
               >
@@ -619,7 +619,7 @@ export default function VoiceRecorderMode() {
                 onClick={() => setFormatMode("summarize")}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   formatMode === "summarize"
-                    ? "bg-purple-500 text-white shadow-sm"
+                    ? "bg-info text-white shadow-sm"
                     : "text-theme-tertiary hover:text-theme-secondary"
                 }`}
               >
@@ -643,7 +643,7 @@ export default function VoiceRecorderMode() {
             {canMerge && (
               <button
                 onClick={mergeSelected}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900 transition-all"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-warning-soft border border-warning-line text-warning-fg hover:bg-warning-soft transition-all"
               >
                 <ArrowsPointingInIcon className="w-3.5 h-3.5" />
                 選択を結合 ({selectedIds.size})
@@ -656,7 +656,7 @@ export default function VoiceRecorderMode() {
                 onClick={() => setShowHistory((v) => !v)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
                   showHistory
-                    ? "bg-teal-50 dark:bg-teal-950 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300"
+                    ? "bg-brand-soft border-brand-line text-brand-fg"
                     : "bg-theme-card border-theme-border text-theme-secondary hover:bg-theme-surface"
                 }`}
               >
@@ -670,7 +670,7 @@ export default function VoiceRecorderMode() {
               <select
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-                className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-3 pr-7 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-3 pr-7 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-info"
                 aria-label="AIモデル選択"
               >
                 {AVAILABLE_MODELS.map((model) => (
@@ -695,9 +695,9 @@ export default function VoiceRecorderMode() {
 
       {/* Error */}
       {aiError && (
-        <div className="mx-4 mt-3 px-4 py-2.5 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm flex items-center justify-between">
+        <div className="mx-4 mt-3 px-4 py-2.5 rounded-lg bg-danger-soft border border-danger-line text-danger-fg text-sm flex items-center justify-between">
           <span>{aiError}</span>
-          <button onClick={() => setAiError(null)} className="ml-2 text-red-400 hover:text-red-500">
+          <button onClick={() => setAiError(null)} className="ml-2 text-danger-fg hover:text-danger-fg">
             &times;
           </button>
         </div>
@@ -801,9 +801,9 @@ export default function VoiceRecorderMode() {
                 id={`voice-group-${group.id}`}
                 className={`rounded-xl border transition-all ${
                   isSelected
-                    ? "border-teal-400 dark:border-teal-600 bg-teal-50/50 dark:bg-teal-950/30 shadow-md"
+                    ? "border-brand bg-brand-soft shadow-md"
                     : "border-theme-border bg-theme-card shadow-sm"
-                } ${group.isRecording ? "ring-2 ring-red-400 ring-opacity-50" : ""}`}
+                } ${group.isRecording ? "ring-2 ring-danger ring-opacity-50" : ""}`}
               >
                 {/* Group header */}
                 <div
@@ -819,12 +819,12 @@ export default function VoiceRecorderMode() {
                       toggleSelect(group.id);
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="w-4 h-4 rounded accent-teal-500 flex-shrink-0"
+                    className="w-4 h-4 rounded accent-brand flex-shrink-0"
                   />
 
                   {/* Recording indicator */}
                   {group.isRecording && (
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+                    <span className="w-2 h-2 rounded-full bg-danger animate-pulse flex-shrink-0" />
                   )}
 
                   {/* Label */}
@@ -847,22 +847,22 @@ export default function VoiceRecorderMode() {
                   {/* Result badges */}
                   <div className="flex items-center gap-1 ml-auto flex-shrink-0">
                     {orgResult && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-info-soft text-info-fg">
                         整理済
                       </span>
                     )}
                     {chatResult && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-100 dark:bg-teal-900 text-teal-600 dark:text-teal-300">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-brand-soft text-brand-fg">
                         整形済
                       </span>
                     )}
                     {sumResult && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-info-soft text-info-fg">
                         要約済
                       </span>
                     )}
                     {isProcessing && (
-                      <ArrowPathIcon className="w-3.5 h-3.5 text-teal-500 animate-spin" />
+                      <ArrowPathIcon className="w-3.5 h-3.5 text-brand-fg animate-spin" />
                     )}
                   </div>
 
@@ -915,7 +915,7 @@ export default function VoiceRecorderMode() {
                             title="コピー"
                           >
                             {copiedId === `orig-${group.id}` ? (
-                              <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />
+                              <CheckCircleIcon className="w-3.5 h-3.5 text-success-fg" />
                             ) : (
                               <ClipboardDocumentIcon className="w-5 h-5" />
                             )}
@@ -939,7 +939,7 @@ export default function VoiceRecorderMode() {
                         <button
                           onClick={() => formatGroup(group.id, "organize")}
                           disabled={isProcessing}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 disabled:opacity-50 transition-all"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-info-soft border border-info-line text-info-fg hover:bg-info-soft disabled:opacity-50 transition-all"
                         >
                           <DocumentTextIcon className="w-3.5 h-3.5" />
                           整理
@@ -947,7 +947,7 @@ export default function VoiceRecorderMode() {
                         <button
                           onClick={() => formatGroup(group.id, "summarize")}
                           disabled={isProcessing}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900 disabled:opacity-50 transition-all"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-info-soft border border-info-line text-info-fg hover:bg-info-soft disabled:opacity-50 transition-all"
                         >
                           <SparklesIcon className="w-3.5 h-3.5" />
                           要約
@@ -955,7 +955,7 @@ export default function VoiceRecorderMode() {
                         <button
                           onClick={() => formatGroup(group.id, "chat-reformat")}
                           disabled={isProcessing}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900 disabled:opacity-50 transition-all"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-soft border border-brand-line text-brand-fg hover:bg-brand-soft disabled:opacity-50 transition-all"
                         >
                           <ClipboardDocumentIcon className="w-3.5 h-3.5" />
                           伝わる文に整形
@@ -972,7 +972,7 @@ export default function VoiceRecorderMode() {
                         </button>
                         <button
                           onClick={() => deleteGroup(group.id)}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-all ml-auto"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-danger-fg hover:bg-danger-soft transition-all ml-auto"
                         >
                           <TrashIcon className="w-3.5 h-3.5" />
                           削除
@@ -992,7 +992,7 @@ export default function VoiceRecorderMode() {
                           max={group.text.length - 1}
                           value={splitPosition}
                           onChange={(e) => setSplitPosition(Number(e.target.value))}
-                          className="w-full accent-teal-500"
+                          className="w-full accent-brand"
                         />
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className="bg-theme-card p-2 rounded border border-theme-border">
@@ -1013,7 +1013,7 @@ export default function VoiceRecorderMode() {
                         <div className="flex gap-2">
                           <button
                             onClick={confirmSplit}
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-500 text-white hover:bg-teal-600 transition-all"
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-brand text-white hover:bg-brand-strong transition-all"
                           >
                             分割実行
                           </button>
@@ -1029,27 +1029,27 @@ export default function VoiceRecorderMode() {
 
                     {/* Organize result */}
                     {orgResult && (
-                      <div className="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-3 border border-blue-200 dark:border-blue-800 space-y-2">
+                      <div className="bg-info-soft rounded-lg p-3 border border-info-line space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-blue-600 dark:text-blue-300">
+                          <span className="text-xs font-bold text-info-fg">
                             整理結果
                           </span>
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => applyOrganized(group.id)}
-                              className="px-2 py-1 rounded text-[10px] font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all"
+                              className="px-2 py-1 rounded text-[10px] font-medium bg-info text-white hover:bg-info-strong transition-all"
                               title="整理結果を原文に適用"
                             >
                               適用
                             </button>
                             <button
                               onClick={() => copyText(orgResult.formatted, `org-${group.id}`)}
-                              className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900"
+                              className="p-1 rounded hover:bg-info-soft"
                             >
                               {copiedId === `org-${group.id}` ? (
-                                <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />
+                                <CheckCircleIcon className="w-3.5 h-3.5 text-success-fg" />
                               ) : (
-                                <ClipboardDocumentIcon className="w-5 h-5 text-blue-400" />
+                                <ClipboardDocumentIcon className="w-5 h-5 text-info-fg" />
                               )}
                             </button>
                           </div>
@@ -1058,7 +1058,7 @@ export default function VoiceRecorderMode() {
                           {orgResult.formatted}
                         </div>
                         {orgResult.changes.length > 0 && (
-                          <div className="text-[11px] text-blue-500 dark:text-blue-400">
+                          <div className="text-[11px] text-info-fg">
                             変更点: {orgResult.changes.join("、")}
                           </div>
                         )}
@@ -1068,14 +1068,14 @@ export default function VoiceRecorderMode() {
 
                     {/* Chat reformat result */}
                     {chatResult && (
-                      <div className="bg-teal-50 dark:bg-teal-950/50 rounded-lg p-3 border border-teal-200 dark:border-teal-800 space-y-2">
+                      <div className="bg-brand-soft rounded-lg p-3 border border-brand-line space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-teal-600 dark:text-teal-300">
+                          <span className="text-xs font-bold text-brand-fg">
                             整形結果
                           </span>
                           <button
                             onClick={() => copyText(chatResult.formatted, `chat-${group.id}`)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-500 text-white hover:bg-teal-600 transition-all shadow-sm"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-brand text-white hover:bg-brand-strong transition-all shadow-sm"
                           >
                             {copiedId === `chat-${group.id}` ? (
                               <>
@@ -1090,11 +1090,11 @@ export default function VoiceRecorderMode() {
                             )}
                           </button>
                         </div>
-                        <div className="text-sm text-theme-primary whitespace-pre-wrap bg-white dark:bg-gray-900 rounded-lg p-3 border border-teal-100 dark:border-teal-900">
+                        <div className="text-sm text-theme-primary whitespace-pre-wrap bg-white bg-surface-raised rounded-lg p-3 border border-brand-line">
                           {chatResult.formatted}
                         </div>
                         {chatResult.changes.length > 0 && (
-                          <div className="text-[11px] text-teal-500 dark:text-teal-400">
+                          <div className="text-[11px] text-brand-fg">
                             変更点: {chatResult.changes.join("、")}
                           </div>
                         )}
@@ -1102,9 +1102,9 @@ export default function VoiceRecorderMode() {
                     )}
                     {/* Summarize result */}
                     {sumResult && (
-                      <div className="bg-purple-50 dark:bg-purple-950/50 rounded-lg p-3 border border-purple-200 dark:border-purple-800 space-y-2">
+                      <div className="bg-info-soft rounded-lg p-3 border border-info-line space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-purple-600 dark:text-purple-300">
+                          <span className="text-xs font-bold text-info-fg">
                             要約結果
                           </span>
                           <button
@@ -1118,12 +1118,12 @@ export default function VoiceRecorderMode() {
                                 `sum-${group.id}`
                               )
                             }
-                            className="p-1 rounded hover:bg-purple-100 dark:hover:bg-purple-900"
+                            className="p-1 rounded hover:bg-info-soft"
                           >
                             {copiedId === `sum-${group.id}` ? (
-                              <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />
+                              <CheckCircleIcon className="w-3.5 h-3.5 text-success-fg" />
                             ) : (
-                              <ClipboardDocumentIcon className="w-5 h-5 text-purple-400" />
+                              <ClipboardDocumentIcon className="w-5 h-5 text-info-fg" />
                             )}
                           </button>
                         </div>
@@ -1132,11 +1132,11 @@ export default function VoiceRecorderMode() {
                         {/* Key points */}
                         {sumResult.keyPoints.length > 0 && (
                           <div>
-                            <div className="text-[11px] font-medium text-purple-500 mb-1">要点</div>
+                            <div className="text-[11px] font-medium text-info-fg mb-1">要点</div>
                             <ul className="space-y-0.5">
                               {sumResult.keyPoints.map((p, i) => (
                                 <li key={i} className="text-xs text-theme-secondary flex gap-1.5">
-                                  <span className="text-purple-400 flex-shrink-0">•</span>
+                                  <span className="text-info-fg flex-shrink-0">•</span>
                                   {p}
                                 </li>
                               ))}
@@ -1146,13 +1146,13 @@ export default function VoiceRecorderMode() {
                         {/* Action items */}
                         {sumResult.actionItems.length > 0 && (
                           <div>
-                            <div className="text-[11px] font-medium text-purple-500 mb-1">
+                            <div className="text-[11px] font-medium text-info-fg mb-1">
                               アクションアイテム
                             </div>
                             <ul className="space-y-0.5">
                               {sumResult.actionItems.map((a, i) => (
                                 <li key={i} className="text-xs text-theme-secondary flex gap-1.5">
-                                  <span className="text-amber-500 flex-shrink-0">▸</span>
+                                  <span className="text-warning-fg flex-shrink-0">▸</span>
                                   {a}
                                 </li>
                               ))}
@@ -1165,7 +1165,7 @@ export default function VoiceRecorderMode() {
                             {sumResult.keywords.map((kw, i) => (
                               <span
                                 key={i}
-                                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300"
+                                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-info-soft text-info-fg"
                               >
                                 {kw}
                               </span>

@@ -10,10 +10,10 @@ export default function PatientInfoCard({
   if (!chiefComplaint && !duration) return null;
 
   return (
-    <div className="p-6 shadow-sm border-l-4 border-blue-600 dark:border-blue-500">
+    <div className="p-6 shadow-sm border-l-4 border-info">
       <div className="flex items-center gap-2 mb-3">
         <svg
-          className="w-5 h-5 text-blue-600 dark:text-blue-500"
+          className="w-5 h-5 text-info-fg"
           fill="currentColor"
           viewBox="0 0 20 20"
           aria-hidden="true"

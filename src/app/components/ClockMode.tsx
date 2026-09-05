@@ -566,7 +566,7 @@ export default function ClockMode() {
   const tabBtn = (active: boolean) =>
     `flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
       active
-        ? "bg-teal-500 text-white shadow-md"
+        ? "bg-brand text-white shadow-md"
         : "text-theme-tertiary hover:text-theme-secondary hover:bg-theme-card border border-theme-border"
     }`;
 
@@ -605,7 +605,7 @@ export default function ClockMode() {
               </div>
             )}
             {!show24h && (
-              <div className="text-2xl sm:text-3xl md:text-4xl text-teal-500 font-bold mb-2">{ampm()}</div>
+              <div className="text-2xl sm:text-3xl md:text-4xl text-brand-fg font-bold mb-2">{ampm()}</div>
             )}
             <time
               className="text-7xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-bold text-theme-primary font-mono tabular-nums leading-none tracking-tight"
@@ -621,7 +621,7 @@ export default function ClockMode() {
                 { label: "日付を表示", val: showDate,     set: setShowDate },
               ].map(({ label, val, set }) => (
                 <label key={label} className="flex items-center gap-2 text-sm text-theme-tertiary cursor-pointer">
-                  <input type="checkbox" checked={val} onChange={(e) => set(e.target.checked)} className="w-4 h-4 rounded accent-teal-500" />
+                  <input type="checkbox" checked={val} onChange={(e) => set(e.target.checked)} className="w-4 h-4 rounded accent-brand" />
                   {label}
                 </label>
               ))}
@@ -637,11 +637,11 @@ export default function ClockMode() {
             </div>
             <div className="flex items-center gap-4 mt-8">
               {!swRunning ? (
-                <button onClick={handleSwStart} className="px-8 py-3 rounded-xl bg-teal-500 text-white font-bold text-lg hover:bg-teal-600 transition-colors shadow-lg">
+                <button onClick={handleSwStart} className="px-8 py-3 rounded-xl bg-brand text-white font-bold text-lg hover:bg-brand-strong transition-colors shadow-lg">
                   {swElapsed > 0 ? "再開" : "スタート"}
                 </button>
               ) : (
-                <button onClick={handleSwStop} className="px-8 py-3 rounded-xl bg-zinc-600 dark:bg-zinc-500 text-white font-bold text-lg hover:bg-zinc-700 dark:hover:bg-zinc-400 transition-colors shadow-lg">
+                <button onClick={handleSwStop} className="px-8 py-3 rounded-xl bg-surface-raised text-white font-bold text-lg hover:bg-surface-raised transition-colors shadow-lg">
                   ストップ
                 </button>
               )}
@@ -682,7 +682,7 @@ export default function ClockMode() {
                 <div
                   key={i}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    i < pomCount % 4 ? "bg-teal-500 scale-110" : "bg-theme-border"
+                    i < pomCount % 4 ? "bg-brand scale-110" : "bg-theme-border"
                   }`}
                 />
               ))}
@@ -695,14 +695,14 @@ export default function ClockMode() {
             {activeTask ? (
               <div className="w-full space-y-1">
                 {/* Current task */}
-                <div className="w-full rounded-lg border border-teal-400/70 bg-teal-50/60 dark:bg-teal-900/20 px-3 py-2 flex items-center gap-2 min-w-0">
-                  <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 shrink-0">NOW</span>
+                <div className="w-full rounded-lg border border-brand-line bg-brand-soft px-3 py-2 flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] font-bold text-brand-fg shrink-0">NOW</span>
                   <span className="flex-1 text-sm font-medium text-theme-primary truncate">{activeTask.title}</span>
                   {activeTask.deadline && activeTaskDeadlineInfo && (
                     <span className={`text-xs font-mono shrink-0 ${
-                      activeTaskDeadlineInfo.overdue ? "text-red-600 dark:text-red-400" :
-                      activeTaskDeadlineInfo.urgent  ? "text-red-500 dark:text-red-400" :
-                      activeTaskDeadlineInfo.warning ? "text-yellow-600 dark:text-yellow-400" :
+                      activeTaskDeadlineInfo.overdue ? "text-danger-fg" :
+                      activeTaskDeadlineInfo.urgent  ? "text-danger-fg" :
+                      activeTaskDeadlineInfo.warning ? "text-warning-fg" :
                       "text-theme-tertiary"
                     }`}>
                       {activeTask.deadline} · {activeTaskDeadlineInfo.label}
@@ -727,7 +727,7 @@ export default function ClockMode() {
                 onChange={(e) => setPomFocus(e.target.value)}
                 placeholder="今セッションのテーマを入力…"
                 maxLength={60}
-                className="w-full rounded-lg border border-theme-border bg-theme-card px-3 py-2 text-sm text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-2 focus:ring-teal-500 text-center"
+                className="w-full rounded-lg border border-theme-border bg-theme-card px-3 py-2 text-sm text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-2 focus:ring-brand text-center"
               />
             )}
 
@@ -769,7 +769,7 @@ export default function ClockMode() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handlePomToggle}
-                className="px-8 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold text-lg shadow-lg transition-all active:scale-95"
+                className="px-8 py-3 rounded-xl bg-brand hover:bg-brand-strong text-white font-bold text-lg shadow-lg transition-all active:scale-95"
               >
                 {pomRunning ? "一時停止" : pomTimeLeft === 0 ? "次へ" : "スタート"}
               </button>
@@ -796,13 +796,13 @@ export default function ClockMode() {
                 aria-expanded={showTaskPanel}
                 className={`relative w-12 h-12 rounded-xl border transition-colors flex items-center justify-center ${
                   showTaskPanel
-                    ? "border-teal-400 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
+                    ? "border-brand bg-brand-soft text-brand-fg"
                     : "border-theme-border text-theme-secondary hover:bg-theme-card"
                 }`}
               >
                 <ListIcon className="w-5 h-5" />
                 {activeTaskCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-teal-500 text-white text-[9px] flex items-center justify-center font-bold leading-none">
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-brand text-white text-[9px] flex items-center justify-center font-bold leading-none">
                     {activeTaskCount}
                   </span>
                 )}
@@ -814,7 +814,7 @@ export default function ClockMode() {
                 aria-expanded={showSettings}
                 className={`w-12 h-12 rounded-xl border transition-colors flex items-center justify-center ${
                   showSettings
-                    ? "border-teal-400 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
+                    ? "border-brand bg-brand-soft text-brand-fg"
                     : "border-theme-border text-theme-secondary hover:bg-theme-card"
                 }`}
               >
@@ -837,18 +837,18 @@ export default function ClockMode() {
                       onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
                       placeholder="タスク名"
                       maxLength={40}
-                      className="flex-1 min-w-0 rounded-lg border border-theme-border bg-theme-bg px-2.5 py-1.5 text-sm text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      className="flex-1 min-w-0 rounded-lg border border-theme-border bg-theme-bg px-2.5 py-1.5 text-sm text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-1 focus:ring-brand"
                     />
                     <input
                       type="time"
                       value={newTaskDeadline}
                       onChange={(e) => setNewTaskDeadline(e.target.value)}
-                      className="w-[5.5rem] shrink-0 rounded-lg border border-theme-border bg-theme-bg px-2 py-1.5 text-sm text-theme-primary focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      className="w-[5.5rem] shrink-0 rounded-lg border border-theme-border bg-theme-bg px-2 py-1.5 text-sm text-theme-primary focus:outline-none focus:ring-1 focus:ring-brand"
                     />
                     <button
                       onClick={handleAddTask}
                       disabled={!newTaskTitle.trim()}
-                      className="shrink-0 px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+                      className="shrink-0 px-3 py-1.5 rounded-lg bg-brand hover:bg-brand-strong disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
                     >
                       追加
                     </button>
@@ -868,7 +868,7 @@ export default function ClockMode() {
                           key={task.id}
                           className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
                             task.done  ? "border-theme-border/40 opacity-50" :
-                            isActive   ? "border-teal-400 bg-teal-50/50 dark:bg-teal-900/20" :
+                            isActive   ? "border-brand bg-brand-soft" :
                             "border-theme-border"
                           }`}
                         >
@@ -877,8 +877,8 @@ export default function ClockMode() {
                             onClick={() => handleToggleTask(task.id)}
                             className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                               task.done
-                                ? "border-teal-500 bg-teal-500 text-white hover:bg-teal-400"
-                                : "border-theme-border hover:border-teal-400"
+                                ? "border-brand bg-brand text-white hover:bg-brand"
+                                : "border-theme-border hover:border-brand"
                             }`}
                             title={task.done ? "未完了に戻す" : "完了にする"}
                           >
@@ -890,7 +890,7 @@ export default function ClockMode() {
                           </button>
 
                           {/* NOW / NEXT badge */}
-                          {isActive && <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 shrink-0">NOW</span>}
+                          {isActive && <span className="text-[10px] font-bold text-brand-fg shrink-0">NOW</span>}
                           {isNext   && <span className="text-[10px] font-bold text-theme-tertiary shrink-0">NEXT</span>}
 
                           {/* Title */}
@@ -903,9 +903,9 @@ export default function ClockMode() {
                             <span className={`text-[11px] font-mono shrink-0 px-1.5 py-0.5 rounded ${
                               task.done ? "text-theme-tertiary" :
                               !info     ? "text-theme-tertiary" :
-                              info.overdue ? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30" :
-                              info.urgent  ? "text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20" :
-                              info.warning ? "text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20" :
+                              info.overdue ? "text-danger-fg bg-danger-soft" :
+                              info.urgent  ? "text-danger-fg bg-danger-soft" :
+                              info.warning ? "text-warning-fg bg-warning-soft" :
                               "text-theme-tertiary"
                             }`}>
                               {task.deadline}
@@ -916,7 +916,7 @@ export default function ClockMode() {
                           {/* Delete */}
                           <button
                             onClick={() => handleDeleteTask(task.id)}
-                            className="shrink-0 w-5 h-5 flex items-center justify-center text-theme-tertiary hover:text-red-500 transition-colors"
+                            className="shrink-0 w-5 h-5 flex items-center justify-center text-theme-tertiary hover:text-danger-fg transition-colors"
                             title="削除"
                           >
                             <TrashIcon className="w-3.5 h-3.5" />
@@ -949,7 +949,7 @@ export default function ClockMode() {
                           onClick={() => handleSetWorkMin(min)}
                           className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                             pomWorkMin === min
-                              ? "bg-teal-500 text-white"
+                              ? "bg-brand text-white"
                               : "border border-theme-border text-theme-tertiary hover:bg-theme-bg"
                           }`}
                         >
@@ -969,7 +969,7 @@ export default function ClockMode() {
                           onClick={() => handleSetBreakMin(min)}
                           className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                             pomBreakMin === min
-                              ? "bg-teal-500 text-white"
+                              ? "bg-brand text-white"
                               : "border border-theme-border text-theme-tertiary hover:bg-theme-bg"
                           }`}
                         >
@@ -997,7 +997,7 @@ export default function ClockMode() {
                         onClick={() => set(!val)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                           val
-                            ? "bg-teal-50 dark:bg-teal-900/40 border-teal-400 text-teal-700 dark:text-teal-300"
+                            ? "bg-brand-soft border-brand text-brand-fg"
                             : "border-theme-border text-theme-tertiary hover:bg-theme-bg"
                         }`}
                       >
@@ -1017,7 +1017,7 @@ export default function ClockMode() {
                         onClick={() => setNBrowser((v) => !v)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                           nBrowser
-                            ? "bg-teal-50 dark:bg-teal-900/40 border-teal-400 text-teal-700 dark:text-teal-300"
+                            ? "bg-brand-soft border-brand text-brand-fg"
                             : "border-theme-border text-theme-tertiary hover:bg-theme-bg"
                         }`}
                       >
@@ -1052,7 +1052,7 @@ export default function ClockMode() {
                             title={desc}
                             className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                               vibratePattern === key
-                                ? "bg-teal-500 text-white"
+                                ? "bg-brand text-white"
                                 : "border border-theme-border text-theme-tertiary hover:bg-theme-bg"
                             }`}
                           >
@@ -1118,11 +1118,11 @@ export default function ClockMode() {
                 </div>
                 <button
                   onClick={toggleBrownNoise}
-                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 cursor-pointer"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 cursor-pointer"
                   role="switch" aria-checked={brownOn} aria-label="Brown Noise"
                 >
                   <div className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${
-                    brownOn ? "bg-teal-500" : "bg-gray-300 dark:bg-gray-600"
+                    brownOn ? "bg-brand" : "bg-line bg-surface-raised"
                   }`}>
                     <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${brownOn ? "translate-x-5" : "translate-x-0"}`} />
                   </div>
@@ -1134,7 +1134,7 @@ export default function ClockMode() {
                   <input
                     type="range" min="0" max="1" step="0.05" value={noiseVol}
                     onChange={(e) => setNoiseVol(parseFloat(e.target.value))}
-                    className="flex-1 accent-teal-500 h-1.5"
+                    className="flex-1 accent-brand h-1.5"
                   />
                   <span className="text-xs text-theme-tertiary">大</span>
                 </div>

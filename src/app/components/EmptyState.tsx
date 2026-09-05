@@ -1,12 +1,12 @@
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
 
 const steps = [
-  { num: 1, color: "bg-orange-100 text-orange-600", title: "録音", desc: "「録音」ボタンを押して会話を開始" },
-  { num: 2, color: "bg-gray-100 text-gray-600", title: "停止", desc: "会話が終わったら録音を停止" },
-  { num: 3, color: "bg-teal-100 text-teal-600", title: "生成", desc: "「カルテ生成」でAIが分析開始" },
-  { num: 4, color: "bg-blue-100 text-blue-600", title: "読み上げ", desc: "生成カルテを音声で読み上げ確認" },
-  { num: 5, color: "bg-violet-100 text-violet-600", title: "保存・出力", desc: "JSON・CSVでカルテをエクスポート" },
-  { num: 6, color: "bg-rose-100 text-rose-600", title: "カスタマイズ", desc: "テーマ・ショートカットを自由に設定" },
+  { num: 1, color: "bg-warning-soft text-warning-fg", title: "録音", desc: "「録音」ボタンを押して会話を開始" },
+  { num: 2, color: "bg-line text-ink-muted", title: "停止", desc: "会話が終わったら録音を停止" },
+  { num: 3, color: "bg-brand-soft text-brand-fg", title: "生成", desc: "「カルテ生成」でAIが分析開始" },
+  { num: 4, color: "bg-info-soft text-info-fg", title: "読み上げ", desc: "生成カルテを音声で読み上げ確認" },
+  { num: 5, color: "bg-info-soft text-info-fg", title: "保存・出力", desc: "JSON・CSVでカルテをエクスポート" },
+  { num: 6, color: "bg-danger-soft text-danger-fg", title: "カスタマイズ", desc: "テーマ・ショートカットを自由に設定" },
 ] as const;
 
 export default function EmptyState() {

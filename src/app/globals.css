@@ -1,6 +1,65 @@
 @import "tailwindcss";
 
+/* dark: バリアントをアプリのテーマ切替(data-theme)に接続する。
+   Tailwind v4の既定はOSのprefers-color-schemeを見るため、アプリ内の切替と食い違っていた */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ── 色の設計 ─────────────────────────────────────────────────────────
+   コンポーネントでは生パレット(bg-red-50, text-teal-600等)を書かず、下の意味トークンを使う。
+   src/app/__tests__/no-raw-palette.test.tsが全tsxを走査し、生パレットの混入を止める。
+
+   役割(5つ)            用途
+     brand              主操作・選択状態・フォーカス(teal)
+     danger             削除・エラー・録音中の停止(red)
+     warning            注意・未処理(amber)
+     info               補助情報・AIの提案・録音中表示(sky)
+     success            完了・SOAP済(emerald)
+   無彩色
+     surface / surface-raised  面
+     ink / ink-muted / ink-faint  文字(3段)
+     line               罫線
+   段(各役割に5つ)
+     {role}         塗り(ボタン背景など)。上に載せる文字は白
+     {role}-strong  塗りのhover
+     {role}-fg      面の上に置く文字・アイコン
+     {role}-soft    薄い面(札・バナー背景)
+     {role}-line    枠線
+
+   使う色: teal / sky / amber / red / emerald / slate
+   避ける色: purple violet indigo(→info) yellow orange(→warning) gray zinc neutral(→無彩色) green blue pink(→近い役割)
+   ──────────────────────────────────────────────────────────────────── */
+
 :root {
+  /* 意味トークン: Light */
+  --brand: #14b8a6;
+  --brand-strong: #0d9488;
+  --brand-fg: #0f766e;
+  --brand-soft: #f0fdfa;
+  --brand-line: #99f6e4;
+
+  --danger: #ef4444;
+  --danger-strong: #dc2626;
+  --danger-fg: #b91c1c;
+  --danger-soft: #fef2f2;
+  --danger-line: #fecaca;
+
+  --warning: #f59e0b;
+  --warning-strong: #d97706;
+  --warning-fg: #b45309;
+  --warning-soft: #fffbeb;
+  --warning-line: #fde68a;
+
+  --info: #0ea5e9;
+  --info-strong: #0284c7;
+  --info-fg: #0369a1;
+  --info-soft: #f0f9ff;
+  --info-line: #bae6fd;
+
+  --success: #10b981;
+  --success-strong: #059669;
+  --success-fg: #047857;
+  --success-soft: #ecfdf5;
+  --success-line: #a7f3d0;
   /* Modern, refined color system - Light Mode */
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
@@ -89,6 +148,35 @@
 }
 
 [data-theme="dark"] {
+  /* 意味トークン: Dark。塗りは同じ、文字は明るく、薄い面は半透明にして下地の色を透かす */
+  --brand-fg: #5eead4;
+  --brand-soft: rgba(20, 184, 166, 0.14);
+  --brand-line: rgba(20, 184, 166, 0.35);
+
+  --danger: #f87171;
+  --danger-strong: #ef4444;
+  --danger-fg: #fca5a5;
+  --danger-soft: rgba(239, 68, 68, 0.14);
+  --danger-line: rgba(239, 68, 68, 0.4);
+
+  --warning: #fbbf24;
+  --warning-strong: #f59e0b;
+  --warning-fg: #fcd34d;
+  --warning-soft: rgba(245, 158, 11, 0.14);
+  --warning-line: rgba(245, 158, 11, 0.4);
+
+  --info: #38bdf8;
+  --info-strong: #0ea5e9;
+  --info-fg: #7dd3fc;
+  --info-soft: rgba(14, 165, 233, 0.14);
+  --info-line: rgba(14, 165, 233, 0.4);
+
+  --success: #34d399;
+  --success-strong: #10b981;
+  --success-fg: #6ee7b7;
+  --success-soft: rgba(16, 185, 129, 0.14);
+  --success-line: rgba(16, 185, 129, 0.4);
+
   /* Dark Mode colors */
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
@@ -172,6 +260,56 @@
   /* Ambient glow effects for dark mode - Tiffany Blue palette */
   --ambient-glow-1: rgba(94, 234, 212, 0.08);
   --ambient-glow-2: rgba(45, 212, 191, 0.08);
+}
+
+/* Tailwindユーティリティとして公開する(bg-brand, text-danger-fg, border-info-line, ring-brand ...)。
+   inlineなので値は実行時のCSS変数を参照し、data-themeの切替に追従する */
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-line: var(--brand-line);
+
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-danger-fg: var(--danger-fg);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+
+  --color-warning: var(--warning);
+  --color-warning-strong: var(--warning-strong);
+  --color-warning-fg: var(--warning-fg);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-line: var(--warning-line);
+
+  --color-info: var(--info);
+  --color-info-strong: var(--info-strong);
+  --color-info-fg: var(--info-fg);
+  --color-info-soft: var(--info-soft);
+  --color-info-line: var(--info-line);
+
+  --color-success: var(--success);
+  --color-success-strong: var(--success-strong);
+  --color-success-fg: var(--success-fg);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
+
+  --color-surface: var(--bg-primary);
+  --color-surface-raised: var(--bg-tertiary);
+  --color-line: var(--border-medium);
+  --color-ink: var(--text-primary);
+  --color-ink-muted: var(--text-secondary);
+  --color-ink-faint: var(--text-tertiary);
+
+  --color-soap-s: var(--soap-s);
+  --color-soap-o: var(--soap-o);
+  --color-soap-a: var(--soap-a);
+  --color-soap-p: var(--soap-p);
+  --color-soap-s-soft: var(--soap-s-subtle);
+  --color-soap-o-soft: var(--soap-o-subtle);
+  --color-soap-a-soft: var(--soap-a-subtle);
+  --color-soap-p-soft: var(--soap-p-subtle);
 }
 
 @layer base {
@@ -1054,6 +1192,11 @@ body::after {
 }
 
 /* Background Colors */
+/* bg-theme-bgは17箇所で参照されていたが未定義で透過していた。bg-primaryの別名として定義 */
+.bg-theme-bg {
+  background: var(--bg-primary);
+}
+
 .bg-theme-primary {
   background: var(--bg-primary);
 }

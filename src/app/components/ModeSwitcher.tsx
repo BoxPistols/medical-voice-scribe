@@ -120,7 +120,7 @@ export default function ModeSwitcher({
               w-9 h-9 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 text-xs whitespace-nowrap
               ${
                 isActive
-                  ? "bg-teal-500 text-white shadow-sm"
+                  ? "bg-brand text-white shadow-sm"
                   : "text-theme-tertiary hover:text-theme-secondary hover:bg-theme-card"
               }
             `}

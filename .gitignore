@@ -51,3 +51,6 @@ next-env.d.ts
 
 *storybook.log
 storybook-static
+
+# Playwright MCP の検証出力
+.playwright-mcp/

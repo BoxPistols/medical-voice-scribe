@@ -626,7 +626,7 @@ export default function MoveMode() {
               aria-selected={selected}
               title={a.desc}
               onClick={() => handleActivityChange(a.id)}
-              className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${
+              className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                 selected
                   ? "bg-theme-accent text-white shadow"
                   : "bg-theme-card text-theme-secondary border border-theme-light hover:bg-theme-highlight"

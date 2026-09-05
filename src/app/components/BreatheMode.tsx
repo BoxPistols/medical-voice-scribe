@@ -573,7 +573,7 @@ export default function BreatheMode() {
               onClick={() => setDeskMode(false)}
               className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 !deskMode
-                  ? "bg-teal-500 text-white shadow-sm"
+                  ? "bg-brand text-white shadow-sm"
                   : "text-theme-tertiary hover:text-theme-secondary"
               }`}
               aria-pressed={!deskMode}
@@ -586,7 +586,7 @@ export default function BreatheMode() {
               onClick={() => setDeskMode(true)}
               className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 deskMode
-                  ? "bg-teal-500 text-white shadow-sm"
+                  ? "bg-brand text-white shadow-sm"
                   : "text-theme-tertiary hover:text-theme-secondary"
               }`}
               aria-pressed={deskMode}
@@ -695,7 +695,7 @@ export default function BreatheMode() {
                   <button
                     type="button"
                     onClick={handleStart}
-                    className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300"
+                    className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-brand-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                   >
                     <PlayIcon className="h-5 w-5" aria-hidden="true" />
                     はじめる
@@ -728,7 +728,7 @@ export default function BreatheMode() {
                     <button
                       type="button"
                       onClick={handleResume}
-                      className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300"
+                      className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-brand-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                       <PlayIcon className="h-5 w-5" aria-hidden="true" />
                       {finished ? "もう一度" : "再開"}
@@ -760,7 +760,7 @@ export default function BreatheMode() {
                     value={volume}
                     onChange={(e) => setVolume(Number(e.target.value))}
                     onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
-                    className="h-1.5 w-full cursor-pointer accent-teal-400"
+                    className="h-1.5 w-full cursor-pointer accent-brand"
                     aria-label="音量"
                   />
                 </div>
@@ -787,7 +787,7 @@ export default function BreatheMode() {
                         disabled={running}
                         className={`rounded-xl border px-3 py-2 text-left transition-colors disabled:opacity-50 ${
                           active
-                            ? "border-teal-400 bg-theme-highlight"
+                            ? "border-brand bg-theme-highlight"
                             : "border-theme-light hover:bg-theme-surface"
                         }`}
                         aria-pressed={active}
@@ -823,7 +823,7 @@ export default function BreatheMode() {
                         disabled={running}
                         className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
                           active
-                            ? "border-teal-400 bg-theme-highlight text-theme-primary"
+                            ? "border-brand bg-theme-highlight text-theme-primary"
                             : "border-theme-light text-theme-secondary hover:bg-theme-surface"
                         }`}
                         aria-pressed={active}
@@ -854,7 +854,7 @@ export default function BreatheMode() {
                         onClick={() => setSessionKind(s.id)}
                         className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
                           active
-                            ? "bg-teal-500 text-white shadow-sm"
+                            ? "bg-brand text-white shadow-sm"
                             : "text-theme-tertiary hover:text-theme-secondary"
                         }`}
                         aria-pressed={active}
@@ -885,7 +885,7 @@ export default function BreatheMode() {
                       });
                     }}
                     className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                      voiceOn ? "bg-teal-500" : "bg-theme-tertiary"
+                      voiceOn ? "bg-brand" : "bg-theme-tertiary"
                     }`}
                   >
                     <span
@@ -923,7 +923,7 @@ export default function BreatheMode() {
                         onClick={() => setSoundSource(opt.id)}
                         className={`flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
                           active
-                            ? "bg-teal-500 text-white shadow-sm"
+                            ? "bg-brand text-white shadow-sm"
                             : "text-theme-tertiary hover:text-theme-secondary"
                         }`}
                         aria-pressed={active}
@@ -945,7 +945,7 @@ export default function BreatheMode() {
                     onChange={(e) => setVolume(Number(e.target.value))}
                     onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
                     disabled={soundSource === "off"}
-                    className="h-1.5 w-full cursor-pointer accent-teal-500 disabled:opacity-40"
+                    className="h-1.5 w-full cursor-pointer accent-brand disabled:opacity-40"
                     aria-label="音量"
                   />
                 </div>
@@ -953,10 +953,10 @@ export default function BreatheMode() {
 
               {/* 履歴 */}
               <div className="rounded-2xl border border-theme-light bg-theme-card p-4 text-sm text-theme-secondary">
-                これまでに{" "}
+                これまでに{""}
                 <span className="font-semibold text-theme-accent tabular-nums">
                   {sessionCount}
-                </span>{" "}
+                </span>{""}
                 回の呼吸セッションを記録しています。
               </div>
             </div>

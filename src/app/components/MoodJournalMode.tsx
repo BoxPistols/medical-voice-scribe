@@ -109,7 +109,7 @@ function MoodSparkline({ points }: { points: DayTrendPoint[] }) {
         seg.length === 1 ? null : (
           <polyline
             key={si}
-            points={seg.map((s) => `${s.x},${s.y}`).join(" ")}
+            points={seg.map((s) => `${s.x},${s.y}`).join("")}
             fill="none"
             stroke="#14b8a6"
             strokeWidth={1.5}
@@ -337,9 +337,9 @@ export default function MoodJournalMode() {
                   aria-checked={active}
                   aria-label={`${lv.label}（${lv.value}点）`}
                   onClick={() => setMood(lv.value)}
-                  className={`flex-1 flex flex-col items-center gap-1 rounded-xl py-2.5 transition-all duration-200 border focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+                  className={`flex-1 flex flex-col items-center gap-1 rounded-xl py-2.5 transition-all duration-200 border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
                     active
-                      ? "border-teal-500 bg-theme-highlight scale-105 shadow-sm"
+                      ? "border-brand bg-theme-highlight scale-105 shadow-sm"
                       : "border-theme-light bg-theme-surface hover:border-theme-medium hover:bg-theme-card"
                   }`}
                   style={active ? { borderColor: moodColor(lv.value, 50) } : undefined}
@@ -380,9 +380,9 @@ export default function MoodJournalMode() {
                     aria-checked={active}
                     aria-label={`活力 ${ENERGY_LABELS[v - 1]}`}
                     onClick={() => setEnergy(v)}
-                    className={`flex-1 h-9 rounded-lg text-xs font-medium transition-all border focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${
+                    className={`flex-1 h-9 rounded-lg text-xs font-medium transition-all border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       active
-                        ? "bg-teal-500 text-white border-teal-500 shadow-sm"
+                        ? "bg-brand text-white border-brand shadow-sm"
                         : "bg-theme-surface text-theme-tertiary border-theme-light hover:bg-theme-card"
                     }`}
                   >
@@ -405,9 +405,9 @@ export default function MoodJournalMode() {
                     type="button"
                     aria-pressed={active}
                     onClick={() => toggleTag(tag)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       active
-                        ? "bg-teal-500 text-white border-teal-500 shadow-sm"
+                        ? "bg-brand text-white border-brand shadow-sm"
                         : "bg-theme-surface text-theme-secondary border-theme-light hover:border-theme-medium hover:bg-theme-card"
                     }`}
                   >
@@ -430,7 +430,7 @@ export default function MoodJournalMode() {
               maxLength={NOTE_MAX}
               rows={3}
               placeholder="今日あったこと、感じたことを自由に…"
-              className="w-full rounded-xl border border-theme-light bg-theme-surface px-3 py-2.5 text-sm text-theme-primary placeholder:text-theme-muted resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus:border-teal-500 transition-colors"
+              className="w-full rounded-xl border border-theme-light bg-theme-surface px-3 py-2.5 text-sm text-theme-primary placeholder:text-theme-muted resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus:border-brand transition-colors"
             />
             <div className="mt-1 text-right text-[11px] text-theme-muted tabular-nums">
               {note.length} / {NOTE_MAX}
@@ -477,7 +477,7 @@ export default function MoodJournalMode() {
                   aria-selected={trendView === "spark"}
                   onClick={() => setTrendView("spark")}
                   className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                    trendView === "spark" ? "bg-teal-500 text-white" : "text-theme-tertiary hover:text-theme-secondary"
+                    trendView === "spark" ? "bg-brand text-white" : "text-theme-tertiary hover:text-theme-secondary"
                   }`}
                 >
                   折れ線
@@ -488,7 +488,7 @@ export default function MoodJournalMode() {
                   aria-selected={trendView === "calendar"}
                   onClick={() => setTrendView("calendar")}
                   className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                    trendView === "calendar" ? "bg-teal-500 text-white" : "text-theme-tertiary hover:text-theme-secondary"
+                    trendView === "calendar" ? "bg-brand text-white" : "text-theme-tertiary hover:text-theme-secondary"
                   }`}
                 >
                   カレンダー
@@ -558,7 +558,7 @@ export default function MoodJournalMode() {
                   value={model}
                   onChange={(e) => setModel(e.target.value as ModelId)}
                   aria-label="AIモデルを選択"
-                  className="rounded-lg border border-theme-light bg-theme-surface px-2 py-1.5 text-xs text-theme-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                  className="rounded-lg border border-theme-light bg-theme-surface px-2 py-1.5 text-xs text-theme-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   {AVAILABLE_MODELS.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -591,7 +591,7 @@ export default function MoodJournalMode() {
                     <ul className="space-y-1.5">
                       {reflectResult.suggestions.map((s, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-theme-primary">
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0" aria-hidden="true" />
+                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0" aria-hidden="true" />
                           <span className="leading-relaxed">{s}</span>
                         </li>
                       ))}
@@ -701,7 +701,7 @@ export default function MoodJournalMode() {
                     type="button"
                     onClick={() => handleDelete(e.id)}
                     aria-label={`${formatDateTime(e.timestamp)} の記録を削除`}
-                    className="flex-shrink-0 p-1.5 rounded-lg text-theme-muted hover:text-theme-warning hover:bg-theme-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                    className="flex-shrink-0 p-1.5 rounded-lg text-theme-muted hover:text-theme-warning hover:bg-theme-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <TrashIcon className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
                   </button>

@@ -5,10 +5,10 @@ interface ErrorAlertProps {
 
 export default function ErrorAlert({ message, onClose }: ErrorAlertProps) {
   return (
-    <div className="m-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+    <div className="m-6 p-4 bg-danger-soft border border-danger-line rounded-lg">
       <div className="flex items-start gap-3">
         <svg
-          className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
+          className="w-5 h-5 text-danger-fg flex-shrink-0 mt-0.5"
           fill="currentColor"
           viewBox="0 0 20 20"
           aria-hidden="true"
@@ -20,12 +20,12 @@ export default function ErrorAlert({ message, onClose }: ErrorAlertProps) {
           />
         </svg>
         <div className="flex-1">
-          <h4 className="text-sm font-bold text-red-900 mb-1">エラー</h4>
-          <p className="text-sm text-red-800">{message}</p>
+          <h4 className="text-sm font-bold text-danger-fg mb-1">エラー</h4>
+          <p className="text-sm text-danger-fg">{message}</p>
         </div>
         <button
           onClick={onClose}
-          className="text-red-400 hover:text-red-600 transition-colors"
+          className="text-danger-fg hover:text-danger-fg transition-colors"
           aria-label="閉じる"
         >
           <svg

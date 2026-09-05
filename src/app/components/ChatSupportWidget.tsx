@@ -621,8 +621,8 @@ export default function ChatSupportWidget({
             <div className="flex items-center gap-3 ml-auto">
               <div className="flex items-center gap-1 text-[10px] opacity-80">
                 {isRecording && (
-                  <span className="flex items-center gap-1 text-red-400">
-                    <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+                  <span className="flex items-center gap-1 text-danger-fg">
+                    <span className="w-2 h-2 bg-danger rounded-full animate-pulse" />
                     録音中
                   </span>
                 )}
@@ -872,7 +872,7 @@ export default function ChatSupportWidget({
                   ).map((topic) => (
                     <details key={topic.id} className="chat-support-faq">
                       <summary className="chat-support-faq-question">
-                        <QuestionMarkCircleIcon className="w-4 h-4 text-teal-500 flex-shrink-0" />
+                        <QuestionMarkCircleIcon className="w-4 h-4 text-brand-fg flex-shrink-0" />
                         <span>{topic.question}</span>
                       </summary>
                       <div className="chat-support-faq-answer">

@@ -9,6 +9,8 @@ import {
   DocumentTextIcon,
   ClockIcon,
   TagIcon,
+  QuestionMarkCircleIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import type {
   RecordSession,
@@ -22,14 +24,16 @@ import {
   switchSession,
   filterSessions,
   getPatientTags,
+  clearAllSessions,
+  resetToInitialStore,
 } from "@/lib/recordStore";
 
 // ── カテゴリ定義 ────────────────────────────────────────────────────────
 
 const CATEGORY_META: Record<SessionCategory, { label: string; color: string }> = {
-  medical: { label: "診療", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
-  daily:   { label: "日常", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
-  memo:    { label: "メモ", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+  medical: { label: "診療", color: "bg-info-soft text-info-fg" },
+  daily:   { label: "日常", color: "bg-success-soft text-success-fg" },
+  memo:    { label: "メモ", color: "bg-warning-soft text-warning-fg" },
 };
 
 // ── Props ────────────────────────────────────────────────────────────────
@@ -57,6 +61,9 @@ export default function SessionDrawer({
   const [filterTag, setFilterTag] = useState("");
   const [newCategory, setNewCategory] = useState<SessionCategory>("medical");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  // フッターの一括操作は誤操作防止のため2段階にする
+  const [confirmBulk, setConfirmBulk] = useState<"clear" | "reset" | null>(null);
 
   // フィルタ済みセッション
   const sessions = useMemo(
@@ -101,6 +108,18 @@ export default function SessionDrawer({
     [store, onStoreChange, onBeforeSwitch],
   );
 
+  const handleClearAll = useCallback(() => {
+    onStoreChange(clearAllSessions());
+    setConfirmBulk(null);
+  }, [onStoreChange]);
+
+  const handleResetSamples = useCallback(() => {
+    onStoreChange(resetToInitialStore());
+    setConfirmBulk(null);
+  }, [onStoreChange]);
+
+  const sampleCount = store.sessions.filter((s) => s.isSample).length;
+
   // 時刻フォーマット
   const fmtTime = (iso: string) => {
     const d = new Date(iso);
@@ -143,6 +162,17 @@ export default function SessionDrawer({
         {/* ── ヘッダー ── */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-theme-border shrink-0">
           <h2 className="text-base font-bold text-theme-primary">記録セッション</h2>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowHelp((v) => !v)}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
+                showHelp ? "text-brand-fg bg-brand-soft" : "text-theme-tertiary hover:bg-theme-card"
+              }`}
+              aria-label="セッションの説明を表示"
+              aria-expanded={showHelp}
+            >
+              <QuestionMarkCircleIcon className="w-5 h-5" />
+            </button>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-lg text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
@@ -151,6 +181,22 @@ export default function SessionDrawer({
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
+        </div>
+
+        {/* ── 説明（初回は何のための画面か分からないので、開閉式で置く） ── */}
+        {showHelp && (
+          <div className="px-4 py-3 border-b border-theme-border bg-theme-card text-xs text-theme-secondary leading-relaxed space-y-1.5 shrink-0">
+            <p>
+              セッションは、会話テキスト・生成したカルテ・トークン使用量を1件としてまとめた記録です。
+              このブラウザのlocalStorageに保存され、サーバーには送られません。
+            </p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              <li>一覧をクリックすると、その記録を画面に呼び出します。編集中の内容は自動で保存されます。</li>
+              <li>「新規」で空の記録を作ります。カテゴリは診療・日常・メモの3種類です。</li>
+              <li>「例:」で始まる記録はサンプルです。削除しても、下の「サンプルを復元」で戻せます。</li>
+            </ul>
+          </div>
+        )}
 
         {/* ── 新規セッション ── */}
         <div className="px-4 py-3 border-b border-theme-border space-y-2 shrink-0">
@@ -172,7 +218,7 @@ export default function SessionDrawer({
             )}
             <button
               onClick={handleNewSession}
-              className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-white text-xs font-medium transition-colors cursor-pointer"
+              className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand hover:bg-brand-strong text-white text-xs font-medium transition-colors cursor-pointer"
             >
               <PlusIcon className="w-3.5 h-3.5" />
               新規
@@ -189,7 +235,7 @@ export default function SessionDrawer({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ラベル・患者タグ・内容で検索…"
-              className="w-full rounded-lg border border-theme-border bg-theme-card pl-8 pr-3 py-1.5 text-sm text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-theme-border bg-theme-card pl-8 pr-3 py-1.5 text-sm text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-1 focus:ring-brand"
             />
           </div>
           {patientTags.length > 0 && (
@@ -197,8 +243,8 @@ export default function SessionDrawer({
               <TagIcon className="w-3.5 h-3.5 text-theme-tertiary shrink-0" />
               <button
                 onClick={() => setFilterTag("")}
-                className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
-                  !filterTag ? "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300" : "text-theme-tertiary hover:bg-theme-card"
+                className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
+                  !filterTag ? "bg-brand-soft text-brand-fg" : "text-theme-tertiary hover:bg-theme-card"
                 }`}
               >
                 すべて
@@ -207,9 +253,9 @@ export default function SessionDrawer({
                 <button
                   key={tag}
                   onClick={() => setFilterTag(filterTag === tag ? "" : tag)}
-                  className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
+                  className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
                     filterTag === tag
-                      ? "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300"
+                      ? "bg-brand-soft text-brand-fg"
                       : "text-theme-tertiary hover:bg-theme-card"
                   }`}
                 >
@@ -221,8 +267,8 @@ export default function SessionDrawer({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setFilterCategory("")}
-              className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
-                !filterCategory ? "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300" : "text-theme-tertiary hover:bg-theme-card"
+              className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
+                !filterCategory ? "bg-brand-soft text-brand-fg" : "text-theme-tertiary hover:bg-theme-card"
               }`}
             >
               すべて
@@ -232,7 +278,7 @@ export default function SessionDrawer({
                 <button
                   key={key}
                   onClick={() => setFilterCategory(filterCategory === key ? "" : key)}
-                  className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
+                  className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
                     filterCategory === key ? meta.color : "text-theme-tertiary hover:bg-theme-card"
                   }`}
                 >
@@ -262,21 +308,26 @@ export default function SessionDrawer({
                       onClick={() => handleSwitchSession(s.id)}
                       className={`w-full text-left px-4 py-3 transition-colors cursor-pointer ${
                         isActive
-                          ? "bg-teal-50/60 dark:bg-teal-900/20 border-l-[3px] border-l-teal-500"
+                          ? "bg-brand-soft border-l-[3px] border-l-teal-500"
                           : "hover:bg-theme-card border-l-[3px] border-l-transparent"
                       }`}
                     >
                       {/* 上段: ラベル + カテゴリ + 時刻 */}
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${catMeta.color}`}>
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${catMeta.color}`}>
                           {catMeta.label}
                         </span>
+                        {s.isSample && (
+                          <span className="text-xs text-theme-tertiary border border-theme-border px-1.5 py-0.5 rounded">
+                            例
+                          </span>
+                        )}
                         {s.patientTag && (
-                          <span className="text-[10px] text-theme-tertiary bg-theme-card px-1.5 py-0.5 rounded">
+                          <span className="text-xs text-theme-tertiary bg-theme-card px-1.5 py-0.5 rounded">
                             {s.patientTag}
                           </span>
                         )}
-                        <span className="ml-auto flex items-center gap-1 text-[11px] text-theme-tertiary shrink-0">
+                        <span className="ml-auto flex items-center gap-1 text-xs text-theme-tertiary shrink-0">
                           <ClockIcon className="w-3 h-3" />
                           {fmtTime(s.updatedAt)}
                         </span>
@@ -295,17 +346,17 @@ export default function SessionDrawer({
                       {/* ステータスバッジ */}
                       <div className="flex items-center gap-2 mt-1.5">
                         {s.soapNote && (
-                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">
+                          <span className="text-xs text-success-fg bg-success-soft px-1.5 py-0.5 rounded">
                             SOAP済
                           </span>
                         )}
                         {s.chatHistory.length > 0 && (
-                          <span className="text-[10px] text-theme-tertiary">
+                          <span className="text-xs text-theme-tertiary">
                             チャット{s.chatHistory.length}件
                           </span>
                         )}
                         {s.transcript && !s.soapNote && (
-                          <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
+                          <span className="text-xs text-warning-fg bg-warning-soft px-1.5 py-0.5 rounded">
                             未分析
                           </span>
                         )}
@@ -320,7 +371,7 @@ export default function SessionDrawer({
                             e.stopPropagation();
                             handleDeleteSession(s.id);
                           }}
-                          className="px-2 py-1 text-[11px] rounded bg-red-500 text-white hover:bg-red-600 transition-colors cursor-pointer"
+                          className="px-2 py-1 text-xs rounded bg-danger text-white hover:bg-danger-strong transition-colors cursor-pointer"
                         >
                           削除
                         </button>
@@ -329,7 +380,7 @@ export default function SessionDrawer({
                             e.stopPropagation();
                             setDeletingId(null);
                           }}
-                          className="px-2 py-1 text-[11px] rounded border border-theme-border text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
+                          className="px-2 py-1 text-xs rounded border border-theme-border text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
                         >
                           戻す
                         </button>
@@ -340,7 +391,7 @@ export default function SessionDrawer({
                           e.stopPropagation();
                           setDeletingId(s.id);
                         }}
-                        className="absolute right-3 top-3 w-6 h-6 flex items-center justify-center rounded text-theme-tertiary hover:text-red-500 opacity-0 hover:opacity-100 focus:opacity-100 transition-all cursor-pointer"
+                        className="absolute right-3 top-3 w-6 h-6 flex items-center justify-center rounded text-theme-tertiary hover:text-danger-fg opacity-0 hover:opacity-100 focus:opacity-100 transition-all cursor-pointer"
                         title="削除"
                         aria-label={`「${s.label || "無題の記録"}」を削除`}
                       >
@@ -354,9 +405,51 @@ export default function SessionDrawer({
           )}
         </div>
 
-        {/* ── フッター ── */}
-        <div className="px-4 py-2 border-t border-theme-border text-[11px] text-theme-tertiary text-center shrink-0">
-          {store.sessions.length} 件の記録 · localStorage 保存
+        {/* ── フッター: 件数 + 一括操作 ── */}
+        <div className="px-4 py-2 border-t border-theme-border shrink-0 space-y-2">
+          {confirmBulk ? (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-theme-secondary flex-1">
+                {confirmBulk === "clear"
+                  ? `${store.sessions.length}件すべて削除します。元に戻せません。`
+                  : "すべての記録を消してサンプルに戻します。"}
+              </span>
+              <button
+                onClick={confirmBulk === "clear" ? handleClearAll : handleResetSamples}
+                className="px-2.5 py-1 rounded bg-danger text-white hover:bg-danger-strong transition-colors cursor-pointer"
+              >
+                実行
+              </button>
+              <button
+                onClick={() => setConfirmBulk(null)}
+                className="px-2.5 py-1 rounded border border-theme-border text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
+              >
+                戻す
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-theme-tertiary flex-1">
+                {store.sessions.length}件{sampleCount > 0 && `（例${sampleCount}）`}
+              </span>
+              <button
+                onClick={() => setConfirmBulk("reset")}
+                className="flex items-center gap-1 px-2 py-1 rounded text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
+                aria-label="サンプルを復元して初期状態に戻す"
+              >
+                <ArrowPathIcon className="w-3.5 h-3.5" />
+                サンプルを復元
+              </button>
+              <button
+                onClick={() => setConfirmBulk("clear")}
+                className="flex items-center gap-1 px-2 py-1 rounded text-theme-tertiary hover:text-danger-fg hover:bg-theme-card transition-colors cursor-pointer"
+                aria-label="すべての記録を削除"
+              >
+                <TrashIcon className="w-3.5 h-3.5" />
+                すべて削除
+              </button>
+            </div>
+          )}
         </div>
       </aside>
     </>

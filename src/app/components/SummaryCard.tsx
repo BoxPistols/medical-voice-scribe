@@ -4,10 +4,10 @@ interface SummaryCardProps {
 
 export default function SummaryCard({ summary }: SummaryCardProps) {
   return (
-    <div className="p-6 shadow-sm border-l-4 border-amber-600 dark:border-amber-500">
+    <div className="p-6 shadow-sm border-l-4 border-warning">
       <div className="flex items-center gap-2 mb-2">
         <svg
-          className="w-5 h-5 text-amber-600 dark:text-amber-500"
+          className="w-5 h-5 text-warning-fg"
           fill="currentColor"
           viewBox="0 0 20 20"
           aria-hidden="true"

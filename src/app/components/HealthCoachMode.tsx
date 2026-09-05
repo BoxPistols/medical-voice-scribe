@@ -405,7 +405,7 @@ export default function HealthCoachMode() {
           <button
             type="button"
             onClick={toggleSpeak}
-            className="flex items-center gap-1.5 rounded-xl border border-theme-light bg-theme-card px-3 py-2 text-xs font-medium text-theme-secondary transition-colors hover:bg-theme-glass focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="flex items-center gap-1.5 rounded-xl border border-theme-light bg-theme-card px-3 py-2 text-xs font-medium text-theme-secondary transition-colors hover:bg-theme-glass focus:outline-none focus:ring-2 focus:ring-brand"
             aria-pressed={speakEnabled}
             aria-label={speakEnabled ? "音声読み上げをオフにする" : "音声読み上げをオンにする"}
             title={speakEnabled ? "読み上げ ON" : "読み上げ OFF"}
@@ -423,7 +423,7 @@ export default function HealthCoachMode() {
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-              className="appearance-none rounded-xl border border-theme-light bg-theme-card pl-3 pr-8 py-2 text-xs text-theme-secondary cursor-pointer transition-colors hover:bg-theme-glass focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="appearance-none rounded-xl border border-theme-light bg-theme-card pl-3 pr-8 py-2 text-xs text-theme-secondary cursor-pointer transition-colors hover:bg-theme-glass focus:outline-none focus:ring-2 focus:ring-brand"
               aria-label="AIモデルを選択"
             >
               {AVAILABLE_MODELS.map((model) => (
@@ -497,7 +497,7 @@ export default function HealthCoachMode() {
                     type="button"
                     onClick={() => handleStarter(starter)}
                     disabled={isLoading}
-                    className="rounded-full border border-theme-light bg-theme-glass px-3.5 py-2 text-xs text-theme-secondary transition-colors hover:bg-theme-card hover:border-theme-medium disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="rounded-full border border-theme-light bg-theme-glass px-3.5 py-2 text-xs text-theme-secondary transition-colors hover:bg-theme-card hover:border-theme-medium disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand"
                   >
                     {starter}
                   </button>
@@ -535,7 +535,7 @@ export default function HealthCoachMode() {
                 type="button"
                 onClick={() => handleStarter(starter)}
                 disabled={isLoading}
-                className="rounded-full border border-theme-light bg-theme-glass px-3 py-1.5 text-[11px] text-theme-tertiary transition-colors hover:bg-theme-card hover:text-theme-secondary disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="rounded-full border border-theme-light bg-theme-glass px-3 py-1.5 text-[11px] text-theme-tertiary transition-colors hover:bg-theme-card hover:text-theme-secondary disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand"
               >
                 {starter}
               </button>
@@ -558,7 +558,7 @@ export default function HealthCoachMode() {
               placeholder="気になっていることを話してみてください..."
               rows={1}
               disabled={isLoading}
-              className="w-full resize-none rounded-xl border border-theme-light bg-theme-surface px-3 py-2.5 text-sm text-theme-primary placeholder:text-theme-muted focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-60"
+              className="w-full resize-none rounded-xl border border-theme-light bg-theme-surface px-3 py-2.5 text-sm text-theme-primary placeholder:text-theme-muted focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-60"
             />
             <p className="mt-1 px-1 text-[10px] text-theme-muted">
               Enter で送信 ／ Shift+Enter で改行。これは医療上の診断ではなく、一般的なセルフケアの情報です。
@@ -591,7 +591,7 @@ function ChatBubble({ message }: { message: CoachMessage }) {
     return (
       <div className="hc-fade flex justify-end">
         <div className="max-w-[85%]">
-          <div className="rounded-2xl rounded-br-md bg-teal-500 px-4 py-2.5 text-sm text-white whitespace-pre-wrap break-words">
+          <div className="rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-sm text-white whitespace-pre-wrap break-words">
             {message.content}
           </div>
           <div className="mt-1 text-right text-[10px] text-theme-muted">{time}</div>

@@ -68,29 +68,29 @@ const URGENCY_META: Record<SymptomUrgency, UrgencyMeta> = {
   emergency: {
     label: "至急",
     headline: "至急の受診・救急要請を検討してください",
-    banner: "bg-red-500/15 border-red-500/60 text-red-700 dark:text-red-300",
-    chip: "bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/50",
+    banner: "bg-danger-soft border-danger-line text-danger-fg",
+    chip: "bg-danger-soft text-danger-fg border border-danger-line",
     Icon: ShieldExclamationIcon,
   },
   "see-doctor": {
     label: "早めに受診",
     headline: "早めに医療機関の受診をおすすめします",
-    banner: "bg-amber-500/15 border-amber-500/60 text-amber-700 dark:text-amber-300",
-    chip: "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/50",
+    banner: "bg-warning-soft border-warning-line text-warning-fg",
+    chip: "bg-warning-soft text-warning-fg border border-warning-line",
     Icon: ExclamationTriangleIcon,
   },
   monitor: {
     label: "経過観察",
     headline: "経過を観察し、悪化時は受診してください",
-    banner: "bg-blue-500/15 border-blue-500/60 text-blue-700 dark:text-blue-300",
-    chip: "bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-500/50",
+    banner: "bg-info-soft border-info-line text-info-fg",
+    chip: "bg-info-soft text-info-fg border border-info-line",
     Icon: HeartIcon,
   },
   "self-care": {
     label: "セルフケア",
     headline: "セルフケアで様子を見てよい状態です",
-    banner: "bg-teal-500/15 border-teal-500/60 text-teal-700 dark:text-teal-300",
-    chip: "bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/50",
+    banner: "bg-brand-soft border-brand-line text-brand-fg",
+    chip: "bg-brand-soft text-brand-fg border border-brand-line",
     Icon: CheckCircleIcon,
   },
 };
@@ -123,7 +123,7 @@ function resultToSpeech(result: SymptomResult): string {
     parts.push(`セルフケア。${result.selfCare.join("。")}`);
   }
   parts.push(result.disclaimer);
-  return parts.join(" ");
+  return parts.join("");
 }
 
 // ── 子コンポーネント ──────────────────────────────────────────────────────
@@ -191,14 +191,14 @@ function ResultPanel({ result, isSpeaking, speechSupported, onToggleSpeech }: Re
           <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <a
               href="tel:119"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-danger-strong px-4 py-2.5 text-sm font-bold text-white hover:bg-danger-strong transition-colors focus:outline-none focus:ring-2 focus:ring-danger"
             >
               <PhoneIcon className="w-5 h-5" aria-hidden="true" />
               119番（救急）に電話する
             </a>
             <a
               href="tel:%237119"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-500/60 px-4 py-2.5 text-sm font-semibold text-red-700 dark:text-red-300 hover:bg-red-500/10 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-danger-line px-4 py-2.5 text-sm font-semibold text-danger-fg hover:bg-danger-soft transition-colors focus:outline-none focus:ring-2 focus:ring-danger"
             >
               <LifebuoyIcon className="w-5 h-5" aria-hidden="true" />
               #7119（救急相談）
@@ -235,15 +235,15 @@ function ResultPanel({ result, isSpeaking, speechSupported, onToggleSpeech }: Re
 
       {/* レッドフラグ */}
       {result.redFlags.length > 0 && (
-        <div className="rounded-2xl border-2 border-red-500/50 bg-red-500/10 p-4 sm:p-5">
-          <h4 className="text-sm font-bold text-red-700 dark:text-red-300 mb-2 flex items-center gap-1.5">
+        <div className="rounded-2xl border-2 border-danger-line bg-danger-soft p-4 sm:p-5">
+          <h4 className="text-sm font-bold text-danger-fg mb-2 flex items-center gap-1.5">
             <ShieldExclamationIcon className="w-4 h-4" aria-hidden="true" />
             これがあれば至急受診を
           </h4>
           <ul className="space-y-1.5">
             {result.redFlags.map((f, i) => (
               <li key={`rf-${i}`} className="text-sm text-theme-primary flex items-start gap-2">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" aria-hidden="true" />
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-danger flex-shrink-0" aria-hidden="true" />
                 <span>{f}</span>
               </li>
             ))}
@@ -255,13 +255,13 @@ function ResultPanel({ result, isSpeaking, speechSupported, onToggleSpeech }: Re
       {result.selfCare.length > 0 && (
         <div className="rounded-2xl bg-theme-card border border-theme-light p-4 sm:p-5">
           <h4 className="text-sm font-bold text-theme-primary mb-2 flex items-center gap-1.5">
-            <HeartIcon className="w-4 h-4 text-teal-500" aria-hidden="true" />
+            <HeartIcon className="w-4 h-4 text-brand-fg" aria-hidden="true" />
             セルフケアの目安
           </h4>
           <ul className="space-y-1.5">
             {result.selfCare.map((s, i) => (
               <li key={`sc-${i}`} className="text-sm text-theme-secondary flex items-start gap-2">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0" aria-hidden="true" />
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0" aria-hidden="true" />
                 <span>{s}</span>
               </li>
             ))}
@@ -287,7 +287,7 @@ function HistoryItem({ check, expanded, onToggle, onDelete }: HistoryItemProps) 
         <button
           type="button"
           onClick={onToggle}
-          className="flex-1 min-w-0 flex items-center gap-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded-md"
+          className="flex-1 min-w-0 flex items-center gap-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-md"
           aria-expanded={expanded}
           aria-controls={panelId}
         >
@@ -307,7 +307,7 @@ function HistoryItem({ check, expanded, onToggle, onDelete }: HistoryItemProps) 
         <button
           type="button"
           onClick={onDelete}
-          className="flex-shrink-0 p-1.5 rounded-md text-theme-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+          className="flex-shrink-0 p-1.5 rounded-md text-theme-tertiary hover:text-danger-fg hover:bg-danger-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-danger"
           aria-label="この履歴を削除"
         >
           <TrashIcon className="w-4 h-4" aria-hidden="true" />
@@ -331,7 +331,7 @@ function HistoryItem({ check, expanded, onToggle, onDelete }: HistoryItemProps) 
           </div>
           <p className="text-sm text-theme-secondary leading-relaxed">{check.result.summary}</p>
           {check.result.redFlags.length > 0 && (
-            <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">
+            <p className="text-xs text-danger-fg leading-relaxed">
               至急サイン: {check.result.redFlags.join(" / ")}
             </p>
           )}
@@ -529,7 +529,7 @@ export default function SymptomCheckerMode() {
       {/* ヘッダー */}
       <header className="space-y-1">
         <h2 className="text-xl sm:text-2xl font-bold text-theme-primary flex items-center gap-2">
-          <ShieldExclamationIcon className="w-6 h-6 text-teal-500" aria-hidden="true" />
+          <ShieldExclamationIcon className="w-6 h-6 text-brand-fg" aria-hidden="true" />
           AI症状チェッカー
         </h2>
         <p className="text-sm text-theme-tertiary">
@@ -555,7 +555,7 @@ export default function SymptomCheckerMode() {
           {/* 症状の説明 */}
           <div>
             <label htmlFor="scm-description" className="block text-sm font-semibold text-theme-primary mb-1.5">
-              症状の説明 <span className="text-red-500" aria-hidden="true">*</span>
+              症状の説明 <span className="text-danger-fg" aria-hidden="true">*</span>
             </label>
             <textarea
               id="scm-description"
@@ -565,7 +565,7 @@ export default function SymptomCheckerMode() {
               rows={4}
               required
               placeholder="例: 昨日の夜から右下腹部が痛い。歩くと響く感じがする。"
-              className="w-full rounded-xl bg-theme-surface border border-theme-medium px-3 py-2.5 text-sm text-theme-primary placeholder:text-theme-muted resize-y focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full rounded-xl bg-theme-surface border border-theme-medium px-3 py-2.5 text-sm text-theme-primary placeholder:text-theme-muted resize-y focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
               aria-describedby="scm-desc-count"
             />
             <p id="scm-desc-count" className="mt-1 text-xs text-theme-muted text-right">
@@ -585,9 +585,9 @@ export default function SymptomCheckerMode() {
                     type="button"
                     onClick={() => setBodyPart(active ? null : part)}
                     aria-pressed={active}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       active
-                        ? "bg-teal-500 text-white"
+                        ? "bg-brand text-white"
                         : "bg-theme-surface text-theme-secondary border border-theme-light hover:bg-theme-card"
                     }`}
                   >
@@ -607,7 +607,7 @@ export default function SymptomCheckerMode() {
               id="scm-duration"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
-              className="w-full sm:w-auto rounded-xl bg-theme-surface border border-theme-medium px-3 py-2.5 text-sm text-theme-primary focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full sm:w-auto rounded-xl bg-theme-surface border border-theme-medium px-3 py-2.5 text-sm text-theme-primary focus:outline-none focus:ring-2 focus:ring-brand"
             >
               <option value="">指定しない</option>
               {DURATION_OPTIONS.map((opt) => (
@@ -621,7 +621,7 @@ export default function SymptomCheckerMode() {
           {/* 重症度スライダ */}
           <div>
             <label htmlFor="scm-severity" className="block text-sm font-semibold text-theme-primary mb-1.5">
-              つらさの程度: <span className="text-teal-600 dark:text-teal-400">{severity} / 5（{SEVERITY_LABELS[severity]}）</span>
+              つらさの程度: <span className="text-brand-fg">{severity} / 5（{SEVERITY_LABELS[severity]}）</span>
             </label>
             <input
               id="scm-severity"
@@ -631,7 +631,7 @@ export default function SymptomCheckerMode() {
               step={1}
               value={severity}
               onChange={(e) => setSeverity(Number(e.target.value) as Scale5)}
-              className="w-full accent-teal-500 cursor-pointer"
+              className="w-full accent-brand cursor-pointer"
               aria-valuetext={`${severity}段階中 ${SEVERITY_LABELS[severity]}`}
             />
             <div className="flex justify-between text-xs text-theme-muted mt-1" aria-hidden="true">
@@ -649,7 +649,7 @@ export default function SymptomCheckerMode() {
               id="scm-model"
               value={model}
               onChange={(e) => setModel(e.target.value as ModelId)}
-              className="w-full sm:w-auto rounded-xl bg-theme-surface border border-theme-medium px-3 py-2.5 text-sm text-theme-primary focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full sm:w-auto rounded-xl bg-theme-surface border border-theme-medium px-3 py-2.5 text-sm text-theme-primary focus:outline-none focus:ring-2 focus:ring-brand"
             >
               {AVAILABLE_MODELS.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -677,7 +677,7 @@ export default function SymptomCheckerMode() {
           {error && (
             <p
               role="alert"
-              className="rounded-xl border border-red-500/50 bg-red-500/10 px-3 py-2.5 text-sm text-red-700 dark:text-red-300"
+              className="rounded-xl border border-danger-line bg-danger-soft px-3 py-2.5 text-sm text-danger-fg"
             >
               {error}
             </p>
@@ -696,7 +696,7 @@ export default function SymptomCheckerMode() {
           ) : (
             !loading && (
               <div className="rounded-2xl border border-dashed border-theme-light bg-theme-surface p-6 text-center">
-                <HeartIcon className="w-8 h-8 text-teal-500/60 mx-auto mb-2" aria-hidden="true" />
+                <HeartIcon className="w-8 h-8 text-brand-fg mx-auto mb-2" aria-hidden="true" />
                 <p className="text-sm text-theme-tertiary">
                   症状を入力してチェックすると、ここに参考情報が表示されます。
                 </p>

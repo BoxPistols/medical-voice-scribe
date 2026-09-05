@@ -65,12 +65,13 @@ import MoveMode from "./components/MoveMode";
 import MentoringMode from "./components/MentoringMode";
 import SessionDrawer from "./components/SessionDrawer";
 import type { RecordStore as RecordStoreType } from "@/lib/recordStore";
+import { SAMPLE_INTERVIEWS } from "@/lib/sampleInterviews";
 import {
   loadStore,
-  createEmptySession,
   addSession,
   updateSession,
   getActiveSession,
+  resetToInitialStore,
 } from "@/lib/recordStore";
 
 // 各モードのヘッダー見出し（タイトル・サブタイトル）— AppMode を網羅
@@ -320,78 +321,13 @@ const formatShortcut = (
   if (shortcut.shift) parts.push("Shift");
 
   let keyDisplay = shortcut.key.toUpperCase();
-  if (keyDisplay === " ") keyDisplay = "Space";
+  if (keyDisplay === "") keyDisplay = "Space";
   parts.push(keyDisplay);
 
   return compact ? parts.join("+") : parts.join(" + ");
 };
 
 // Sample medical interview texts for quick insertion
-const SAMPLE_INTERVIEWS = [
-  {
-    id: "naika",
-    label: "内科（頭痛・倦怠感）",
-    description: "一般的な頭痛の問診例",
-    text: `医師: 今日はどうされましたか？
-患者: ここ1週間くらい、頭痛がひどくて来ました。
-医師: 頭痛はどのあたりが痛みますか？
-患者: こめかみの両側がズキズキする感じです。
-医師: 痛みの程度はどのくらいですか？10段階で言うとどのくらいでしょう。
-患者: 6か7くらいです。ひどいときは仕事に集中できないくらいです。
-医師: 吐き気やめまいはありますか？
-患者: 吐き気は少しあります。めまいはないです。
-医師: 最近、生活で何か変わったことはありますか？
-患者: 仕事が忙しくて、睡眠時間が4〜5時間くらいになっています。デスクワークも増えました。
-医師: 肩こりや眼精疲労はありますか？
-患者: はい、肩こりがひどいです。目も疲れやすくなりました。
-医師: これまでに大きな病気をされたことはありますか？
-患者: 特にないです。
-医師: アレルギーや常用しているお薬はありますか？
-患者: ありません。市販の頭痛薬を飲むことはあります。`,
-  },
-  {
-    id: "seikei",
-    label: "整形外科（腰痛）",
-    description: "急性腰痛の問診例",
-    text: `医師: どうされましたか？
-患者: 3日前に重い荷物を持ち上げたときに腰をやってしまいまして。
-医師: 痛みはどのあたりですか？
-患者: 右側の腰から少しお尻の方にかけてです。
-医師: しびれはありますか？
-患者: 右のお尻から太ももの裏にかけて、少ししびれる感じがあります。
-医師: どういう姿勢で痛みが強くなりますか？
-患者: 前かがみになると特にひどいです。朝起き上がるのも辛いです。
-医師: お仕事は何をされていますか？
-患者: 倉庫で荷物の搬入作業をしています。
-医師: 以前にも腰を痛めたことはありますか？
-患者: 2年前にもぎっくり腰をやりました。そのときは1週間くらいで治りました。
-医師: 排尿や排便に問題はないですか？
-患者: それは大丈夫です。
-医師: 現在、何かお薬は飲んでいますか？
-患者: 特にないです。湿布は貼っています。`,
-  },
-  {
-    id: "shouni",
-    label: "小児科（発熱・咳）",
-    description: "保護者と医師の会話例",
-    text: `医師: 今日はどうされましたか？
-母親: 5歳の息子なんですが、昨日の夜から熱が出まして。
-医師: 今朝の体温はどのくらいでしたか？
-母親: 38度5分でした。昨晩は39度まで上がりました。
-医師: 咳や鼻水はありますか？
-母親: 咳が出ています。乾いた咳で、夜中に何度も咳き込んでいました。鼻水も少し出ています。
-医師: のどの痛みは訴えていますか？
-母親: はい、のどが痛いと言っています。食欲もあまりなくて、今朝はお粥を少し食べただけです。
-医師: 保育園や幼稚園では何か流行っていますか？
-母親: 保育園で風邪が流行っているみたいです。先週もお休みしている子が何人かいました。
-医師: 予防接種は受けていますか？
-母親: 定期接種は全部済んでいます。インフルエンザも先月受けました。
-医師: お薬のアレルギーはありますか？
-母親: 特にないです。
-医師: 水分は取れていますか？
-母親: お茶やスポーツドリンクは少しずつ飲んでいます。`,
-  },
-];
 
 // モード切替ショートカット用の順序定義
 const MODE_ORDER: AppMode[] = [
@@ -660,9 +596,9 @@ export default function Home() {
 
   // セッション初期化: ストアが空なら初期セッションを作成
   useEffect(() => {
+    // 全削除後などで空になっていたらサンプル入りの初期状態に戻す
     if (recordStore.sessions.length === 0) {
-      const initial = createEmptySession("medical");
-      setRecordStore(addSession(recordStore, initial));
+      setRecordStore(resetToInitialStore());
       return;
     }
     // アクティブセッションのデータを復元
@@ -1779,7 +1715,7 @@ export default function Home() {
             {/* Branding + Clock */}
             <div className="flex items-center gap-2 md:gap-3 md:min-w-0 md:flex-shrink">
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                <div className="flex w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 items-center justify-center shadow-sm flex-shrink-0">
+                <div className="flex w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-brand to-brand-strong items-center justify-center shadow-sm flex-shrink-0">
                   <MicrophoneIcon
                     className="w-4 h-4 md:w-5 md:h-5 text-white"
                     strokeWidth={2.5}
@@ -1800,7 +1736,7 @@ export default function Home() {
               {mounted && showClock && (
                 <div className="flex items-center gap-2 lg:flex-col lg:items-center flex-shrink-0">
                   <time
-                    className="text-lg lg:text-xl font-bold text-gray-400 dark:text-gray-500 font-mono tabular-nums"
+                    className="text-lg lg:text-xl font-bold text-ink-faint font-mono tabular-nums"
                     dateTime={currentTime.toISOString()}
                     aria-label="現在時刻"
                     suppressHydrationWarning
@@ -1809,8 +1745,8 @@ export default function Home() {
                   </time>
                   {isRecording && (
                     <div className="flex items-center gap-1 lg:mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                      <span className="text-xs font-mono text-orange-500 tabular-nums">
+                      <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
+                      <span className="text-xs font-mono text-warning-fg tabular-nums">
                         {formatElapsedTime(recordingElapsed)}
                       </span>
                     </div>
@@ -1829,7 +1765,7 @@ export default function Home() {
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value as ModelId)}
-                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-7 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-7 py-1.5 text-[11px] text-theme-tertiary cursor-pointer hover:border-theme-border-hover focus:outline-none focus:ring-2 focus:ring-info"
                   aria-label="AIモデル選択"
                   title={(() => {
                     const m = AVAILABLE_MODELS.find(m => m.id === selectedModel);
@@ -1847,7 +1783,7 @@ export default function Home() {
                   aria-hidden="true"
                 />
                 {/* Model info tooltip */}
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-white dark:bg-gray-900 border border-theme-border rounded-lg shadow-xl text-xs">
+                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-white bg-surface-raised border border-theme-border rounded-lg shadow-xl text-xs">
                   <div className="font-medium text-theme-secondary text-[11px] mb-2">モデル比較</div>
                   <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1.5 text-left">
                     <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">モデル</div>
@@ -1855,16 +1791,16 @@ export default function Home() {
                     <div className="text-theme-tertiary text-[10px] font-medium pb-1 border-b border-theme-border">品質</div>
                     {AVAILABLE_MODELS.flatMap((m) => {
                       const usage = usageStatus[m.id];
-                      const usageColor = usage && usage.count / usage.limit >= 1 ? 'text-red-500' : usage && usage.count / usage.limit >= 0.8 ? 'text-amber-500' : 'text-theme-muted';
+                      const usageColor = usage && usage.count / usage.limit >= 1 ? 'text-danger-fg' : usage && usage.count / usage.limit >= 0.8 ? 'text-warning-fg' : 'text-theme-muted';
                       return [
                       <div key={`${m.id}-name`} className={`py-0.5 ${m.id === selectedModel ? 'text-theme-primary font-medium' : 'text-theme-secondary'}`}>
                         <span>{m.name.replace('GPT-', '')}</span>
                         {usage && <span className={`ml-1.5 text-[9px] tabular-nums ${usageColor}`}>残り{usage.remaining}/{usage.limit}</span>}
                       </div>,
-                      <div key={`${m.id}-speed`} className={`py-0.5 text-amber-500 ${m.id === selectedModel ? 'opacity-100' : 'opacity-70'}`}>
+                      <div key={`${m.id}-speed`} className={`py-0.5 text-warning-fg ${m.id === selectedModel ? 'opacity-100' : 'opacity-70'}`}>
                         {'⚡'.repeat(m.speed)}
                       </div>,
-                      <div key={`${m.id}-quality`} className={`py-0.5 ${m.id === selectedModel ? 'text-amber-500' : 'text-theme-tertiary'}`}>
+                      <div key={`${m.id}-quality`} className={`py-0.5 ${m.id === selectedModel ? 'text-warning-fg' : 'text-theme-tertiary'}`}>
                         {'★'.repeat(m.quality)}{'☆'.repeat(5 - m.quality)}
                       </div>,
                     ];})}
@@ -1879,7 +1815,6 @@ export default function Home() {
                 <button
                   onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
                   className="w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
-                  title="セッション管理"
                   aria-label="セッション管理"
                   data-tooltip-bottom="セッション"
                 >
@@ -1977,7 +1912,6 @@ export default function Home() {
               <button
                 onClick={() => { saveCurrentSession(); setIsSessionDrawerOpen(true); }}
                 className="w-9 h-9 flex items-center justify-center rounded-lg text-theme-tertiary btn-theme-hover"
-                title="セッション管理"
                 aria-label="セッション管理"
               >
                 <Bars3Icon className="w-5 h-5" aria-hidden="true" />
@@ -2175,10 +2109,10 @@ export default function Home() {
                           onClick={() =>
                             handleUseModifiersChange(!useModifiers)
                           }
-                          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 ${
+                          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1 ${
                             useModifiers
-                              ? "bg-teal-600"
-                              : "bg-gray-300 dark:bg-gray-600"
+                              ? "bg-brand-strong"
+                              : "bg-line bg-surface-raised"
                           }`}
                           role="switch"
                           aria-checked={useModifiers}
@@ -2297,14 +2231,14 @@ export default function Home() {
                         y="5"
                         width="10"
                         height="14"
-                        className="group-hover:fill-teal-50"
+                        className="group-hover:fill-brand-soft"
                       />
                       <rect
                         x="15"
                         y="5"
                         width="6"
                         height="14"
-                        className="group-hover:fill-teal-50"
+                        className="group-hover:fill-brand-soft"
                       />
                     </svg>
                   </button>
@@ -2327,14 +2261,14 @@ export default function Home() {
                         y="5"
                         width="8"
                         height="14"
-                        className="group-hover:fill-teal-50"
+                        className="group-hover:fill-brand-soft"
                       />
                       <rect
                         x="13"
                         y="5"
                         width="8"
                         height="14"
-                        className="group-hover:fill-teal-50"
+                        className="group-hover:fill-brand-soft"
                       />
                     </svg>
                   </button>
@@ -2357,14 +2291,14 @@ export default function Home() {
                         y="5"
                         width="6"
                         height="14"
-                        className="group-hover:fill-teal-50"
+                        className="group-hover:fill-brand-soft"
                       />
                       <rect
                         x="11"
                         y="5"
                         width="10"
                         height="14"
-                        className="group-hover:fill-teal-50"
+                        className="group-hover:fill-brand-soft"
                       />
                     </svg>
                   </button>
@@ -2647,7 +2581,7 @@ export default function Home() {
                               onChange={(e) =>
                                 setSelectedVoiceIndex(Number(e.target.value))
                               }
-                              className="w-full px-3 py-2 text-sm border border-theme-border rounded-md bg-theme-surface text-theme-primary focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                              className="w-full px-3 py-2 text-sm border border-theme-border rounded-md bg-theme-surface text-theme-primary focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
                             >
                               {availableVoices.map((voice, index) => (
                                 <option key={index} value={index}>
@@ -2726,7 +2660,7 @@ export default function Home() {
                           {result.soap.subjective?.severity && (
                             <div>
                               <span className="font-bold text-xs text-theme-secondary">
-                                重症度:{" "}
+                                重症度:{""}
                               </span>
                               <span className="soap-content">
                                 {result.soap.subjective.severity}
@@ -2822,7 +2756,7 @@ export default function Home() {
                                 {result.soap.assessment.diagnosis}
                               </span>
                               {result.soap.assessment?.icd10 && (
-                                <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded font-mono">
+                                <span className="px-2 py-0.5 bg-success-strong text-white text-xs rounded font-mono">
                                   {result.soap.assessment.icd10}
                                 </span>
                               )}
@@ -2887,19 +2821,19 @@ export default function Home() {
                                           <div>
                                             <span className="font-semibold">
                                               用量:
-                                            </span>{" "}
+                                            </span>{""}
                                             {med.dosage}
                                           </div>
                                           <div>
                                             <span className="font-semibold">
                                               用法:
-                                            </span>{" "}
+                                            </span>{""}
                                             {med.frequency}
                                           </div>
                                           <div>
                                             <span className="font-semibold">
                                               期間:
-                                            </span>{" "}
+                                            </span>{""}
                                             {med.duration}
                                           </div>
                                         </div>
@@ -3005,7 +2939,7 @@ export default function Home() {
                       setShowExportPreview(false);
                       setExportPreviewData(null);
                     }}
-                    className="px-4 py-2 text-sm font-medium text-theme-primary bg-theme-interactive border border-theme-border rounded-md hover:bg-theme-interactive-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-theme-primary bg-theme-interactive border border-theme-border rounded-md hover:bg-theme-interactive-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand transition-colors"
                   >
                     キャンセル
                   </button>
@@ -3035,7 +2969,7 @@ export default function Home() {
               <div className="font-mono">
                 Next.js 14 / OpenAI API / Web Speech API で構築
               </div>
-              <div className="flex items-center gap-1.5 text-amber-600 font-semibold">
+              <div className="flex items-center gap-1.5 text-warning-fg font-semibold">
                 <svg
                   className="w-3.5 h-3.5"
                   fill="currentColor"
@@ -3089,7 +3023,7 @@ export default function Home() {
                   onClick={() => setHelpTab(tab)}
                   className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
                     helpTab === tab
-                      ? "border-teal-400 text-white"
+                      ? "border-brand text-white"
                       : "border-transparent text-white/75 hover:text-white"
                   }`}
                 >
@@ -3335,17 +3269,17 @@ export default function Home() {
           <div className="bg-[#0f172a] rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col border border-white/10 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/5">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center">
                   <PlayIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h3 id="onboarding-video-title" className="text-lg font-bold text-white">製品デモ動画</h3>
-                  <p className="text-xs text-slate-400">Medical Scribe Flow の使い方</p>
+                  <p className="text-xs text-ink-faint">Medical Scribe Flow の使い方</p>
                 </div>
               </div>
               <button
                 onClick={() => { setShowOnboardingVideo(false); setShowHelp(true); setHelpTab("medical"); }}
-                className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+                className="text-ink-faint hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
                 aria-label="動画を閉じる"
               >
                 <XMarkIcon className="w-6 h-6" />
@@ -3360,10 +3294,10 @@ export default function Home() {
               />
             </div>
             <div className="px-6 py-4 bg-white/5 flex justify-between items-center">
-              <p className="text-xs text-slate-500">※ 音声が流れますのでご注意ください</p>
+              <p className="text-xs text-ink-faint">※ 音声が流れますのでご注意ください</p>
               <button
                 onClick={() => { setShowOnboardingVideo(false); setShowHelp(true); setHelpTab("medical"); }}
-                className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-teal-900/20"
+                className="px-6 py-2 bg-brand-strong hover:bg-brand text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-brand/20"
               >
                 はじめる
               </button>
@@ -3405,14 +3339,14 @@ export default function Home() {
                   <div>
                     <div className="font-medium text-theme-primary">修飾キーショートカットを使用</div>
                     <div className="text-xs text-theme-secondary mt-0.5">
-                      オンにすると、テキスト入力中でも{" "}
-                      <span className="font-mono bg-theme-highlight px-1 rounded">Cmd+R</span>{" "}
+                      オンにすると、テキスト入力中でも{""}
+                      <span className="font-mono bg-theme-highlight px-1 rounded">Cmd+R</span>{""}
                       などで操作できます
                     </div>
                   </div>
                   <button
                     onClick={() => handleUseModifiersChange(!useModifiers)}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${useModifiers ? "bg-teal-600" : "bg-gray-200 dark:bg-gray-700"}`}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 ${useModifiers ? "bg-brand-strong" : "bg-line bg-surface-raised"}`}
                     role="switch"
                     aria-checked={useModifiers}
                     aria-label="修飾キーショートカットを使用"
@@ -3431,7 +3365,7 @@ export default function Home() {
                   </div>
                   <button
                     onClick={() => setShowClock(!showClock)}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${showClock ? "bg-teal-600" : "bg-gray-200 dark:bg-gray-700"}`}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 ${showClock ? "bg-brand-strong" : "bg-line bg-surface-raised"}`}
                     role="switch"
                     aria-checked={showClock}
                     aria-label="時計を表示"
@@ -3465,7 +3399,7 @@ export default function Home() {
                                 onClick={() => setEditingShortcutId(def.id)}
                                 className={`min-w-[100px] px-3 py-1.5 rounded-md text-sm font-mono border transition-all ${
                                   isEditing
-                                    ? "bg-theme-surface border-teal-500 text-theme-accent ring-2 ring-teal-500/20"
+                                    ? "bg-theme-surface border-brand text-theme-accent ring-2 ring-brand-soft"
                                     : "bg-theme-surface border-theme-light text-theme-primary hover:border-theme-accent"
                                 }`}
                               >
@@ -3474,7 +3408,7 @@ export default function Home() {
                               {JSON.stringify(current) !== JSON.stringify(platformDefault) && (
                                 <button
                                   onClick={() => handleShortcutChange(def.id, platformDefault)}
-                                  className="p-1.5 text-theme-tertiary hover:text-red-500 transition-colors"
+                                  className="p-1.5 text-theme-tertiary hover:text-danger-fg transition-colors"
                                   title="デフォルトに戻す"
                                 >
                                   <ArrowLeftIcon className="w-4 h-4" />
@@ -3494,7 +3428,7 @@ export default function Home() {
             <div className="px-6 py-4 border-t border-theme-soft bg-theme-modal-footer flex justify-between items-center">
               <button
                 onClick={handleResetSettings}
-                className="text-xs text-theme-tertiary hover:text-red-500 flex items-center gap-1 transition-colors"
+                className="text-xs text-theme-tertiary hover:text-danger-fg flex items-center gap-1 transition-colors"
               >
                 <TrashIcon className="w-4 h-4" />
                 設定をリセット
