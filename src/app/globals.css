@@ -841,6 +841,7 @@ body::after {
 /* Status badge with glassmorphism */
 .status-badge {
   display: inline-flex;
+  white-space: nowrap; /* 幅が足りないとき「待機中」が2行に折れていた */
   align-items: center;
   gap: 0.5rem;
   padding: 0.375rem 0.875rem;

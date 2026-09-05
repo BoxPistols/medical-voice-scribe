@@ -1711,7 +1711,7 @@ export default function Home() {
         <div className="max-w-[1600px] mx-auto px-3 md:px-6 lg:px-8">
           {/* Mobile horizontal scroll wrapper */}
           <div className="overflow-x-auto md:overflow-visible scrollbar-none">
-          <div className="relative flex items-center gap-2 md:gap-0 md:justify-between h-12 md:h-14 min-w-max md:min-w-0">
+          <div className="@container/header relative flex items-center gap-2 md:gap-0 md:justify-between h-12 md:h-14 min-w-max md:min-w-0">
             {/* Branding + Clock */}
             <div className="flex items-center gap-2 md:gap-3 md:min-w-0 md:flex-shrink">
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
@@ -1756,7 +1756,7 @@ export default function Home() {
             </div>
 
             {/* Mode Switcher + Status indicator — Desktop */}
-            <div className="hidden md:flex items-center gap-2 lg:gap-3">
+            <div className="hidden md:flex items-center gap-2 lg:gap-3 min-w-0">
               <ModeSwitcher currentMode={appMode} onModeChange={setAppMode} />
               {appMode === "medical" && <StatusBadge isRecording={isRecording} />}
 
@@ -1783,7 +1783,7 @@ export default function Home() {
                   aria-hidden="true"
                 />
                 {/* Model info tooltip */}
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-white bg-surface-raised border border-theme-border rounded-lg shadow-xl text-xs">
+                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-surface-raised border border-theme-border rounded-lg shadow-xl text-xs">
                   <div className="font-medium text-theme-secondary text-xs mb-2">モデル比較</div>
                   <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1.5 text-left">
                     <div className="text-theme-tertiary text-xs font-medium pb-1 border-b border-theme-border">モデル</div>

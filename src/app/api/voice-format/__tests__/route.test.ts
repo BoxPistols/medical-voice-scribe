@@ -74,7 +74,7 @@ describe('/api/voice-format', () => {
       const res = await POST(makeRequest({ text: 'テスト' }))
       expect(res.status).toBe(400)
       const data = await res.json()
-      expect(data.error).toContain('modeは organize または summarize')
+      expect(data.error).toContain('modeは organize, summarize, chat-reformat のいずれかを指定してください')
     })
 
     it('mode が無効な値の場合 400 を返す', async () => {
@@ -82,7 +82,7 @@ describe('/api/voice-format', () => {
       const res = await POST(makeRequest({ text: 'テスト', mode: 'invalid' }))
       expect(res.status).toBe(400)
       const data = await res.json()
-      expect(data.error).toContain('modeは organize または summarize')
+      expect(data.error).toContain('modeは organize, summarize, chat-reformat のいずれかを指定してください')
     })
   })
 

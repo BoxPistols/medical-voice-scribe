@@ -106,6 +106,8 @@ export default function ModeSwitcher({
   currentMode,
   onModeChange,
 }: ModeSwitcherProps) {
+  // ラベルはビューポートではなくヘッダー行の幅(@container/header)で出し分ける。
+  // 9モード分のラベルと右側の操作群が収まる実測値として1360pxを閾値にしている
   return (
     <div className="flex items-center gap-0.5 bg-theme-surface rounded-xl p-0.5 border border-theme-light flex-shrink min-w-0 max-w-full overflow-x-auto scrollbar-none">
       {MODES.map((mode) => {
@@ -117,7 +119,7 @@ export default function ModeSwitcher({
             onClick={() => onModeChange(mode.id)}
             className={`
               flex items-center justify-center gap-1 rounded-lg font-medium transition-all duration-200 flex-shrink-0
-              w-9 h-9 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 text-xs whitespace-nowrap
+              w-9 h-9 @[1360px]/header:w-auto @[1360px]/header:h-auto @[1360px]/header:px-2 @[1360px]/header:py-1.5 text-xs whitespace-nowrap
               ${
                 isActive
                   ? "bg-brand text-white shadow-sm"
@@ -128,8 +130,8 @@ export default function ModeSwitcher({
             aria-label={`${mode.label}モードに切替`}
             aria-pressed={isActive}
           >
-            <Icon className="w-5 h-5 lg:w-3.5 lg:h-3.5 flex-shrink-0" strokeWidth={2} aria-hidden="true" />
-            <span className="hidden lg:inline">{mode.shortLabel}</span>
+            <Icon className="w-5 h-5 @[1360px]/header:w-3.5 @[1360px]/header:h-3.5 flex-shrink-0" strokeWidth={2} aria-hidden="true" />
+            <span className="hidden @[1360px]/header:inline">{mode.shortLabel}</span>
           </button>
         );
       })}
