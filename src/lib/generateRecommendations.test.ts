@@ -54,7 +54,7 @@ describe('generateRecommendations', () => {
   })
 
   it('soapがundefinedの場合は空配列を返す', () => {
-    const result = generateRecommendations({ soap: undefined } as SoapNote)
+    const result = generateRecommendations({ soap: undefined } as unknown as SoapNote)
     expect(result).toEqual([])
   })
 
@@ -128,7 +128,7 @@ describe('generateRecommendations', () => {
 
   it('新規処方薬と既存薬がある場合は相互作用の警告を生成する', () => {
     const soapNote = createMockSoapNote()
-    soapNote.soap.plan.medications = [{ name: 'ロキソニン', dosage: '60mg', frequency: '1日3回' }]
+    soapNote.soap.plan.medications = [{ name: 'ロキソニン', dosage: '60mg', frequency: '1日3回', duration: '7日間' }]
     soapNote.soap.subjective.medications = ['アスピリン', 'ワーファリン']
 
     const result = generateRecommendations(soapNote)
@@ -179,7 +179,7 @@ describe('generateRecommendations', () => {
     soapNote.soap.plan.tests = ['検査1']
     soapNote.soap.plan.followUp = 'フォロー'
     soapNote.soap.plan.patientEducation = '教育'
-    soapNote.soap.plan.medications = [{ name: '薬', dosage: '1', frequency: '1' }]
+    soapNote.soap.plan.medications = [{ name: '薬', dosage: '1', frequency: '1', duration: '1' }]
     soapNote.soap.subjective.medications = ['既存薬']
     soapNote.soap.subjective.associatedSymptoms = ['症状1', '症状2', '症状3']
 
