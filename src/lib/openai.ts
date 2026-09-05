@@ -1,9 +1,13 @@
 import OpenAI from "openai";
 
+/** キー未設定時にAPIが返す文言。セットアップ手順が分かるように書く */
+export const OPENAI_CONFIG_ERROR_MESSAGE =
+  "サーバーにOpenAI APIキーが設定されていません。.env.localにOPENAI_API_KEYを設定してください";
+
 /** OPENAI_API_KEYが未設定のときに投げる。ルート側で503に変換する */
 export class OpenAIConfigError extends Error {
   constructor() {
-    super("OPENAI_API_KEY環境変数が設定されていません");
+    super(OPENAI_CONFIG_ERROR_MESSAGE);
     this.name = "OpenAIConfigError";
   }
 }

@@ -25,7 +25,7 @@ export default function ErrorAlert({ message, onClose }: ErrorAlertProps) {
         </div>
         <button
           onClick={onClose}
-          className="text-danger-fg hover:text-danger-fg transition-colors"
+          className="text-danger-fg hover:text-danger transition-colors"
           aria-label="閉じる"
         >
           <svg

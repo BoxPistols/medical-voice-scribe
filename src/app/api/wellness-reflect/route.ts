@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { openai } from '@/lib/openai';
+import { openai, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
 import OpenAI from 'openai';
 import type { ModelId, TokenUsage } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
@@ -218,6 +218,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ result, model, tokenUsage });
   } catch (error: unknown) {
+    if (error instanceof OpenAIConfigError) {
+      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
+    }
+
     if (error instanceof SyntaxError) {
       return NextResponse.json({ error: 'AIの応答を解析できませんでした' }, { status: 500 });
     }

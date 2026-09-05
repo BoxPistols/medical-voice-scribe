@@ -412,7 +412,7 @@ export default function MentoringMode() {
                   setMessages([]);
                   localStorage.removeItem(MENTORING_STORAGE_KEY);
                 }}
-                className="text-xs text-theme-tertiary hover:text-danger-fg transition-colors cursor-pointer px-2 py-1 rounded border border-theme-border hover:border-danger-line"
+                className="text-xs text-theme-tertiary hover:text-danger transition-colors cursor-pointer px-2 py-1 rounded border border-theme-border hover:border-danger-line"
               >
                 履歴クリア
               </button>
@@ -443,7 +443,7 @@ export default function MentoringMode() {
                   <button
                     key={i}
                     onClick={() => setInputValue(s)}
-                    className="text-xs px-3 py-1.5 rounded-full border border-brand-line text-brand-fg hover:bg-brand-soft transition-colors"
+                    className="text-xs px-3 py-1.5 rounded-full border border-brand-line text-brand-fg hover:bg-brand-soft-strong transition-colors"
                   >
                     {s}
                   </button>
@@ -477,7 +477,7 @@ export default function MentoringMode() {
                       {msg.role === "assistant" && speakingId !== msg.id && (
                         <button
                           onClick={() => speakMessage(msg.id, msg.content)}
-                          className="flex items-center gap-1 text-xs text-theme-tertiary hover:text-brand-fg transition-colors cursor-pointer"
+                          className="flex items-center gap-1 text-xs text-theme-tertiary hover:text-brand transition-colors cursor-pointer"
                           title="読み上げ"
                           aria-label="読み上げ"
                         >
@@ -489,7 +489,7 @@ export default function MentoringMode() {
                         <div className="flex items-center gap-1.5">
                           {/* 巻き戻し */}
                           <button onClick={skipBack} disabled={speechIndex === 0}
-                            className="w-5 h-5 flex items-center justify-center text-brand-fg hover:text-brand-fg disabled:text-theme-tertiary disabled:opacity-40 transition-colors cursor-pointer" title="前の文" aria-label="前の文">
+                            className="w-5 h-5 flex items-center justify-center text-brand-fg hover:text-brand disabled:text-theme-tertiary disabled:opacity-40 transition-colors cursor-pointer" title="前の文" aria-label="前の文">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                           </button>
                           {/* 一時停止/再開 */}
@@ -503,12 +503,12 @@ export default function MentoringMode() {
                           </button>
                           {/* 早送り */}
                           <button onClick={skipForward} disabled={speechIndex >= speechSentences.length - 1}
-                            className="w-5 h-5 flex items-center justify-center text-brand-fg hover:text-brand-fg disabled:text-theme-tertiary disabled:opacity-40 transition-colors cursor-pointer" title="次の文" aria-label="次の文">
+                            className="w-5 h-5 flex items-center justify-center text-brand-fg hover:text-brand disabled:text-theme-tertiary disabled:opacity-40 transition-colors cursor-pointer" title="次の文" aria-label="次の文">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                           </button>
                           {/* 停止 */}
                           <button onClick={() => speakMessage(msg.id, msg.content)}
-                            className="w-5 h-5 flex items-center justify-center text-danger-fg hover:text-danger-fg transition-colors cursor-pointer" title="停止" aria-label="停止">
+                            className="w-5 h-5 flex items-center justify-center text-danger-fg hover:text-danger transition-colors cursor-pointer" title="停止" aria-label="停止">
                             <StopIcon className="w-3.5 h-3.5" />
                           </button>
                           {/* 速度 */}
@@ -516,7 +516,7 @@ export default function MentoringMode() {
                             {[0.75, 1.0, 1.25, 1.5].map((r) => (
                               <button key={r} onClick={() => changeSpeechRate(r)}
                                 className={`px-1 py-0.5 rounded text-xs font-medium transition-colors cursor-pointer ${
-                                  speechRate === r ? "bg-brand text-white" : "text-theme-tertiary hover:text-brand-fg"
+                                  speechRate === r ? "bg-brand text-white" : "text-theme-tertiary hover:text-brand"
                                 }`}
                                 title={`${r}x`}
                               >
@@ -612,7 +612,7 @@ export default function MentoringMode() {
               className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
                 isListening
                   ? "bg-danger text-white animate-pulse"
-                  : "bg-theme-bg border border-theme-border text-theme-secondary hover:text-brand-fg hover:border-brand"
+                  : "bg-theme-bg border border-theme-border text-theme-secondary hover:text-brand hover:border-brand"
               }`}
               aria-label={isListening ? "音声入力を停止" : "音声入力を開始"}
               title={isListening ? "音声入力を停止" : "音声で入力"}

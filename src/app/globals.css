@@ -18,11 +18,12 @@
      surface / surface-raised  面
      ink / ink-muted / ink-faint  文字(3段)
      line               罫線
-   段(各役割に5つ)
+   段(各役割に6つ)
      {role}         塗り(ボタン背景など)。上に載せる文字は白
      {role}-strong  塗りのhover
      {role}-fg      面の上に置く文字・アイコン
      {role}-soft    薄い面(札・バナー背景)
+     {role}-soft-strong  薄い面のhover
      {role}-line    枠線
 
    使う色: teal / sky / amber / red / emerald / slate
@@ -35,30 +36,35 @@
   --brand-strong: #0d9488;
   --brand-fg: #0f766e;
   --brand-soft: #f0fdfa;
+  --brand-soft-strong: #ccfbf1;
   --brand-line: #99f6e4;
 
   --danger: #ef4444;
   --danger-strong: #dc2626;
   --danger-fg: #b91c1c;
   --danger-soft: #fef2f2;
+  --danger-soft-strong: #fee2e2;
   --danger-line: #fecaca;
 
   --warning: #f59e0b;
   --warning-strong: #d97706;
   --warning-fg: #b45309;
   --warning-soft: #fffbeb;
+  --warning-soft-strong: #fef3c7;
   --warning-line: #fde68a;
 
   --info: #0ea5e9;
   --info-strong: #0284c7;
   --info-fg: #0369a1;
   --info-soft: #f0f9ff;
+  --info-soft-strong: #e0f2fe;
   --info-line: #bae6fd;
 
   --success: #10b981;
   --success-strong: #059669;
   --success-fg: #047857;
   --success-soft: #ecfdf5;
+  --success-soft-strong: #d1fae5;
   --success-line: #a7f3d0;
   /* Modern, refined color system - Light Mode */
   --bg-primary: #f8fafc;
@@ -151,30 +157,35 @@
   /* 意味トークン: Dark。塗りは同じ、文字は明るく、薄い面は半透明にして下地の色を透かす */
   --brand-fg: #5eead4;
   --brand-soft: rgba(20, 184, 166, 0.14);
+  --brand-soft-strong: rgba(20, 184, 166, 0.26);
   --brand-line: rgba(20, 184, 166, 0.35);
 
   --danger: #f87171;
   --danger-strong: #ef4444;
   --danger-fg: #fca5a5;
   --danger-soft: rgba(239, 68, 68, 0.14);
+  --danger-soft-strong: rgba(239, 68, 68, 0.26);
   --danger-line: rgba(239, 68, 68, 0.4);
 
   --warning: #fbbf24;
   --warning-strong: #f59e0b;
   --warning-fg: #fcd34d;
   --warning-soft: rgba(245, 158, 11, 0.14);
+  --warning-soft-strong: rgba(245, 158, 11, 0.26);
   --warning-line: rgba(245, 158, 11, 0.4);
 
   --info: #38bdf8;
   --info-strong: #0ea5e9;
   --info-fg: #7dd3fc;
   --info-soft: rgba(14, 165, 233, 0.14);
+  --info-soft-strong: rgba(14, 165, 233, 0.26);
   --info-line: rgba(14, 165, 233, 0.4);
 
   --success: #34d399;
   --success-strong: #10b981;
   --success-fg: #6ee7b7;
   --success-soft: rgba(16, 185, 129, 0.14);
+  --success-soft-strong: rgba(16, 185, 129, 0.26);
   --success-line: rgba(16, 185, 129, 0.4);
 
   /* Dark Mode colors */
@@ -269,30 +280,35 @@
   --color-brand-strong: var(--brand-strong);
   --color-brand-fg: var(--brand-fg);
   --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-strong: var(--brand-soft-strong);
   --color-brand-line: var(--brand-line);
 
   --color-danger: var(--danger);
   --color-danger-strong: var(--danger-strong);
   --color-danger-fg: var(--danger-fg);
   --color-danger-soft: var(--danger-soft);
+  --color-danger-soft-strong: var(--danger-soft-strong);
   --color-danger-line: var(--danger-line);
 
   --color-warning: var(--warning);
   --color-warning-strong: var(--warning-strong);
   --color-warning-fg: var(--warning-fg);
   --color-warning-soft: var(--warning-soft);
+  --color-warning-soft-strong: var(--warning-soft-strong);
   --color-warning-line: var(--warning-line);
 
   --color-info: var(--info);
   --color-info-strong: var(--info-strong);
   --color-info-fg: var(--info-fg);
   --color-info-soft: var(--info-soft);
+  --color-info-soft-strong: var(--info-soft-strong);
   --color-info-line: var(--info-line);
 
   --color-success: var(--success);
   --color-success-strong: var(--success-strong);
   --color-success-fg: var(--success-fg);
   --color-success-soft: var(--success-soft);
+  --color-success-soft-strong: var(--success-soft-strong);
   --color-success-line: var(--success-line);
 
   --color-surface: var(--bg-primary);

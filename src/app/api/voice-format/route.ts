@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import type { ModelId, TokenUsage } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
 import { checkAndIncrementRateLimit } from '@/lib/rateLimiter';
+import { getOpenAI, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
 
 const USD_TO_JPY = 150;
 
@@ -25,13 +26,6 @@ function calculateTokenCost(modelId: ModelId, promptTokens: number, completionTo
     estimatedCostUSD: totalCostUSD,
     estimatedCostJPY: totalCostUSD * USD_TO_JPY,
   };
-}
-
-function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY環境変数が設定されていません');
-  }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 }
 
 const ORGANIZE_PROMPT = `あなたはITエンジニアの音声認識テキストをSlackチャット向けに整理するアシスタントです。
@@ -130,7 +124,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const openai = getOpenAIClient();
+    const openai = getOpenAI();
     const systemPrompt = mode === 'organize' ? ORGANIZE_PROMPT : mode === 'chat-reformat' ? CHAT_REFORMAT_PROMPT : SUMMARIZE_PROMPT;
 
     // トークン上限（nano は 4000、gpt-5.6-luna 等それ以外は 16000）
@@ -172,6 +166,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ result: parsed, tokenUsage });
   } catch (error: unknown) {
+    if (error instanceof OpenAIConfigError) {
+      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
+    }
+
     console.error('Voice format error:', error);
     if (error instanceof SyntaxError) {
       return NextResponse.json({ error: 'AIの応答を解析できませんでした' }, { status: 500 });

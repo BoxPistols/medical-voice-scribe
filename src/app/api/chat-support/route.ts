@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { openai } from '@/lib/openai';
+import { openai, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
 import OpenAI from 'openai';
 import type { SoapNote, ModelId } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
@@ -228,6 +228,10 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
+    if (error instanceof OpenAIConfigError) {
+      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
+    }
+
     console.error('Chat Support API Error:', error);
 
     if (error instanceof OpenAI.APIError) {

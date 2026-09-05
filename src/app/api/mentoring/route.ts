@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import type { ModelId } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
 import { checkAndIncrementRateLimit } from '@/lib/rateLimiter';
+import { getOpenAI, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
 
 // メンタリングモード用システムプロンプト（ポジティブ心理学ベース）
 const MENTORING_PROMPT = `あなたはポジティブ心理学に基づくメンタルコーチです。
@@ -27,15 +28,6 @@ const MENTORING_PROMPT = `あなたはポジティブ心理学に基づくメン
 // モデルIDの検証
 function isValidModel(model: string): model is ModelId {
   return AVAILABLE_MODELS.some(m => m.id === model);
-}
-
-function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY環境変数が設定されていません');
-  }
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
 }
 
 export async function POST(req: Request) {
@@ -70,7 +62,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const openai = getOpenAIClient();
+    const openai = getOpenAI();
 
     // 会話履歴の検証と構築（systemロールはプロンプトインジェクション防止のため除外）
     const validRoles = ['user', 'assistant'];
@@ -115,6 +107,10 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
+    if (error instanceof OpenAIConfigError) {
+      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
+    }
+
     console.error('Mentoring API Error:', error);
 
     if (error instanceof OpenAI.APIError) {

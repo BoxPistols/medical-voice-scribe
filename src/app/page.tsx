@@ -1783,7 +1783,7 @@ export default function Home() {
                   aria-hidden="true"
                 />
                 {/* Model info tooltip */}
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-surface-raised border border-theme-border rounded-lg shadow-xl text-xs">
+                <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-72 p-3 bg-theme-secondary border border-theme-border rounded-lg shadow-xl text-xs">
                   <div className="font-medium text-theme-secondary text-xs mb-2">モデル比較</div>
                   <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1.5 text-left">
                     <div className="text-theme-tertiary text-xs font-medium pb-1 border-b border-theme-border">モデル</div>

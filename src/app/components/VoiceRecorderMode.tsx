@@ -643,7 +643,7 @@ export default function VoiceRecorderMode() {
             {canMerge && (
               <button
                 onClick={mergeSelected}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-warning-soft border border-warning-line text-warning-fg hover:bg-warning-soft transition-all"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-warning-soft border border-warning-line text-warning-fg hover:bg-warning-soft-strong transition-all"
               >
                 <ArrowsPointingInIcon className="w-3.5 h-3.5" />
                 選択を結合 ({selectedIds.size})
@@ -697,7 +697,7 @@ export default function VoiceRecorderMode() {
       {aiError && (
         <div className="mx-4 mt-3 px-4 py-2.5 rounded-lg bg-danger-soft border border-danger-line text-danger-fg text-sm flex items-center justify-between">
           <span>{aiError}</span>
-          <button onClick={() => setAiError(null)} className="ml-2 text-danger-fg hover:text-danger-fg">
+          <button onClick={() => setAiError(null)} className="ml-2 text-danger-fg hover:text-danger">
             &times;
           </button>
         </div>
@@ -939,7 +939,7 @@ export default function VoiceRecorderMode() {
                         <button
                           onClick={() => formatGroup(group.id, "organize")}
                           disabled={isProcessing}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-info-soft border border-info-line text-info-fg hover:bg-info-soft disabled:opacity-50 transition-all"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-info-soft border border-info-line text-info-fg hover:bg-info-soft-strong disabled:opacity-50 transition-all"
                         >
                           <DocumentTextIcon className="w-3.5 h-3.5" />
                           整理
@@ -947,7 +947,7 @@ export default function VoiceRecorderMode() {
                         <button
                           onClick={() => formatGroup(group.id, "summarize")}
                           disabled={isProcessing}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-info-soft border border-info-line text-info-fg hover:bg-info-soft disabled:opacity-50 transition-all"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-info-soft border border-info-line text-info-fg hover:bg-info-soft-strong disabled:opacity-50 transition-all"
                         >
                           <SparklesIcon className="w-3.5 h-3.5" />
                           要約
@@ -955,7 +955,7 @@ export default function VoiceRecorderMode() {
                         <button
                           onClick={() => formatGroup(group.id, "chat-reformat")}
                           disabled={isProcessing}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-soft border border-brand-line text-brand-fg hover:bg-brand-soft disabled:opacity-50 transition-all"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-soft border border-brand-line text-brand-fg hover:bg-brand-soft-strong disabled:opacity-50 transition-all"
                         >
                           <ClipboardDocumentIcon className="w-3.5 h-3.5" />
                           伝わる文に整形
@@ -972,7 +972,7 @@ export default function VoiceRecorderMode() {
                         </button>
                         <button
                           onClick={() => deleteGroup(group.id)}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-danger-fg hover:bg-danger-soft transition-all ml-auto"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-danger-fg hover:bg-danger-soft-strong transition-all ml-auto"
                         >
                           <TrashIcon className="w-3.5 h-3.5" />
                           削除
@@ -1044,7 +1044,7 @@ export default function VoiceRecorderMode() {
                             </button>
                             <button
                               onClick={() => copyText(orgResult.formatted, `org-${group.id}`)}
-                              className="p-1 rounded hover:bg-info-soft"
+                              className="p-1 rounded hover:bg-info-soft-strong"
                             >
                               {copiedId === `org-${group.id}` ? (
                                 <CheckCircleIcon className="w-3.5 h-3.5 text-success-fg" />
@@ -1090,7 +1090,7 @@ export default function VoiceRecorderMode() {
                             )}
                           </button>
                         </div>
-                        <div className="text-sm text-theme-primary whitespace-pre-wrap bg-white bg-surface-raised rounded-lg p-3 border border-brand-line">
+                        <div className="text-sm text-theme-primary whitespace-pre-wrap bg-theme-secondary rounded-lg p-3 border border-brand-line">
                           {chatResult.formatted}
                         </div>
                         {chatResult.changes.length > 0 && (
@@ -1118,7 +1118,7 @@ export default function VoiceRecorderMode() {
                                 `sum-${group.id}`
                               )
                             }
-                            className="p-1 rounded hover:bg-info-soft"
+                            className="p-1 rounded hover:bg-info-soft-strong"
                           >
                             {copiedId === `sum-${group.id}` ? (
                               <CheckCircleIcon className="w-3.5 h-3.5 text-success-fg" />

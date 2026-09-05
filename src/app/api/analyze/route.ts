@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { openai, OpenAIConfigError } from '@/lib/openai';
+import { openai, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
 import OpenAI from 'openai';
 import { SYSTEM_PROMPT } from './prompt';
 import type { SoapNote, ModelId, TokenUsage } from './types';
@@ -167,14 +167,11 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
 
   } catch (error) {
-    console.error('API Error:', error);
-
     if (error instanceof OpenAIConfigError) {
-      return NextResponse.json(
-        { error: 'サーバーにOpenAI APIキーが設定されていません。.env.localにOPENAI_API_KEYを設定してください' },
-        { status: 503 }
-      );
+      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
     }
+
+    console.error('API Error:', error);
 
     if (error instanceof OpenAI.APIError) {
       if (error.status === 401) {

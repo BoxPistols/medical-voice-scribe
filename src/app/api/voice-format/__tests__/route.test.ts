@@ -31,6 +31,9 @@ function makeOpenAIResponse(content: string, usage?: { prompt_tokens: number; co
 describe('/api/voice-format', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // lib/openaiはクライアントをモジュールスコープにキャッシュするため、
+    // 環境変数を差し替えるテストの前にモジュールを読み直す
+    vi.resetModules()
     process.env.OPENAI_API_KEY = 'sk-test-key'
   })
 
@@ -222,11 +225,11 @@ describe('/api/voice-format', () => {
   // ---- エラーハンドリング ----
 
   describe('エラーハンドリング', () => {
-    it('OPENAI_API_KEY 未設定の場合エラーを返す', async () => {
+    it('OPENAI_API_KEYが未設定の場合、設定を促す503を返す', async () => {
       delete process.env.OPENAI_API_KEY
       const { POST } = await import('../route')
       const res = await POST(makeRequest({ text: 'テスト', mode: 'organize' }))
-      expect(res.status).toBe(500)
+      expect(res.status).toBe(503)
       const data = await res.json()
       expect(data.error).toContain('OPENAI_API_KEY')
     })

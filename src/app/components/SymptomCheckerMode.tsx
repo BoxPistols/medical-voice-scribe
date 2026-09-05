@@ -191,14 +191,14 @@ function ResultPanel({ result, isSpeaking, speechSupported, onToggleSpeech }: Re
           <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <a
               href="tel:119"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-danger-strong px-4 py-2.5 text-sm font-bold text-white hover:bg-danger-strong transition-colors focus:outline-none focus:ring-2 focus:ring-danger"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-danger px-4 py-2.5 text-sm font-bold text-white hover:bg-danger-strong transition-colors focus:outline-none focus:ring-2 focus:ring-danger"
             >
               <PhoneIcon className="w-5 h-5" aria-hidden="true" />
               119番（救急）に電話する
             </a>
             <a
               href="tel:%237119"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-danger-line px-4 py-2.5 text-sm font-semibold text-danger-fg hover:bg-danger-soft transition-colors focus:outline-none focus:ring-2 focus:ring-danger"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-danger-line px-4 py-2.5 text-sm font-semibold text-danger-fg hover:bg-danger-soft-strong transition-colors focus:outline-none focus:ring-2 focus:ring-danger"
             >
               <LifebuoyIcon className="w-5 h-5" aria-hidden="true" />
               #7119（救急相談）
@@ -307,7 +307,7 @@ function HistoryItem({ check, expanded, onToggle, onDelete }: HistoryItemProps) 
         <button
           type="button"
           onClick={onDelete}
-          className="flex-shrink-0 p-1.5 rounded-md text-theme-tertiary hover:text-danger-fg hover:bg-danger-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-danger"
+          className="flex-shrink-0 p-1.5 rounded-md text-theme-tertiary hover:text-danger-fg hover:bg-danger-soft-strong transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-danger"
           aria-label="この履歴を削除"
         >
           <TrashIcon className="w-4 h-4" aria-hidden="true" />
