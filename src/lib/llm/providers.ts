@@ -95,11 +95,26 @@ export function clientFor(provider: ProviderKey): OpenAI {
   if (cached) return cached;
 
   const config = PROVIDERS[provider];
-  const apiKey = process.env[config.envKey];
-  if (!apiKey) {
+  const raw = process.env[config.envKey];
+  if (!raw) {
     throw new ProviderConfigError(
       provider,
       `サーバーに${config.label}のAPIキーが設定されていません。.env.localに${config.envKey}を設定してください`,
+    );
+  }
+
+  // 前後の空白と改行を落とす。環境変数の画面に貼るときに混ざりやすい
+  const apiKey = raw.trim();
+
+  // APIキーはAuthorizationヘッダーに載るので、ASCII以外が混ざると
+  // fetchが "Cannot convert argument to a ByteString" で落ちる。
+  // そのままだと原因の分からない500になるので、ここで理由を出して止める。
+  const bad = [...apiKey].find((ch) => ch.charCodeAt(0) > 0x7e || ch.charCodeAt(0) < 0x21);
+  if (bad !== undefined) {
+    throw new ProviderConfigError(
+      provider,
+      `${config.envKey}に使えない文字(U+${bad.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0")})が含まれています。` +
+        `全角文字や不可視文字が混ざっていないか確認し、貼り直してください`,
     );
   }
 

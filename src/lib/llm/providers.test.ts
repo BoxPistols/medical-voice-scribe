@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { pricedModelIds } from "./pricing";
 
+// テスト環境はjsdomで、openai SDKは「ブラウザからの利用」として生成を拒否する。
+// ここで見たいのはキーの扱いなので、SDK本体はクラスの殻に置き換える
+vi.mock("openai", () => ({
+  default: class OpenAI {
+    constructor(public opts: { apiKey: string; baseURL?: string }) {}
+  },
+}));
+
 // 環境変数を差し替えるので、都度モジュールを読み直す
 async function load() {
   vi.resetModules();
@@ -69,9 +77,38 @@ describe("プロバイダーレジストリ", () => {
     expect(missing, "pricing.tsに価格が無いと費用を表示できない").toEqual([]);
   });
 
+  // llm-radar:allow-superseded-start 旧IDを「登録しない」ことの確認なので、IDが残るのが正しい
   it("旧世代で割高なgemini-3.5-flashは登録しない", async () => {
     const m = await load();
     const all = m.PROVIDER_ORDER.flatMap((p) => m.PROVIDERS[p].models);
     expect(all).not.toContain("gemini-3.5-flash");
+  });
+  // llm-radar:allow-superseded-end
+});
+
+describe("APIキーの検証", () => {
+  const ORIG = process.env.GEMINI_API_KEY;
+  afterEach(() => {
+    if (ORIG) process.env.GEMINI_API_KEY = ORIG;
+    else delete process.env.GEMINI_API_KEY;
+  });
+
+  it("前後の空白と改行は落とす", async () => {
+    process.env.GEMINI_API_KEY = "  test-key\n";
+    const m = await load();
+    expect(() => m.clientFor("gemini")).not.toThrow();
+  });
+
+  it("非ASCIIが混ざっていたら理由つきで止める", async () => {
+    // 全角スペースは貼り付けで混ざりやすい代表例
+    process.env.GEMINI_API_KEY = "test　key";
+    const m = await load();
+    expect(() => m.clientFor("gemini")).toThrow(m.ProviderConfigError);
+    try {
+      m.clientFor("gemini");
+    } catch (e) {
+      expect((e as Error).message).toContain("使えない文字");
+      expect((e as Error).message).toContain("U+3000");
+    }
   });
 });
