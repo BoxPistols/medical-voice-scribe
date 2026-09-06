@@ -5,48 +5,27 @@ import Link from "next/link";
 import { Player } from "@remotion/player";
 import { ProductVideo, TOTAL_DURATION } from "../../remotion/ProductVideo";
 
+const RENDER_COMMAND =
+  "npx remotion render src/remotion/index.ts ProductVideo public/video.mp4";
+
+// 色はデザイントークンで書く。Remotionのシーン本体は動画側なので実値のままだが、
+// このページはアプリの一部なので他の画面と揃える。
 export const VideoPlayer: React.FC = () => {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0f172a",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 32,
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      }}
-    >
+    <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4 py-8 sm:px-8">
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: 32 }}>
-        <h1
-          style={{
-            fontSize: 32,
-            fontWeight: 700,
-            color: "white",
-            margin: "0 0 8px",
-          }}
-        >
+      <div className="text-center mb-8 max-w-full">
+        {/* 幅に応じて字を詰める。固定のfontSizeだと狭い画面で見出しが切れていた */}
+        <h1 className="text-ink font-bold m-0 mb-2 text-[clamp(1.25rem,6vw,2rem)] leading-tight">
           製品紹介動画プレビュー
         </h1>
-        <p style={{ fontSize: 16, color: "#94a3b8", margin: 0 }}>
-          Medical Scribe Flow — AI医療書記自動生成システム
+        <p className="text-ink-muted m-0 text-sm sm:text-base">
+          Vital Flow — 医療・こころ・からだのAIスーパーアプリ
         </p>
       </div>
 
-      {/* Player Container */}
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 960,
-          borderRadius: 16,
-          overflow: "hidden",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.5)",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
+      {/* Player */}
+      <div className="w-full max-w-[960px] rounded-2xl overflow-hidden border border-line shadow-2xl">
         <Player
           component={ProductVideo}
           compositionWidth={1920}
@@ -60,62 +39,31 @@ export const VideoPlayer: React.FC = () => {
         />
       </div>
 
-      {/* Info */}
-      <div
-        style={{
-          marginTop: 24,
-          display: "flex",
-          gap: 24,
-          color: "#64748b",
-          fontSize: 14,
-        }}
-      >
-        <span>1920 x 1080 | 30fps</span>
-        <span>|</span>
+      {/* Info: 狭い画面では折り返す */}
+      <div className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-1 text-ink-faint text-xs sm:text-sm">
+        <span>1920 x 1080 / 30fps</span>
+        <span aria-hidden="true">|</span>
         <span>{Math.round(TOTAL_DURATION / 30)}秒</span>
-        <span>|</span>
+        <span aria-hidden="true">|</span>
         <span>10シーン</span>
       </div>
 
       {/* Instructions */}
-      <div
-        style={{
-          marginTop: 32,
-          padding: 24,
-          background: "rgba(255,255,255,0.03)",
-          borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.06)",
-          maxWidth: 640,
-          width: "100%",
-        }}
-      >
-        <h3 style={{ fontSize: 16, color: "#e2e8f0", margin: "0 0 12px" }}>
+      <div className="mt-8 p-5 sm:p-6 bg-surface-raised rounded-xl border border-line max-w-[640px] w-full">
+        <h2 className="text-base text-ink m-0 mb-3 font-bold">
           MP4としてレンダリング
-        </h3>
-        <code
-          style={{
-            display: "block",
-            background: "rgba(0,0,0,0.3)",
-            padding: 16,
-            borderRadius: 8,
-            color: "#14b8a6",
-            fontSize: 14,
-            lineHeight: 1.6,
-          }}
-        >
-          npx remotion render src/remotion/index.ts ProductVideo public/video.mp4
-        </code>
+        </h2>
+        {/* 長い1行なので、折り返さず横スクロールさせる。折り返すとコマンドが読みにくい */}
+        <pre className="m-0 bg-surface rounded-lg p-4 overflow-x-auto">
+          <code className="text-brand-fg text-xs sm:text-sm leading-relaxed whitespace-pre">
+            {RENDER_COMMAND}
+          </code>
+        </pre>
       </div>
 
-      {/* Back Link */}
       <Link
         href="/"
-        style={{
-          marginTop: 24,
-          color: "#14b8a6",
-          textDecoration: "none",
-          fontSize: 14,
-        }}
+        className="mt-6 text-brand-fg no-underline text-sm hover:text-brand"
       >
         ← アプリに戻る
       </Link>

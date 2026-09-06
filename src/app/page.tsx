@@ -66,6 +66,7 @@ import MentoringMode from "./components/MentoringMode";
 import SessionDrawer from "./components/SessionDrawer";
 import type { RecordStore as RecordStoreType } from "@/lib/recordStore";
 import { SAMPLE_INTERVIEWS } from "@/lib/sampleInterviews";
+import { THEME_STORAGE_KEY } from "@/lib/theme";
 import {
   loadStore,
   addSession,
@@ -536,7 +537,7 @@ export default function Home() {
 
   // Theme management - Load from localStorage
   useEffect(() => {
-    const savedTheme = localStorage.getItem("medical-scribe-theme") as
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as
       | "light"
       | "dark"
       | "system"
@@ -747,7 +748,7 @@ export default function Home() {
         root.removeAttribute("data-theme");
       }
 
-      localStorage.setItem("medical-scribe-theme", theme);
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
     };
 
     applyTheme();
@@ -1163,7 +1164,7 @@ export default function Home() {
     );
     if (confirmed) {
       setTheme("system");
-      localStorage.removeItem("medical-scribe-theme");
+      localStorage.removeItem(THEME_STORAGE_KEY);
 
       // Reset shortcuts with platform defaults
       // Default to useModifiers = true on reset as per requirement
