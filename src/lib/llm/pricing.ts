@@ -23,6 +23,8 @@ const DEFAULT_PRICING: Record<string, ModelPricing> = {
 
   // Gemini
   // 2026-12-31までの期間価格。2027-01-01から $1.50/$7.50に戻るので、その時点で更新する。
+  // 3.8の価格は2026-09-03の発表(blog.google日本語版)でも$0.75/$3.75と示されている。
+  "gemini-3.8-flash": { input: 0.75, output: 3.75 },
   "gemini-3.6-flash": { input: 0.75, output: 3.75 },
   // 3.5-flashは旧世代で、3.8の2倍以上高い($1.50/$9.00)。
   // 選ぶと損をするだけなので登録も選択肢入りもさせない。
