@@ -599,7 +599,7 @@ export default function VoiceRecorderMode() {
                 onClick={() => setFormatMode("organize")}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   formatMode === "organize"
-                    ? "bg-info text-white shadow-sm"
+                    ? "bg-brand text-white shadow-sm"
                     : "text-theme-tertiary hover:text-theme-secondary"
                 }`}
               >
@@ -619,7 +619,7 @@ export default function VoiceRecorderMode() {
                 onClick={() => setFormatMode("summarize")}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   formatMode === "summarize"
-                    ? "bg-info text-white shadow-sm"
+                    ? "bg-brand text-white shadow-sm"
                     : "text-theme-tertiary hover:text-theme-secondary"
                 }`}
               >
@@ -1037,7 +1037,7 @@ export default function VoiceRecorderMode() {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => applyOrganized(group.id)}
-                              className="px-2 py-1 rounded text-xs font-medium bg-info text-white hover:bg-info-strong transition-all"
+                              className="px-2 py-1 rounded text-xs font-medium bg-brand text-white hover:bg-brand-strong transition-all"
                               title="整理結果を原文に適用"
                             >
                               適用

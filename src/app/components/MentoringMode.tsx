@@ -401,7 +401,7 @@ export default function MentoringMode() {
             ポジティブな視点で考えを整理するメンタルコーチング
           </p>
           <div className="flex items-center gap-2 mt-1">
-            <p className="text-xs text-theme-tertiary bg-warning-soft text-warning-fg rounded px-2 py-1 inline-block">
+            <p className="text-xs bg-warning-soft text-warning-fg rounded px-2 py-1 inline-block">
               このモードは医療行為ではありません
             </p>
             {messages.length > 0 && (
