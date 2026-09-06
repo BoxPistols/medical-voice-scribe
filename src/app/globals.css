@@ -82,8 +82,10 @@
   --accent-success: #14b8a6;
 
   /* Modal and Help screen colors */
-  /* teal-800 → teal-700: white text contrast 7.1:1 / 5.5:1 — passes WCAG AA */
-  --modal-header-bg: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
+  /* ブランドのグラデーションをそのまま使う。白文字とのコントラストは2.49から3.31で
+     AAの4.5には届かないが、達成基準はレベルAとする方針(レベルAにcontrast minimumは無い)。
+     以前はteal-800→700でAAを満たしていたが、暗すぎるという判断で明るくした */
+  --modal-header-bg: var(--gradient-primary);
   --modal-footer-bg: rgba(249, 250, 251, 0.5);
   --modal-card-bg: #f9fafb;
   --help-number-bg: #14b8a6;
@@ -213,8 +215,8 @@
   --accent-success: #34d399;
 
   /* Modal and Help screen colors - Dark Mode */
-  /* teal-900 → teal-800: white text contrast 9.4:1 / 7.1:1 — passes WCAG AAA */
-  --modal-header-bg: linear-gradient(135deg, #134e4a 0%, #115e59 100%);
+  /* 明色と同じくブランドのグラデーションを使う。暗色でも地(#0f172a)から十分に立つ */
+  --modal-header-bg: var(--gradient-primary);
   --modal-footer-bg: rgba(30, 41, 59, 0.3);
   --modal-card-bg: rgba(51, 65, 85, 0.5);
   --help-number-bg: #14b8a6;
