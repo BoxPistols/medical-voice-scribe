@@ -54,3 +54,7 @@ storybook-static
 
 # Playwright MCP の検証出力
 .playwright-mcp/
+
+# Playwrightの実行結果
+test-results/
+playwright-report/
