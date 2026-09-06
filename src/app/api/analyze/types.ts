@@ -30,17 +30,9 @@ const MODEL_CATALOG: Omit<ModelInfo, "inputPrice" | "outputPrice">[] = [
     id: "gemini-3.6-flash",
     provider: "gemini",
     name: "Gemini 3.6 Flash",
-    description: "無料枠あり・3.8が混んだときの代替",
+    description: "無料枠あり・高速",
     speed: 5,
     quality: 4,
-  },
-  {
-    id: "gemini-3.8-flash",
-    provider: "gemini",
-    name: "Gemini 3.8 Flash",
-    description: "無料枠あり・最新",
-    speed: 5,
-    quality: 5,
   },
 ];
 

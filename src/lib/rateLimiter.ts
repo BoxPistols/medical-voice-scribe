@@ -6,7 +6,6 @@ const DAILY_LIMITS: Record<string, number> = {
   // Google側の無料枠(1分あたり20回、モデルごとに別勘定)とは別物。
   // 同じキーを他のプロダクトでも使うので、デモが食う分は控えめにする。
   'gemini-3.6-flash': 25,
-  'gemini-3.8-flash': 25,
 };
 
 interface UsageRecord {
