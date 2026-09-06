@@ -3076,7 +3076,7 @@ export default function Home() {
                     <div className="grid sm:grid-cols-2 gap-3 text-sm">
                       {[
                         { Icon: MicrophoneIcon,    title: "音声入力", desc: "ブラウザの音声認識機能を使用してリアルタイムに文字起こし" },
-                        { Icon: CpuChipIcon,       title: "AI生成",   desc: "OpenAI GPT-4oを使用したSOAPカルテの自動生成" },
+                        { Icon: CpuChipIcon,       title: "AI生成",   desc: `OpenAI ${AVAILABLE_MODELS[0].name}を使用したSOAPカルテの自動生成` },
                         { Icon: SpeakerWaveIcon,   title: "読み上げ", desc: "生成されたカルテをシステム音声で読み上げ（速度・音声調整可能）" },
                         { Icon: CloudArrowDownIcon, title: "保存・共有", desc: "JSON/CSV形式でエクスポート、インポートが可能" },
                       ].map(({ Icon, title, desc }) => (
