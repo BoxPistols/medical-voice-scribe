@@ -12,13 +12,21 @@ import { ROLES, STEPS } from "../src/lib/designTokens";
 /** 時計と録音タイマーが毎秒動くので、時刻を固定する */
 const FIXED_TIME = new Date("2026-09-06T09:00:00");
 
-/** ヘッダーの構成が変わる幅。実装のしきい値(md=768, lg=1024, @container=1360)の前後を取る */
-const WIDTHS = [390, 768, 1024, 1280, 1359, 1360, 1600] as const;
+/**
+ * ヘッダーの構成が変わる幅の前後を取る。
+ * md=768とlg=1024はビューポートのしきい値。
+ * ラベルの出し分けはヘッダー行の幅(@container 1360px)で決まるので、
+ * ビューポートでは左右パディング32pxぶん外側の1392pxが境界になる。実測で確認した。
+ */
+const WIDTHS = [390, 768, 1024, 1280, 1391, 1392, 1600] as const;
 
 const THEMES = ["light", "dark"] as const;
 
 async function prepare(page: Page, theme: (typeof THEMES)[number]) {
+  // installだけでは時計が進み、秒の桁が撮影ごとに変わった。
+  // setFixedTimeでDateの読み取り自体を固定する
   await page.clock.install({ time: FIXED_TIME });
+  await page.clock.setFixedTime(FIXED_TIME);
 
   await page.addInitScript((t) => {
     // 初回のデモ動画モーダルを出さない。出ると全画面を覆って何も撮れない

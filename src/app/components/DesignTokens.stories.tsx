@@ -168,7 +168,7 @@ function Example() {
   );
 }
 
-function Catalog() {
+function TokenCatalog() {
   return (
     <div
       style={{
@@ -252,11 +252,11 @@ function Catalog() {
 
 const meta = {
   title: "デザイン/デザイントークン",
-  component: Catalog,
+  component: TokenCatalog,
   parameters: { layout: "fullscreen" },
-} satisfies Meta<typeof Catalog>;
+} satisfies Meta<typeof TokenCatalog>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const カタログ: Story = {};
+export const Catalog: Story = { name: "カタログ" };

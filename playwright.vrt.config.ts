@@ -24,8 +24,11 @@ export default defineConfig({
 
   expect: {
     toHaveScreenshot: {
-      // フォントのアンチエイリアス程度は許し、色や配置の変化は落とす幅
+      // フォントのアンチエイリアス程度は許し、色や配置の変化は落とす幅。
+      // thresholdは画素ごとの色差の許容量。既定の0.2では、暗色の薄い面どうしの
+      // 違い(alpha 0.14の役割色)が埋もれて検出できなかったので下げている
       maxDiffPixelRatio: 0.0005,
+      threshold: 0.03,
       animations: "disabled",
       caret: "hide",
       scale: "css",

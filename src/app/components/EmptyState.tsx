@@ -1,12 +1,14 @@
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
 
 const steps = [
-  { num: 1, color: "bg-warning-soft text-warning-fg", title: "録音", desc: "「録音」ボタンを押して会話を開始" },
-  { num: 2, color: "bg-line text-ink-muted", title: "停止", desc: "会話が終わったら録音を停止" },
-  { num: 3, color: "bg-brand-soft text-brand-fg", title: "生成", desc: "「カルテ生成」でAIが分析開始" },
-  { num: 4, color: "bg-info-soft text-info-fg", title: "読み上げ", desc: "生成カルテを音声で読み上げ確認" },
-  { num: 5, color: "bg-info-soft text-info-fg", title: "保存・出力", desc: "JSON・CSVでカルテをエクスポート" },
-  { num: 6, color: "bg-danger-soft text-danger-fg", title: "カスタマイズ", desc: "テーマ・ショートカットを自由に設定" },
+  // 手順は順序を持つので番号は残す。色は情報を足していないうえ、
+  // 元は6色に分かれていて「カスタマイズ」がdanger色になっていた。brandに揃える
+  { num: 1, title: "録音", desc: "「録音」ボタンを押して会話を開始" },
+  { num: 2, title: "停止", desc: "会話が終わったら録音を停止" },
+  { num: 3, title: "生成", desc: "「カルテ生成」でAIが分析開始" },
+  { num: 4, title: "読み上げ", desc: "生成カルテを音声で読み上げ確認" },
+  { num: 5, title: "保存・出力", desc: "JSON・CSVでカルテをエクスポート" },
+  { num: 6, title: "カスタマイズ", desc: "テーマ・ショートカットを自由に設定" },
 ] as const;
 
 export default function EmptyState() {
@@ -34,7 +36,7 @@ export default function EmptyState() {
             className="p-4 rounded-lg border border-theme-light bg-theme-card hover:shadow-md transition-shadow"
           >
             <div
-              className={`w-8 h-8 rounded-full ${step.color} flex items-center justify-center text-sm font-bold mb-3`}
+              className="w-8 h-8 rounded-full bg-brand-soft text-brand-fg flex items-center justify-center text-sm font-bold mb-3"
             >
               {step.num}
             </div>

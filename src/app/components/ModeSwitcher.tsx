@@ -27,7 +27,7 @@ interface ModeSwitcherProps {
   onModeChange: (mode: AppMode) => void;
 }
 
-const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof ClockIcon; description: string; shortcutKey: number }[] = [
+export const MODES: { id: AppMode; label: string; shortLabel: string; icon: typeof ClockIcon; description: string; shortcutKey: number }[] = [
   {
     id: "medical",
     label: "医療カルテ",
