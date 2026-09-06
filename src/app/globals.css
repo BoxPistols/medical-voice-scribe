@@ -97,10 +97,14 @@
   --gradient-warm: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
 
   /* Elevated text colors — soft yet legible */
+  /* 白地で4.5:1を満たす範囲でslateを1段ずつ濃くしている。
+     以前はtertiaryが2.45、mutedが1.9で、本文として読めなかった。
+     4.5:1を満たす最も明るいslateが500なので、mutedはtertiaryと同値になる。
+     それより明るい灰色を使いたい場合は、文字ではなく罫線や図形に限る */
   --text-primary: #334155;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
-  --text-muted: #b0bec9;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-muted: #64748b;
 
   /* Refined borders — gentle dividers */
   --border-light: #f0f3f7;
@@ -224,10 +228,11 @@
   --gradient-warm: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
 
   /* Dark mode text colors */
+  /* 暗色側も4.5:1を満たす範囲に収める。mutedは3.75で読めなかったのでtertiaryと同値にする */
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
   --text-tertiary: #94a3b8;
-  --text-muted: #64748b;
+  --text-muted: #94a3b8;
 
   /* Dark mode borders */
   --border-light: #334155;
