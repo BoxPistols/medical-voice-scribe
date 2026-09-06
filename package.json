@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "check:tokens": "node scripts/check-design-tokens.mjs src/app src/lib",
     "test": "vitest",
     "test:run": "vitest run",
     "remotion:studio": "npx remotion studio src/remotion/index.ts",

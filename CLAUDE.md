@@ -1,0 +1,63 @@
+# medical-voice-scribe
+
+音声による医療問診をSOAPカルテ形式に変換するデモアプリケーション。Next.js 16、React、
+TypeScript、Tailwind CSS v4。
+
+## UIを触る前に読む
+
+`docs/design-tokens.md`。色は意味を持つ名前だけで書き、Tailwindの数字付きパレットは使わない。
+
+一覧と実際の色はStorybookの「デザイン / デザイントークン」で見られる。
+
+```
+pnpm storybook
+```
+
+## 色の書き方
+
+```tsx
+// こう書く
+<button className="bg-brand text-white hover:bg-brand-strong">保存</button>
+<span className="bg-warning-soft text-warning-fg border border-warning-line">未処理</span>
+
+// こう書かない
+<button className="bg-teal-500 text-white hover:bg-teal-600">保存</button>
+<span className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">未処理</span>
+```
+
+役割は `brand` `danger` `warning` `info` `success` の5つ。段は
+`{role}` `-strong` `-fg` `-soft` `-soft-strong` `-line` の6つ。
+無彩色は `surface` `surface-raised` `ink` `ink-muted` `ink-faint` `line`。
+
+トークンは両テーマの値を持つので、**`dark:` はほとんど書かなくてよい**。
+
+## 守る決まり
+
+- フォントサイズは12px未満を使わない。`text-[10px]` や `text-[11px]` は書かない
+- オーバーレイとpopupは半透明80-90%に `backdrop-filter: blur()` を当てる
+- 日本語と英数字の間に半角スペースを入れない。新規に書く行だけが対象で、既存行は触らない
+- `any` と `@ts-ignore` を使わない
+- テストのフィクスチャには架空の名前を使う。実在の人名や組織名を書かない
+
+## 検査
+
+```
+pnpm test        # 生パレット、12px未満、コントラスト、トークンの一致を含む
+pnpm exec tsc --noEmit
+pnpm build
+```
+
+検査はファイルを列挙せず `src/app` 配下を走査するので、新しく足したファイルも対象に入る。
+除外は `src/remotion` と `opengraph-image` だけ。
+
+## 環境変数
+
+`OPENAI_API_KEY` を `.env.local` に置く。未設定でもビルドと起動はでき、APIは503と
+設定を促すメッセージを返す。クライアントは呼び出し時に生成するので、
+モジュール読み込み時に落ちることはない。
+
+## 注意
+
+`src/app/globals.css` を編集してもTurbopackが古いCSSを配信し続けることがある。
+効いていないと感じたら配信中のCSSを確認し、`.next/dev` を消して開発サーバーを再起動する。
+CSSチャンクは複数返るので、最初の1つだけを見て判断しない。
