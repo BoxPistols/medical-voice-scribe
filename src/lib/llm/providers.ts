@@ -17,6 +17,8 @@ interface ProviderConfig {
   baseURL?: string;
   /** このプロバイダーが提供するモデルID(公式ドキュメントで確認したものだけ) */
   models: string[];
+  /** 一時エラー(429/5xx)の再試行回数。SDKが指数バックオフで待つ */
+  maxRetries?: number;
 }
 
 export const PROVIDERS: Record<ProviderKey, ProviderConfig> = {
@@ -33,7 +35,16 @@ export const PROVIDERS: Record<ProviderKey, ProviderConfig> = {
     // 価格も3.8の2倍以上なので入れない。
     // モデルIDは集計サイトではなくai.google.dev/gemini-api/docs/modelsで確認すること。
     // 別プロジェクトで集計サイト由来のIDが本番で404になった例がある。
-    models: ["gemini-3.8-flash"],
+    // 3.6と3.8の両方を置く理由は、無料枠がモデルごとに別勘定だから。
+    // 実測(2026-09-06): 3.8が429(quota exceeded, limit 20)で落ちている最中に、
+    // 3.6は同じキーで200を返した。片方が詰まってももう片方で続けられる。
+    // 価格は同額($0.75/$3.75)なので、3.6を選んでも損はしない。
+    // 品質は3.8が上なので、通常は3.8、混んだら3.6という使い分けになる。
+    models: ["gemini-3.6-flash", "gemini-3.8-flash"],
+    // 無料枠は1分あたり20回で、モデルごとに別枠(実測のエラー本文で確認)。
+    // 再試行を増やすと1リクエストで枠を何度も消費して429を招くので、控えめにする。
+    // 503(high demand)は一時的とGoogleが案内しているので、数回だけ待って再試行する。
+    maxRetries: 3,
   },
 };
 
@@ -88,7 +99,11 @@ export function clientFor(provider: ProviderKey): OpenAI {
     );
   }
 
-  const client = new OpenAI({ apiKey, baseURL: config.baseURL });
+  const client = new OpenAI({
+    apiKey,
+    baseURL: config.baseURL,
+    maxRetries: config.maxRetries ?? 2,
+  });
   clients.set(provider, client);
   return client;
 }

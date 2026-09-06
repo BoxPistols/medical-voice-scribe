@@ -22,9 +22,10 @@ const DEFAULT_PRICING: Record<string, ModelPricing> = {
   "gpt-5.6-luna": { input: 0.2, output: 1.2 },
 
   // Gemini
-  // 3.8-flashと3.7-flashは2026-12-31までの期間価格。
+  // 3.6/3.7/3.8 flashは同額で、いずれも2026-12-31までの期間価格。
   // 2027-01-01から $1.50/$7.50に戻るので、その時点で更新する。
   "gemini-3.8-flash": { input: 0.75, output: 3.75 },
+  "gemini-3.6-flash": { input: 0.75, output: 3.75 },
   // 3.5-flashは旧世代で、3.8の2倍以上高い($1.50/$9.00)。
   // 選ぶと損をするだけなので登録も選択肢入りもさせない。
 };

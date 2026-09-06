@@ -34,7 +34,7 @@ describe("プロバイダーレジストリ", () => {
 
     process.env.GEMINI_API_KEY = "test-key";
     const m2 = await load();
-    expect(m2.availableModelIds()).toEqual(["gemini-3.8-flash"]);
+    expect(m2.availableModelIds()).toEqual(m2.PROVIDERS.gemini.models);
   });
 
   it("キー未設定でclientForを呼ぶとProviderConfigError", async () => {

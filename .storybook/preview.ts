@@ -40,6 +40,13 @@ const preview: Preview = {
   ],
 
   parameters: {
+    // はじめに、デザイン、Componentsの順に並べる。
+    // 初めて開いた人が概要から入れるようにする
+    options: {
+      storySort: {
+        order: ["はじめに", "デザイン", "Components", "Remotion"],
+      },
+    },
     controls: {
       matchers: {
        color: /(background|color)$/i,

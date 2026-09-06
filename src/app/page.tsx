@@ -6,40 +6,42 @@ import { useFocusTrap } from "@/hooks/useFocusTrap";
 import type { SoapNote, ModelId, TokenUsage } from "./api/analyze/types";
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from "./api/analyze/types";
 import {
-  MicrophoneIcon,
-  SparklesIcon,
-  SpeakerWaveIcon,
   ArrowDownTrayIcon,
-  ArrowUpTrayIcon,
-  DocumentDuplicateIcon,
-  PlayIcon,
-  PauseIcon,
-  StopIcon,
-  Cog6ToothIcon,
-  QuestionMarkCircleIcon,
-  XMarkIcon,
   ArrowLeftIcon,
+  ArrowPathIcon,
   ArrowRightIcon,
+  ArrowUpTrayIcon,
+  Bars3Icon,
+  CheckCircleIcon,
   ChevronDownIcon,
+  ClipboardDocumentIcon,
+  ClockIcon,
+  CloudArrowDownIcon,
+  Cog6ToothIcon,
+  ComputerDesktopIcon,
+  CpuChipIcon,
+  DocumentChartBarIcon,
+  DocumentDuplicateIcon,
+  DocumentIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  TrashIcon,
-  ClipboardDocumentIcon,
-  UserCircleIcon,
-  PuzzlePieceIcon,
-  Bars3Icon,
-  SunIcon,
+  MicrophoneIcon,
   MoonIcon,
-  ComputerDesktopIcon,
-  DocumentIcon,
-  DocumentChartBarIcon,
-  ClockIcon,
-  ArrowPathIcon,
-  CpuChipIcon,
-  CloudArrowDownIcon,
+  PauseIcon,
+  PlayCircleIcon,
+  PlayIcon,
+  PuzzlePieceIcon,
+  QuestionMarkCircleIcon,
+  SparklesIcon,
+  SpeakerWaveIcon,
+  StopIcon,
+  SunIcon,
+  SwatchIcon,
+  TrashIcon,
+  UserCircleIcon,
+  XCircleIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { StopIcon as StopIconSolid } from "@heroicons/react/24/solid";
 import ChatSupportWidget from "./components/ChatSupportWidget";
@@ -67,6 +69,7 @@ import SessionDrawer from "./components/SessionDrawer";
 import type { RecordStore as RecordStoreType } from "@/lib/recordStore";
 import { SAMPLE_INTERVIEWS } from "@/lib/sampleInterviews";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
+import { STORYBOOK_URL } from "@/lib/siteLinks";
 import {
   loadStore,
   addSession,
@@ -2977,8 +2980,27 @@ export default function Home() {
             }`}
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs text-theme-tertiary">
-              <div className="font-mono">
-                Next.js 14 / OpenAI API / Web Speech API で構築
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="font-mono">
+                  Next.js 16 / OpenAI API / Web Speech API で構築
+                </span>
+                {/* デザインシステムは別プロジェクトとしてデプロイしている */}
+                <a
+                  href={STORYBOOK_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-brand-fg hover:text-brand transition-colors"
+                >
+                  <SwatchIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                  デザインシステム
+                </a>
+                <a
+                  href="/video"
+                  className="inline-flex items-center gap-1 text-theme-tertiary hover:text-brand transition-colors"
+                >
+                  <PlayCircleIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                  紹介動画
+                </a>
               </div>
               <div className="flex items-center gap-1.5 text-warning-fg font-semibold">
                 <svg

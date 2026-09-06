@@ -1,0 +1,81 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="はじめに/概要" />
+
+# Vital Flowデザインシステム
+
+医療・こころ・からだのAIスーパーアプリ「Vital Flow」で使っている部品と、色やサイズの決まりをまとめた場所です。
+
+<div style={{ display: "flex", gap: 12, flexWrap: "wrap", margin: "20px 0 28px" }}>
+  <a
+    href="https://medical-voice-scribe.vercel.app"
+    target="_blank"
+    rel="noreferrer"
+    style={{
+      display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px",
+      borderRadius: 8, background: "#14b8a6", color: "white",
+      textDecoration: "none", fontWeight: 600, fontSize: 14,
+    }}
+  >
+    アプリを開く
+  </a>
+  <a
+    href="https://medical-voice-scribe.vercel.app/video"
+    target="_blank"
+    rel="noreferrer"
+    style={{
+      display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px",
+      borderRadius: 8, border: "1px solid #94a3b8", color: "inherit",
+      textDecoration: "none", fontWeight: 600, fontSize: 14,
+    }}
+  >
+    紹介動画を見る
+  </a>
+  <a
+    href="https://github.com/BoxPistols/medical-voice-scribe"
+    target="_blank"
+    rel="noreferrer"
+    style={{
+      display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px",
+      borderRadius: 8, border: "1px solid #94a3b8", color: "inherit",
+      textDecoration: "none", fontWeight: 600, fontSize: 14,
+    }}
+  >
+    ソースコード
+  </a>
+</div>
+
+## アプリについて
+
+音声で交わした問診をSOAP形式のカルテに変換するデモです。医療カルテのほかに、症状チェッカー、ヘルスコーチ、気分ジャーナル、呼吸・瞑想、体を動かす、音声メモ、メンタリング、時計の9つのモードがあります。
+
+デモ用途のもので、臨床では使えません。
+
+## Storybookの歩き方
+
+初めて開いた方向けに、最低限の操作だけ書いておきます。
+
+| したいこと | 操作 |
+| --- | --- |
+| 部品を探す | 左のサイドバー。上の検索窓は `⌘K` でも開く |
+| 明色と暗色を見比べる | 上部ツールバーの「テーマ」を切り替える |
+| 値を変えて試す | 下部のControlsタブでpropsを編集する |
+| 使い方とpropsの一覧を読む | 各部品のDocsを開く |
+| コードを見る | 表示の下にあるShow code |
+| 画面幅を変える | ツールバーのビューポート切り替え |
+
+## どこから見るとよいか
+
+| 場所 | 中身 |
+| --- | --- |
+| デザイン / デザイントークン | 色の一覧です。実際に描画されている値とコントラスト比を出しています。値を書き写していないので実装とずれません |
+| デザイン / コンポーネント一覧 | 部品を1枚に並べたページです。系として揃っているかを見るのに使います |
+| Components | 個々の部品です。状態ごとのストーリーが入っています |
+
+## 色の決まり
+
+色は意味を持つ名前だけで書きます。`bg-red-50` のような数字付きのTailwindクラスはコンポーネントに書きません。
+
+役割は `brand` `danger` `warning` `info` `success` の5つで、それぞれが6段の階調を持ちます。詳しくはリポジトリの `docs/design-tokens.md` にあります。
+
+決まりを外れた記述はテストとエディタのフックが止めるので、書いた直後に気づけます。

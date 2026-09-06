@@ -1,6 +1,7 @@
 import type { StorybookConfig } from '@storybook/nextjs-vite';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import remarkGfm from 'remark-gfm';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -13,7 +14,17 @@ const config: StorybookConfig = {
     "@chromatic-com/storybook",
     "@storybook/addon-vitest",
     "@storybook/addon-a11y",
-    "@storybook/addon-docs",
+    {
+      name: "@storybook/addon-docs",
+      options: {
+        // MDXの表はGFMの記法なので、既定のままだとパイプ記号がそのまま出る
+        mdxPluginOptions: {
+          mdxCompileOptions: {
+            remarkPlugins: [remarkGfm],
+          },
+        },
+      },
+    },
     "@storybook/addon-onboarding"
   ],
   "framework": "@storybook/nextjs-vite",
