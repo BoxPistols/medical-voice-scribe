@@ -22,7 +22,7 @@ const steps = [
   {
     num: "02",
     title: "AIが自動分析",
-    desc: "会話内容をGPT-4/5が解析し、医学的に重要な情報を抽出・構造化",
+    desc: "会話内容をGPT-5.6 Lunaが解析し、医学的に重要な情報を抽出・構造化",
     Icon: CpuChipIcon,
   },
   {

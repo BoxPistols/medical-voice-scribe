@@ -142,7 +142,7 @@ export const TitleScene: React.FC<{ sceneDuration: number }> = ({
               letterSpacing: "-0.02em",
             }}
           >
-            Medical Scribe
+            Vital
             <span style={{ color: "#14b8a6" }}> Flow</span>
           </h1>
         </div>
@@ -163,7 +163,7 @@ export const TitleScene: React.FC<{ sceneDuration: number }> = ({
               fontWeight: 400,
             }}
           >
-            AI医療書記自動生成システム
+            医療・こころ・からだのAIスーパーアプリ
           </p>
           <p
             style={{
@@ -173,7 +173,7 @@ export const TitleScene: React.FC<{ sceneDuration: number }> = ({
               fontWeight: 400,
             }}
           >
-            音声認識 × AI で、カルテ作成を革新する
+            音声認識とAIで、記録と振り返りを支える
           </p>
         </div>
       </div>

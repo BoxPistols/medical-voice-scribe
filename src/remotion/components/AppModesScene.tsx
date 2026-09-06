@@ -7,40 +7,26 @@ import {
   useVideoConfig,
 } from "remotion";
 
+// アプリのモードと一対一に対応させる。src/app/components/ModeSwitcher.tsxのMODESが原本。
+// Remotionはブラウザのテーマと無関係に描画するので、CSS変数ではなく実値を書く。
+// 色はアプリの役割色から取っている(brand teal / info sky / success emerald / warning amber)。
 const modes = [
-  {
-    icon: "📋",
-    label: "医療カルテ",
-    desc: "音声認識×AI\nSOAP自動生成",
-    color: "#14b8a6",
-    bg: "rgba(20,184,166,0.1)",
-    border: "rgba(20,184,166,0.25)",
-  },
-  {
-    icon: "⏱",
-    label: "ポモドーロ",
-    desc: "タスク管理×タイマー\n集中力を最大化",
-    color: "#f59e0b",
-    bg: "rgba(245,158,11,0.1)",
-    border: "rgba(245,158,11,0.25)",
-  },
-  {
-    icon: "🎙",
-    label: "音声メモ",
-    desc: "録音→AI整形\nSlack連携フォーマット",
-    color: "#2563eb",
-    bg: "rgba(37,99,235,0.1)",
-    border: "rgba(37,99,235,0.25)",
-  },
-  {
-    icon: "💬",
-    label: "メンタリング",
-    desc: "ポジティブ心理学\nAIコーチング",
-    color: "#ec4899",
-    bg: "rgba(236,72,153,0.1)",
-    border: "rgba(236,72,153,0.25)",
-  },
+  { icon: "📋", label: "医療カルテ", desc: "音声認識×AI\nSOAP自動生成", color: "#14b8a6" },
+  { icon: "🩺", label: "症状チェッカー", desc: "症状から\n受診の目安を整理", color: "#38bdf8" },
+  { icon: "💚", label: "ヘルスコーチ", desc: "生活習慣の相談に\nAIが伴走", color: "#34d399" },
+  { icon: "📔", label: "気分ジャーナル", desc: "気分と体調を記録\n傾向を振り返る", color: "#a78bfa" },
+  { icon: "🌬", label: "呼吸・瞑想", desc: "ガイド付き呼吸で\nこころを整える", color: "#22d3ee" },
+  { icon: "🤸", label: "体を動かす", desc: "姿勢チェックと\n休憩のストレッチ", color: "#fbbf24" },
+  { icon: "🎙", label: "音声メモ", desc: "録音→AI整形\n要点とアクション抽出", color: "#60a5fa" },
+  { icon: "💬", label: "メンタリング", desc: "ポジティブ心理学\nAIコーチング", color: "#f472b6" },
+  { icon: "⏱", label: "時計", desc: "ポモドーロと\nタスク管理", color: "#f59e0b" },
 ];
+
+const withTint = (color: string) => ({
+  color,
+  bg: `${color}1a`, // 10%
+  border: `${color}40`, // 25%
+});
 
 export const AppModesScene: React.FC<{ sceneDuration: number }> = ({
   sceneDuration,
@@ -64,12 +50,12 @@ export const AppModesScene: React.FC<{ sceneDuration: number }> = ({
     <AbsoluteFill
       style={{
         background: "linear-gradient(180deg, #0f172a, #1a1f3a, #0f172a)",
-        padding: 80,
+        padding: 72,
         opacity: fadeOut,
       }}
     >
       {/* Header */}
-      <div style={{ opacity: headerOpacity, marginBottom: 56 }}>
+      <div style={{ opacity: headerOpacity, marginBottom: 36 }}>
         <p
           style={{
             fontSize: 24,
@@ -80,72 +66,65 @@ export const AppModesScene: React.FC<{ sceneDuration: number }> = ({
             margin: 0,
           }}
         >
-          4 Modes
+          {modes.length} Modes
         </p>
         <h2
           style={{
-            fontSize: 52,
+            fontSize: 48,
             color: "white",
             fontWeight: 700,
             margin: "12px 0 0",
           }}
         >
-          ひとつのアプリで、4つの働き方を支援
+          ひとつのアプリで、医療とこころとからだを支援
         </h2>
       </div>
 
-      {/* Mode cards */}
+      {/* Mode cards: 3列3行 */}
       <div
         style={{
-          display: "flex",
-          gap: 28,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateRows: "repeat(3, 1fr)",
+          gap: 20,
           flex: 1,
-          alignItems: "stretch",
         }}
       >
         {modes.map((mode, i) => {
-          const delay = 20 + i * 15;
+          const tint = withTint(mode.color);
+          // 9枚を1枚ずつ出すと尺に収まらないので、行ごとにまとめて出す
+          const delay = 20 + Math.floor(i / 3) * 14;
           const cardScale = spring({
             frame: frame - delay,
             fps,
             config: { damping: 12, stiffness: 80 },
           });
-          const cardOpacity = interpolate(
-            frame,
-            [delay, delay + 15],
-            [0, 1],
-            { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-          );
+          const cardOpacity = interpolate(frame, [delay, delay + 15], [0, 1], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          });
 
           return (
             <div
-              key={i}
+              key={mode.label}
               style={{
-                flex: 1,
-                background: mode.bg,
-                borderRadius: 20,
-                padding: 36,
+                background: tint.bg,
+                borderRadius: 18,
+                padding: 20,
                 opacity: cardOpacity,
                 transform: `scale(${cardScale})`,
-                border: `1px solid ${mode.border}`,
+                border: `1px solid ${tint.border}`,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 20,
+                gap: 8,
               }}
             >
-              <div
-                style={{
-                  fontSize: 64,
-                  lineHeight: 1,
-                }}
-              >
-                {mode.icon}
-              </div>
+              <div style={{ fontSize: 44, lineHeight: 1 }}>{mode.icon}</div>
               <h3
                 style={{
-                  fontSize: 28,
+                  fontSize: 26,
                   color: mode.color,
                   fontWeight: 700,
                   margin: 0,
@@ -156,11 +135,11 @@ export const AppModesScene: React.FC<{ sceneDuration: number }> = ({
               </h3>
               <p
                 style={{
-                  fontSize: 20,
+                  fontSize: 18,
                   color: "#94a3b8",
                   margin: 0,
                   textAlign: "center",
-                  lineHeight: 1.6,
+                  lineHeight: 1.5,
                   whiteSpace: "pre-line",
                 }}
               >

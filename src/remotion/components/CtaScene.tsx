@@ -20,12 +20,12 @@ import {
 const highlights = [
   { label: "リアルタイム音声認識", Icon: MicrophoneIcon },
   { label: "SOAP形式カルテ自動生成", Icon: ClipboardDocumentIcon },
-  { label: "ポモドーロタイマー", Icon: ClockIcon },
-  { label: "AIメンタリング", Icon: HeartIcon },
-  { label: "音声メモ & AI整形", Icon: ArrowUpTrayIcon },
+  { label: "症状チェッカー", Icon: HeartIcon },
+  { label: "気分ジャーナルと呼吸ガイド", Icon: HeartIcon },
+  { label: "ポモドーロとタスク管理", Icon: ClockIcon },
+  { label: "音声メモとAI整形", Icon: ArrowUpTrayIcon },
   { label: "JSON / CSV エクスポート", Icon: CommandLineIcon },
-  { label: "ダークモード対応", Icon: MoonIcon },
-  { label: "PWA対応", Icon: DevicePhoneMobileIcon },
+  { label: "ダークモードとPWA対応", Icon: MoonIcon },
 ];
 
 export const CtaScene: React.FC<{ sceneDuration: number }> = ({
@@ -140,7 +140,7 @@ export const CtaScene: React.FC<{ sceneDuration: number }> = ({
               margin: 0,
             }}
           >
-            Medical Scribe
+            Vital
             <span style={{ color: "#14b8a6" }}> Flow</span>
           </h2>
           <p
@@ -150,7 +150,7 @@ export const CtaScene: React.FC<{ sceneDuration: number }> = ({
               margin: "12px 0 0",
             }}
           >
-            医療現場のドキュメント作成を、もっとスマートに。
+            記録も、こころも、からだも、ひとつのアプリで。
           </p>
         </div>
 
@@ -221,7 +221,7 @@ export const CtaScene: React.FC<{ sceneDuration: number }> = ({
               textShadow: `0 0 ${ctaGlow * 20}px rgba(20,184,166,0.4)`,
             }}
           >
-            Medical Scribe Flow をお試しください
+            Vital Flowをお試しください
           </p>
         </div>
 

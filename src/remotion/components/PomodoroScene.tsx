@@ -102,7 +102,7 @@ export const PomodoroScene: React.FC<{ sceneDuration: number }> = ({
             margin: 0,
           }}
         >
-          Pomodoro Timer
+          Clock Mode
         </p>
         <h2
           style={{
@@ -112,7 +112,7 @@ export const PomodoroScene: React.FC<{ sceneDuration: number }> = ({
             margin: "12px 0 0",
           }}
         >
-          集中と休憩のリズムで生産性を最大化
+          時計モードのポモドーロで、集中と休憩のリズムをつくる
         </h2>
       </div>
 
