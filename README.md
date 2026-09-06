@@ -168,7 +168,7 @@ OpenAI GPT-4/5の軽量モデルを使用した、以下の情報を含む詳細
                              ▼
                     ┌─────────────────┐
                     │   OpenAI API    │
-                    │   GPT-4o-mini   │
+                    │  GPT-5.6 Luna   │
                     │  JSON Response  │
                     └─────────────────┘
 ```
@@ -741,7 +741,7 @@ pnpm generate:embeddings
    - 診断や治療の根拠として使用しないでください
 
 3. **AI生成内容の不確実性**
-   - GPT-4o-miniの出力は100%正確ではありません
+   - GPT-5.6 Lunaの出力は100%正確ではありません
    - 必ず医師による確認・修正が必要です
    - 幻覚（Hallucination）により事実と異なる内容が生成される可能性があります
 
@@ -758,7 +758,7 @@ pnpm generate:embeddings
 
 OpenAI APIの使用料金が発生します：
 
-- **GPT-4o-mini事例**: $0.150 / 1M input tokens, $0.600 / 1M output tokens
+- **GPT-5.6 Luna**: $0.20 / 1M input tokens, $1.20 / 1M output tokens（`src/app/api/analyze/types.ts`のAVAILABLE_MODELSが正）
 - 1回の解析あたり約$0.001-0.005（会話の長さによる）
 
 ### 法的考慮事項
