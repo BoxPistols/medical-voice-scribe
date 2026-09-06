@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { openai, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
+import { openai, clientForModel, ProviderConfigError } from '@/lib/openai';
 import OpenAI from "openai";
 import type { ModelId } from "../analyze/types";
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from "../analyze/types";
@@ -149,7 +149,7 @@ export async function POST(req: Request): Promise<Response> {
         ? `## ユーザーの最近の記録（参考。診断には使わないこと）\n${wellnessContext.trim()}`
         : "## ユーザーの最近の記録\n（記録はまだありません）";
 
-    const completion = await openai.chat.completions.create({
+    const completion = await clientForModel(model).chat.completions.create({
       model,
       messages: [
         { role: "system", content: HEALTH_COACH_PROMPT },
@@ -171,8 +171,8 @@ export async function POST(req: Request): Promise<Response> {
       type: classifyResponse(content),
     });
   } catch (error) {
-    if (error instanceof OpenAIConfigError) {
-      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
+    if (error instanceof ProviderConfigError) {
+      return NextResponse.json({ error: error.message }, { status: 503 });
     }
 
     if (error instanceof OpenAI.APIError) {

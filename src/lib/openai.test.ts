@@ -15,14 +15,24 @@ describe("lib/openai", () => {
     await expect(import("./openai")).resolves.toBeDefined();
   });
 
-  it("キー未設定で getOpenAI() を呼ぶと OpenAIConfigError", async () => {
+  it("キー未設定でgetOpenAI() を呼ぶとProviderConfigError", async () => {
     const m = await import("./openai");
-    expect(() => m.getOpenAI()).toThrow(m.OpenAIConfigError);
+    expect(() => m.getOpenAI()).toThrow(m.ProviderConfigError);
   });
 
   it("互換用 openai はプロパティに触れた時点で同じエラーを投げる", async () => {
     const m = await import("./openai");
-    expect(() => m.openai.chat).toThrow(m.OpenAIConfigError);
+    expect(() => m.openai.chat).toThrow(m.ProviderConfigError);
+  });
+
+  it("エラー文言に設定すべき環境変数名が入る", async () => {
+    const m = await import("./openai");
+    try {
+      m.getOpenAI();
+      throw new Error("投げられなかった");
+    } catch (e) {
+      expect((e as Error).message).toContain("OPENAI_API_KEY");
+    }
   });
 
   it("キーがあれば生成でき、同じインスタンスを返す", async () => {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { openai, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
+import { openai, clientForModel, ProviderConfigError } from '@/lib/openai';
 import OpenAI from 'openai';
 import type { SoapNote, ModelId } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
@@ -192,7 +192,7 @@ export async function POST(req: Request) {
           }))
       : [];
 
-    const completion = await openai.chat.completions.create({
+    const completion = await clientForModel(model).chat.completions.create({
       model,
       messages: [
         {
@@ -228,8 +228,8 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
-    if (error instanceof OpenAIConfigError) {
-      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
+    if (error instanceof ProviderConfigError) {
+      return NextResponse.json({ error: error.message }, { status: 503 });
     }
 
     console.error('Chat Support API Error:', error);

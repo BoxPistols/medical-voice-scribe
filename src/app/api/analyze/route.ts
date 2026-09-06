@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { openai, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
+import { openai, clientForModel, ProviderConfigError } from '@/lib/openai';
 import OpenAI from 'openai';
 import { SYSTEM_PROMPT } from './prompt';
 import type { SoapNote, ModelId, TokenUsage } from './types';
@@ -7,6 +7,7 @@ import { AVAILABLE_MODELS, DEFAULT_MODEL } from './types';
 import { validateModel } from '@/lib/helpers';
 import { checkAndIncrementRateLimit } from '@/lib/rateLimiter';
 import { searchMedicalTerms, buildMedicalContext } from '@/lib/medicalDictionary';
+import { calculateTokenCost } from "@/lib/llm/cost";
 
 const EMBEDDING_MODEL = "text-embedding-3-small";
 const EMBEDDING_DIMENSIONS = 256;
@@ -17,25 +18,6 @@ const USD_TO_JPY = 150;
 // AVAILABLE_MODELSからIDリストを生成
 const VALID_MODEL_IDS = AVAILABLE_MODELS.map(m => m.id) as unknown as string[];
 
-// トークンコスト計算
-function calculateTokenCost(modelId: ModelId, promptTokens: number, completionTokens: number): TokenUsage {
-  const modelConfig = AVAILABLE_MODELS.find(m => m.id === modelId);
-  if (!modelConfig) {
-    return { promptTokens, completionTokens, totalTokens: promptTokens + completionTokens, estimatedCostUSD: 0, estimatedCostJPY: 0 };
-  }
-
-  const inputCost = (promptTokens / 1_000_000) * modelConfig.inputPrice;
-  const outputCost = (completionTokens / 1_000_000) * modelConfig.outputPrice;
-  const totalCostUSD = inputCost + outputCost;
-
-  return {
-    promptTokens,
-    completionTokens,
-    totalTokens: promptTokens + completionTokens,
-    estimatedCostUSD: totalCostUSD,
-    estimatedCostJPY: totalCostUSD * USD_TO_JPY,
-  };
-}
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -95,7 +77,7 @@ export async function POST(req: Request) {
 
     // ストリーミングモード
     if (useStream) {
-      const stream = await openai.chat.completions.create({
+      const stream = await clientForModel(model).chat.completions.create({
         model,
         messages: [
           { role: "system", content: systemPrompt },
@@ -145,7 +127,7 @@ export async function POST(req: Request) {
     }
 
     // 非ストリーミングモード（従来の動作）
-    const completion = await openai.chat.completions.create({
+    const completion = await clientForModel(model).chat.completions.create({
       model,
       messages: [
         { role: "system", content: systemPrompt },
@@ -167,8 +149,8 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
 
   } catch (error) {
-    if (error instanceof OpenAIConfigError) {
-      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
+    if (error instanceof ProviderConfigError) {
+      return NextResponse.json({ error: error.message }, { status: 503 });
     }
 
     console.error('API Error:', error);

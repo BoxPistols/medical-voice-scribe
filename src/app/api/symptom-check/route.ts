@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { openai, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
+import { openai, clientForModel, ProviderConfigError } from '@/lib/openai';
 import OpenAI from 'openai';
 import type { ModelId, TokenUsage } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
 import { buildChatTuning, parseModelJson } from '@/lib/openaiChat';
 import type { SymptomResult, SymptomUrgency } from '@/lib/wellness/types';
+import { calculateTokenCost } from "@/lib/llm/cost";
 
 // ── 定数 ──────────────────────────────────────────────────────────────────
 
@@ -21,28 +22,6 @@ function isValidModel(model: string): model is ModelId {
   return AVAILABLE_MODELS.some((m) => m.id === model);
 }
 
-function calculateTokenCost(modelId: ModelId, promptTokens: number, completionTokens: number): TokenUsage {
-  const modelConfig = AVAILABLE_MODELS.find((m) => m.id === modelId);
-  if (!modelConfig) {
-    return {
-      promptTokens,
-      completionTokens,
-      totalTokens: promptTokens + completionTokens,
-      estimatedCostUSD: 0,
-      estimatedCostJPY: 0,
-    };
-  }
-  const inputCost = (promptTokens / 1_000_000) * modelConfig.inputPrice;
-  const outputCost = (completionTokens / 1_000_000) * modelConfig.outputPrice;
-  const totalCostUSD = inputCost + outputCost;
-  return {
-    promptTokens,
-    completionTokens,
-    totalTokens: promptTokens + completionTokens,
-    estimatedCostUSD: totalCostUSD,
-    estimatedCostJPY: totalCostUSD * USD_TO_JPY,
-  };
-}
 
 // ── システムプロンプト（保守的トリアージ補助・診断ではない） ────────────────
 
@@ -200,7 +179,7 @@ export async function POST(req: Request) {
       severity: severityNum,
     });
 
-    const response = await openai.chat.completions.create({
+    const response = await clientForModel(model).chat.completions.create({
       model,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -234,8 +213,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ result, tokenUsage });
   } catch (error: unknown) {
-    if (error instanceof OpenAIConfigError) {
-      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
+    if (error instanceof ProviderConfigError) {
+      return NextResponse.json({ error: error.message }, { status: 503 });
     }
 
     if (error instanceof OpenAI.APIError) {

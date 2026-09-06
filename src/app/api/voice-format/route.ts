@@ -3,7 +3,8 @@ import OpenAI from 'openai';
 import type { ModelId, TokenUsage } from '../analyze/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../analyze/types';
 import { checkAndIncrementRateLimit } from '@/lib/rateLimiter';
-import { getOpenAI, OpenAIConfigError, OPENAI_CONFIG_ERROR_MESSAGE } from '@/lib/openai';
+import { getOpenAI, clientForModel, ProviderConfigError } from '@/lib/openai';
+import { calculateTokenCost } from "@/lib/llm/cost";
 
 const USD_TO_JPY = 150;
 
@@ -11,22 +12,6 @@ function isValidModel(model: string): model is ModelId {
   return AVAILABLE_MODELS.some(m => m.id === model);
 }
 
-function calculateTokenCost(modelId: ModelId, promptTokens: number, completionTokens: number): TokenUsage {
-  const modelConfig = AVAILABLE_MODELS.find(m => m.id === modelId);
-  if (!modelConfig) {
-    return { promptTokens, completionTokens, totalTokens: promptTokens + completionTokens, estimatedCostUSD: 0, estimatedCostJPY: 0 };
-  }
-  const inputCost = (promptTokens / 1_000_000) * modelConfig.inputPrice;
-  const outputCost = (completionTokens / 1_000_000) * modelConfig.outputPrice;
-  const totalCostUSD = inputCost + outputCost;
-  return {
-    promptTokens,
-    completionTokens,
-    totalTokens: promptTokens + completionTokens,
-    estimatedCostUSD: totalCostUSD,
-    estimatedCostJPY: totalCostUSD * USD_TO_JPY,
-  };
-}
 
 const ORGANIZE_PROMPT = `あなたはITエンジニアの音声認識テキストをSlackチャット向けに整理するアシスタントです。
 入力されたテキストは音声認識で生成されたものです。以下のルールで整理してください：
@@ -131,7 +116,7 @@ export async function POST(req: Request) {
     // luna を 4000 にすると推論トークンが上限を食い切り可視出力が空になる（実測）
     const maxCompletionTokens = model.includes('nano') ? 4000 : 16000;
 
-    const response = await openai.chat.completions.create({
+    const response = await clientForModel(model).chat.completions.create({
       model,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -166,8 +151,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ result: parsed, tokenUsage });
   } catch (error: unknown) {
-    if (error instanceof OpenAIConfigError) {
-      return NextResponse.json({ error: OPENAI_CONFIG_ERROR_MESSAGE }, { status: 503 });
+    if (error instanceof ProviderConfigError) {
+      return NextResponse.json({ error: error.message }, { status: 503 });
     }
 
     console.error('Voice format error:', error);

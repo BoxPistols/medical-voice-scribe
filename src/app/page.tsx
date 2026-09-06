@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import type { SoapNote, ModelId, TokenUsage } from "./api/analyze/types";
@@ -418,14 +418,24 @@ export default function Home() {
 
   // レート制限の使用状況
   const [usageStatus, setUsageStatus] = useState<Record<string, { count: number; limit: number; remaining: number }>>({});
+  // サーバーにキーがあるモデルだけをセレクタに出す。
+  // 未設定のモデルを出すと、選んだ瞬間に503になるだけで理由が分からない。
+  // 取得前は全部出す(サーバー側でも弾かれるので、選べないよりは選べたほうがまし)
+  const [configuredModelIds, setConfiguredModelIds] = useState<string[] | null>(null);
+
+  const selectableModels = useMemo(
+    () => (configuredModelIds === null ? AVAILABLE_MODELS : AVAILABLE_MODELS.filter((m) => configuredModelIds.includes(m.id))),
+    [configuredModelIds],
+  );
 
   const fetchUsageStatus = useCallback(async () => {
     try {
       const res = await fetch('/api/usage-status');
       if (!res.ok) return;
-      const data: { modelId: string; count: number; limit: number; remaining: number }[] = await res.json();
+      const data: { modelId: string; count: number; limit: number; remaining: number; configured?: boolean }[] = await res.json();
       const map: Record<string, { count: number; limit: number; remaining: number }> = {};
       data.forEach((d) => { map[d.modelId] = { count: d.count, limit: d.limit, remaining: d.remaining }; });
+      setConfiguredModelIds(data.filter((d) => d.configured !== false).map((d) => d.modelId));
       setUsageStatus(map);
     } catch {
       // 取得失敗時は無視
@@ -1773,7 +1783,7 @@ export default function Home() {
                     return m ? `${m.name}\n${m.description}\n速度: ${'⚡'.repeat(m.speed)} 品質: ${'★'.repeat(m.quality)}` : '';
                   })()}
                 >
-                  {AVAILABLE_MODELS.map((model) => (
+                  {selectableModels.map((model) => (
                     <option key={model.id} value={model.id} title={`${model.description} | 速度:${model.speed}/5 品質:${model.quality}/5`}>
                       {model.name}
                     </option>
@@ -1790,7 +1800,7 @@ export default function Home() {
                     <div className="text-theme-tertiary text-xs font-medium pb-1 border-b border-theme-border">モデル</div>
                     <div className="text-theme-tertiary text-xs font-medium pb-1 border-b border-theme-border">速度</div>
                     <div className="text-theme-tertiary text-xs font-medium pb-1 border-b border-theme-border">品質</div>
-                    {AVAILABLE_MODELS.flatMap((m) => {
+                    {selectableModels.flatMap((m) => {
                       const usage = usageStatus[m.id];
                       const usageColor = usage && usage.count / usage.limit >= 1 ? 'text-danger-fg' : usage && usage.count / usage.limit >= 0.8 ? 'text-warning-fg' : 'text-theme-muted';
                       return [
@@ -1895,7 +1905,7 @@ export default function Home() {
                     className="appearance-none bg-theme-card border border-theme-border rounded-lg pl-2 pr-6 py-1.5 text-xs text-theme-tertiary cursor-pointer"
                     aria-label="AIモデル選択"
                   >
-                    {AVAILABLE_MODELS.map((model) => (
+                    {selectableModels.map((model) => (
                       <option key={model.id} value={model.id}>
                         {model.name.replace('GPT-', '')}
                       </option>

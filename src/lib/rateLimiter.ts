@@ -2,6 +2,9 @@
 const DAILY_LIMITS: Record<string, number> = {
   // gpt-5.4系（nano / mini）は提供終了。単価がほぼ同じ nano 枠の上限を luna が引き継ぐ
   'gpt-5.6-luna': 50,
+  // Geminiは無料枠があるぶん回数を多めに取る。上限はサーバー側のキーを守るためのもので、
+  // 自前キーを使う場合の制限ではない
+  'gemini-3.8-flash': 100,
 };
 
 interface UsageRecord {
