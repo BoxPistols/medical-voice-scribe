@@ -43,8 +43,11 @@ pnpm storybook
 
 ```
 pnpm test        # 生パレット、12px未満、コントラスト、トークンの一致を含む
+pnpm check:tokens
 pnpm exec tsc --noEmit
 pnpm build
+pnpm vrt         # 見た目の回帰検査(本番ビルドに対して撮る)
+pnpm e2e         # 動作のe2e
 ```
 
 検査はファイルを列挙せず `src/app` 配下を走査するので、新しく足したファイルも対象に入る。
