@@ -12,7 +12,9 @@ const SKIP_FILES = /(\.stories\.tsx|opengraph-image\.tsx)$/;
 const FAMILIES =
   "teal|emerald|green|cyan|sky|blue|indigo|violet|purple|fuchsia|amber|yellow|orange|red|rose|pink|slate|gray|zinc|neutral|stone|lime";
 const RAW = new RegExp(
-  `(?<![\\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|outline|from|to|via|fill|stroke|accent|shadow|placeholder|divide)-(?:${FAMILIES})-\\d+(?:/\\d+)?(?![\\w-])`,
+  // border-l や bg-gradient-to のような方向つきの書き方も拾う。
+  // border-l-teal-500 が検査をすり抜けて残っていた
+  `(?<![\\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|outline|from|to|via|fill|stroke|accent|shadow|placeholder|divide)(?:-(?:[xytrbles]|gradient-[a-z]+|offset))?-(?:${FAMILIES})-\\d+(?:/\\d+)?(?![\\w-])`,
   "g",
 );
 

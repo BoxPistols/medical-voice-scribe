@@ -30,10 +30,16 @@ import {
 
 // ── カテゴリ定義 ────────────────────────────────────────────────────────
 
-const CATEGORY_META: Record<SessionCategory, { label: string; color: string }> = {
-  medical: { label: "診療", color: "bg-info-soft text-info-fg" },
-  daily:   { label: "日常", color: "bg-success-soft text-success-fg" },
-  memo:    { label: "メモ", color: "bg-warning-soft text-warning-fg" },
+// color は一覧の札に使う。selected はフィルタで選択中のときに使う。
+// 明色では -soft が地(#f8fafc)とほぼ同じ明るさで、選択が文字色でしか伝わらなかった。
+// 選択状態は面を一段濃くして、色以外でも位置が分かるようにする。
+const CATEGORY_META: Record<
+  SessionCategory,
+  { label: string; color: string; selected: string }
+> = {
+  medical: { label: "診療", color: "bg-info-soft text-info-fg", selected: "bg-info-soft-strong text-info-fg" },
+  daily:   { label: "日常", color: "bg-success-soft text-success-fg", selected: "bg-success-soft-strong text-success-fg" },
+  memo:    { label: "メモ", color: "bg-warning-soft text-warning-fg", selected: "bg-warning-soft-strong text-warning-fg" },
 };
 
 // ── Props ────────────────────────────────────────────────────────────────
@@ -250,14 +256,14 @@ export default function SessionDrawer({
         {/* ── 新規セッション ── */}
         <div className="px-4 py-3 border-b border-theme-border space-y-2 shrink-0">
           <div className="flex items-center gap-2">
-            {(Object.entries(CATEGORY_META) as [SessionCategory, { label: string; color: string }][]).map(
+            {(Object.entries(CATEGORY_META) as [SessionCategory, (typeof CATEGORY_META)[SessionCategory]][]).map(
               ([key, meta]) => (
                 <button
                   key={key}
                   onClick={() => setNewCategory(key)}
                   className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                     newCategory === key
-                      ? meta.color
+                      ? meta.selected
                       : "text-theme-tertiary border border-theme-border hover:bg-theme-card"
                   }`}
                 >
@@ -293,7 +299,7 @@ export default function SessionDrawer({
               <button
                 onClick={() => setFilterTag("")}
                 className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
-                  !filterTag ? "bg-brand-soft text-brand-fg" : "text-theme-tertiary hover:bg-theme-card"
+                  !filterTag ? "bg-brand-soft-strong text-brand-fg" : "text-theme-tertiary hover:bg-theme-card"
                 }`}
               >
                 すべて
@@ -304,7 +310,7 @@ export default function SessionDrawer({
                   onClick={() => setFilterTag(filterTag === tag ? "" : tag)}
                   className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
                     filterTag === tag
-                      ? "bg-brand-soft text-brand-fg"
+                      ? "bg-brand-soft-strong text-brand-fg"
                       : "text-theme-tertiary hover:bg-theme-card"
                   }`}
                 >
@@ -317,18 +323,18 @@ export default function SessionDrawer({
             <button
               onClick={() => setFilterCategory("")}
               className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
-                !filterCategory ? "bg-brand-soft text-brand-fg" : "text-theme-tertiary hover:bg-theme-card"
+                !filterCategory ? "bg-brand-soft-strong text-brand-fg" : "text-theme-tertiary hover:bg-theme-card"
               }`}
             >
               すべて
             </button>
-            {(Object.entries(CATEGORY_META) as [SessionCategory, { label: string; color: string }][]).map(
+            {(Object.entries(CATEGORY_META) as [SessionCategory, (typeof CATEGORY_META)[SessionCategory]][]).map(
               ([key, meta]) => (
                 <button
                   key={key}
                   onClick={() => setFilterCategory(filterCategory === key ? "" : key)}
                   className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
-                    filterCategory === key ? meta.color : "text-theme-tertiary hover:bg-theme-card"
+                    filterCategory === key ? meta.selected : "text-theme-tertiary hover:bg-theme-card"
                   }`}
                 >
                   {meta.label}
@@ -357,7 +363,7 @@ export default function SessionDrawer({
                       onClick={() => handleSwitchSession(s.id)}
                       className={`w-full text-left px-4 py-3 transition-colors cursor-pointer ${
                         isActive
-                          ? "bg-brand-soft border-l-[3px] border-l-teal-500"
+                          ? "bg-brand-soft border-l-[3px] border-l-brand"
                           : "hover:bg-theme-card border-l-[3px] border-l-transparent"
                       }`}
                     >

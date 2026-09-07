@@ -15,7 +15,7 @@ const FAMILIES =
   "teal|emerald|green|cyan|sky|blue|indigo|violet|purple|fuchsia|amber|yellow|orange|red|rose|pink|slate|gray|zinc|neutral|stone|lime";
 
 const RAW_PALETTE = new RegExp(
-  `(?<![\\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|outline|from|to|via|fill|stroke|accent|shadow|placeholder|divide)-(?:${FAMILIES})-\\d+(?:/\\d+)?(?![\\w-])`,
+  `(?<![\\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|outline|from|to|via|fill|stroke|accent|shadow|placeholder|divide)(?:-(?:[xytrbles]|gradient-[a-z]+|offset))?-(?:${FAMILIES})-\\d+(?:/\\d+)?(?![\\w-])`,
   "g",
 );
 const SMALL_FONT = /(?:text-\[|font-size:\s*|fontSize:\s*['"]?)(\d+(?:\.\d+)?)(px|rem|em)?/g;
