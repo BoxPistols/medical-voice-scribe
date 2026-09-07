@@ -196,10 +196,14 @@ export default function SessionDrawer({
               セッションは、会話テキスト・生成したカルテ・トークン使用量を1件としてまとめた記録です。
               このブラウザのlocalStorageに保存され、サーバーには送られません。
             </p>
+            <p>
+              入っている記録はすべて架空のサンプルです。実在の患者の情報は含みません。
+              編集も削除も自由に試せます。消しても下の「サンプルを復元」で元に戻せます。
+            </p>
             <ul className="list-disc pl-4 space-y-0.5">
               <li>一覧をクリックすると、その記録を画面に呼び出します。編集中の内容は自動で保存されます。</li>
               <li>「新規」で空の記録を作ります。カテゴリは診療・日常・メモの3種類です。</li>
-              <li>「例:」で始まる記録はサンプルです。削除しても、下の「サンプルを復元」で戻せます。</li>
+              <li>「例」の札が付いた記録はサンプルです。削除しても「サンプルを復元」で戻せます。</li>
             </ul>
           </div>
         )}
@@ -237,6 +241,7 @@ export default function SessionDrawer({
                 onClick={() => setConfirmBulk("reset")}
                 className="flex items-center gap-1 px-2 py-1 rounded text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
                 aria-label="サンプルを復元して初期状態に戻す"
+                title="架空のサンプル5件を入れ直します。今ある記録はすべて消えます"
               >
                 <ArrowPathIcon className="w-3.5 h-3.5" />
                 サンプルを復元
@@ -245,6 +250,7 @@ export default function SessionDrawer({
                 onClick={() => setConfirmBulk("clear")}
                 className="flex items-center gap-1 px-2 py-1 rounded text-theme-tertiary hover:text-danger-fg hover:bg-theme-card transition-colors cursor-pointer"
                 aria-label="すべての記録を削除"
+                title="記録をすべて消します。サンプルは「サンプルを復元」で戻せます"
               >
                 <TrashIcon className="w-3.5 h-3.5" />
                 すべて削除
@@ -373,7 +379,10 @@ export default function SessionDrawer({
                           {catMeta.label}
                         </span>
                         {s.isSample && (
-                          <span className="text-xs text-theme-tertiary border border-theme-border px-1.5 py-0.5 rounded">
+                          <span
+                            className="text-xs text-theme-tertiary border border-theme-border px-1.5 py-0.5 rounded"
+                            title="架空のサンプルです。編集も削除も自由に試せます"
+                          >
                             例
                           </span>
                         )}

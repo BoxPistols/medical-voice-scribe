@@ -23,10 +23,17 @@ export default function EmptyState() {
       <h3 className="text-lg font-bold text-theme-primary mb-2">
         SOAPカルテ生成へようこそ
       </h3>
-      <p className="text-sm text-theme-secondary mb-8 max-w-sm mx-auto leading-relaxed">
+      <p className="text-sm text-theme-secondary mb-4 max-w-sm mx-auto leading-relaxed">
         AIが医師と患者の会話を分析し、
         <br className="hidden sm:block" />
         標準的な医療記録形式（SOAP）でカルテを作成します。
+      </p>
+
+      {/* 初めて開いた人が最初に見る場所。触ってよいことをここで伝える。
+          ツールチップだけだと、短時間で見る人には届かない */}
+      <p className="text-xs text-ink-faint mb-8 max-w-md mx-auto leading-relaxed">
+        入っている記録はすべて架空のサンプルです。実在の患者の情報は含みません。
+        自由に編集や削除を試せます。消しても「記録セッション」から元に戻せます。
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg text-left">

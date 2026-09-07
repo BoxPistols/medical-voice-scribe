@@ -3022,7 +3022,7 @@ export default function Home() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>デモンストレーション用途のみ - 臨床使用不可</span>
+                <span>デモ用途のみ・臨床使用不可 / データはこのブラウザにのみ保存</span>
               </div>
             </div>
           </footer>
@@ -3086,6 +3086,11 @@ export default function Home() {
                     <p className="text-sm text-theme-secondary leading-relaxed">
                       Medical Voice Scribeは、音声による医療問診を自動的にSOAPカルテ形式に変換するデモアプリケーションです。
                       医療現場での記録業務の効率化を目的としています。
+                    </p>
+                    <p className="text-sm text-theme-secondary leading-relaxed mt-3">
+                      入っている記録はすべて架空のサンプルで、実在の患者の情報は含みません。
+                      記録はこのブラウザにのみ保存され、サーバーには送られません。
+                      編集も削除も自由に試せます。消しても「記録セッション」の「サンプルを復元」で元に戻せます。
                     </p>
                   </div>
                   <div>
