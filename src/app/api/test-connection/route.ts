@@ -6,6 +6,7 @@ import {
   providerOf,
   isProviderConfigured,
   ProviderConfigError,
+  describeKey,
 } from '@/lib/llm/providers';
 
 export const runtime = 'nodejs';
@@ -20,6 +21,8 @@ interface Result {
   configured: boolean;
   status: 'ok' | 'skipped' | 'error';
   message?: string;
+  /** 失敗したときだけ、キーの形を返す。値そのものは含めない */
+  keyShape?: ReturnType<typeof describeKey>;
 }
 
 async function probe(modelId: string): Promise<Result> {
@@ -51,7 +54,14 @@ async function probe(modelId: string): Promise<Result> {
         : error instanceof Error
           ? error.message
           : '不明なエラー';
-    return { model: modelId, provider, configured: true, status: 'error', message };
+    return {
+      model: modelId,
+      provider,
+      configured: true,
+      status: 'error',
+      message,
+      keyShape: describeKey(provider),
+    };
   }
 }
 

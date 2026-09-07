@@ -1,4 +1,4 @@
-// llm-radar:allow-superseded-file UIに出る任意のモデル名を打ち込む操作の確認
+// ai-api:allow-superseded-file UIに出る任意のモデル名を打ち込む操作の確認
 import { test, expect } from '@playwright/test'
 
 test.describe('Medical Voice Scribe - Basic Flow', () => {

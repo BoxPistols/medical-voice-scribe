@@ -136,6 +136,35 @@ export function clientForModel(modelId: string): OpenAI {
   return clientFor(provider);
 }
 
+/**
+ * 保存されているキーの形だけを返す。値そのものは返さない。
+ *
+ * Vercelのsensitiveな環境変数は保存後に画面で読めないため、
+ * 「貼り間違えたのか、まだ反映されていないのか」を切り分ける手段が無かった。
+ * 長さと先頭4文字(Geminiは必ずAIza)と、使えない文字の位置だけを出す。
+ */
+export function describeKey(provider: ProviderKey): {
+  present: boolean;
+  length: number;
+  prefix: string;
+  invalidAt: number | null;
+  invalidChar: string | null;
+} {
+  const raw = process.env[PROVIDERS[provider].envKey];
+  if (!raw) return { present: false, length: 0, prefix: "", invalidAt: null, invalidChar: null };
+  const key = raw.trim();
+  const chars = [...key];
+  const at = chars.findIndex((ch) => ch.charCodeAt(0) > 0x7e || ch.charCodeAt(0) < 0x21);
+  return {
+    present: true,
+    length: chars.length,
+    prefix: chars.slice(0, 4).join(""),
+    invalidAt: at < 0 ? null : at,
+    invalidChar:
+      at < 0 ? null : `U+${chars[at].charCodeAt(0).toString(16).toUpperCase().padStart(4, "0")}`,
+  };
+}
+
 /** テスト用。環境変数を差し替えた後にキャッシュを捨てる */
 export function resetClientCache(): void {
   clients.clear();

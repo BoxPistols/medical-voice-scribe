@@ -77,13 +77,13 @@ describe("プロバイダーレジストリ", () => {
     expect(missing, "pricing.tsに価格が無いと費用を表示できない").toEqual([]);
   });
 
-  // llm-radar:allow-superseded-start 旧IDを「登録しない」ことの確認なので、IDが残るのが正しい
+  // ai-api:allow-superseded-start 旧IDを「登録しない」ことの確認なので、IDが残るのが正しい
   it("旧世代で割高なgemini-3.5-flashは登録しない", async () => {
     const m = await load();
     const all = m.PROVIDER_ORDER.flatMap((p) => m.PROVIDERS[p].models);
     expect(all).not.toContain("gemini-3.5-flash");
   });
-  // llm-radar:allow-superseded-end
+  // ai-api:allow-superseded-end
 });
 
 describe("APIキーの検証", () => {
@@ -110,5 +110,44 @@ describe("APIキーの検証", () => {
       expect((e as Error).message).toContain("使えない文字");
       expect((e as Error).message).toContain("U+3000");
     }
+  });
+});
+
+describe("キーの形の診断", () => {
+  const ORIG = process.env.GEMINI_API_KEY;
+  afterEach(() => {
+    if (ORIG) process.env.GEMINI_API_KEY = ORIG;
+    else delete process.env.GEMINI_API_KEY;
+  });
+
+  it("値そのものは返さない", async () => {
+    process.env.GEMINI_API_KEY = "AIzaSecretValue1234567890";
+    const m = await load();
+    const d = m.describeKey("gemini");
+    expect(JSON.stringify(d)).not.toContain("SecretValue");
+    expect(d.prefix).toBe("AIza");
+    expect(d.length).toBe(25);
+  });
+
+  it("使えない文字の位置を返す", async () => {
+    process.env.GEMINI_API_KEY = "AIzaXY以下のキー";
+    const m = await load();
+    const d = m.describeKey("gemini");
+    expect(d.invalidAt).toBe(6);
+    expect(d.invalidChar).toBe("U+4EE5");
+  });
+
+  it("正常なキーは位置を返さない", async () => {
+    process.env.GEMINI_API_KEY = "AIzaSyA1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q";
+    const m = await load();
+    const d = m.describeKey("gemini");
+    expect(d.invalidAt).toBeNull();
+    expect(d.length).toBe(39);
+  });
+
+  it("未設定ならpresentがfalse", async () => {
+    delete process.env.GEMINI_API_KEY;
+    const m = await load();
+    expect(m.describeKey("gemini").present).toBe(false);
   });
 });

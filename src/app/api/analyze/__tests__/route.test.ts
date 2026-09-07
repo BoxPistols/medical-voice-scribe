@@ -1,4 +1,4 @@
-// llm-radar:allow-superseded-file 未知のモデルIDを弾くことの確認
+// ai-api:allow-superseded-file 未知のモデルIDを弾くことの確認
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { validateTextInput, isValidSoapNote } from '@/lib/helpers'
 
