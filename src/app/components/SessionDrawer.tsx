@@ -198,6 +198,55 @@ export default function SessionDrawer({
           </div>
         )}
 
+        {/* ── 件数と一括操作 ──
+             下に置いていたときは気づかれなかった。サンプルを消してしまった人が
+             戻し方に辿り着けないので、一覧より上に出す ── */}
+        <div className="px-4 py-2 border-b border-theme-border shrink-0">
+          {confirmBulk ? (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-theme-secondary flex-1">
+                {confirmBulk === "clear"
+                  ? `${store.sessions.length}件すべて削除します。元に戻せません。`
+                  : "すべての記録を消してサンプルに戻します。"}
+              </span>
+              <button
+                onClick={confirmBulk === "clear" ? handleClearAll : handleResetSamples}
+                className="px-2.5 py-1 rounded bg-danger text-white hover:bg-danger-strong transition-colors cursor-pointer"
+              >
+                実行
+              </button>
+              <button
+                onClick={() => setConfirmBulk(null)}
+                className="px-2.5 py-1 rounded border border-theme-border text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
+              >
+                戻す
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-theme-tertiary flex-1">
+                {store.sessions.length}件{sampleCount > 0 && `（例${sampleCount}）`}
+              </span>
+              <button
+                onClick={() => setConfirmBulk("reset")}
+                className="flex items-center gap-1 px-2 py-1 rounded text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
+                aria-label="サンプルを復元して初期状態に戻す"
+              >
+                <ArrowPathIcon className="w-3.5 h-3.5" />
+                サンプルを復元
+              </button>
+              <button
+                onClick={() => setConfirmBulk("clear")}
+                className="flex items-center gap-1 px-2 py-1 rounded text-theme-tertiary hover:text-danger-fg hover:bg-theme-card transition-colors cursor-pointer"
+                aria-label="すべての記録を削除"
+              >
+                <TrashIcon className="w-3.5 h-3.5" />
+                すべて削除
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* ── 新規セッション ── */}
         <div className="px-4 py-3 border-b border-theme-border space-y-2 shrink-0">
           <div className="flex items-center gap-2">
@@ -405,52 +454,6 @@ export default function SessionDrawer({
           )}
         </div>
 
-        {/* ── フッター: 件数 + 一括操作 ── */}
-        <div className="px-4 py-2 border-t border-theme-border shrink-0 space-y-2">
-          {confirmBulk ? (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-theme-secondary flex-1">
-                {confirmBulk === "clear"
-                  ? `${store.sessions.length}件すべて削除します。元に戻せません。`
-                  : "すべての記録を消してサンプルに戻します。"}
-              </span>
-              <button
-                onClick={confirmBulk === "clear" ? handleClearAll : handleResetSamples}
-                className="px-2.5 py-1 rounded bg-danger text-white hover:bg-danger-strong transition-colors cursor-pointer"
-              >
-                実行
-              </button>
-              <button
-                onClick={() => setConfirmBulk(null)}
-                className="px-2.5 py-1 rounded border border-theme-border text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
-              >
-                戻す
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-theme-tertiary flex-1">
-                {store.sessions.length}件{sampleCount > 0 && `（例${sampleCount}）`}
-              </span>
-              <button
-                onClick={() => setConfirmBulk("reset")}
-                className="flex items-center gap-1 px-2 py-1 rounded text-theme-tertiary hover:bg-theme-card transition-colors cursor-pointer"
-                aria-label="サンプルを復元して初期状態に戻す"
-              >
-                <ArrowPathIcon className="w-3.5 h-3.5" />
-                サンプルを復元
-              </button>
-              <button
-                onClick={() => setConfirmBulk("clear")}
-                className="flex items-center gap-1 px-2 py-1 rounded text-theme-tertiary hover:text-danger-fg hover:bg-theme-card transition-colors cursor-pointer"
-                aria-label="すべての記録を削除"
-              >
-                <TrashIcon className="w-3.5 h-3.5" />
-                すべて削除
-              </button>
-            </div>
-          )}
-        </div>
       </aside>
     </>
   );

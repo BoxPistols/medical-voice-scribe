@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
+  isFirstVisit,
+  saveStore,
   createInitialStore,
   createSampleSessions,
   clearAllSessions,
@@ -47,6 +49,21 @@ describe("recordStore 初期化とサンプル", () => {
     expect(store.sessions[0].transcript).toBe("");
     expect(store.sessions[0].isSample).toBeUndefined();
     expect(loadStore().sessions).toHaveLength(1);
+  });
+
+  it("初回訪問を判定できる。保存すると初回ではなくなる", () => {
+    expect(isFirstVisit()).toBe(true);
+    saveStore(createInitialStore());
+    expect(isFirstVisit()).toBe(false);
+  });
+
+  it("初回の状態を保存すると、読み直しても同じIDのままになる", () => {
+    // 保存しないと読むたびにサンプルが作り直され、相対時刻が毎回リセットされる
+    const first = loadStore();
+    saveStore(first);
+    const second = loadStore();
+    expect(second.sessions.map((s) => s.id)).toEqual(first.sessions.map((s) => s.id));
+    expect(second.activeSessionId).toBe(first.activeSessionId);
   });
 
   it("resetToInitialStore はユーザーの記録を消してサンプルに戻す", () => {

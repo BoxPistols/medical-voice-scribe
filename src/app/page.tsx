@@ -76,6 +76,8 @@ import {
   updateSession,
   getActiveSession,
   resetToInitialStore,
+  isFirstVisit,
+  saveStore,
 } from "@/lib/recordStore";
 
 // 各モードのヘッダー見出し（タイトル・サブタイトル）— AppMode を網羅
@@ -608,12 +610,17 @@ export default function Home() {
     });
   }, [transcript, result, tokenUsage]);
 
-  // セッション初期化: ストアが空なら初期セッションを作成
+  // セッション初期化
   useEffect(() => {
     // 全削除後などで空になっていたらサンプル入りの初期状態に戻す
     if (recordStore.sessions.length === 0) {
       setRecordStore(resetToInitialStore());
       return;
+    }
+    // 初回はサンプル入りの状態をそのまま保存する。
+    // 保存しないと再読み込みのたびにIDと時刻が作り直され、「5分前」が毎回リセットされる
+    if (isFirstVisit()) {
+      saveStore(recordStore);
     }
     // アクティブセッションのデータを復元
     const active = getActiveSession(recordStore);

@@ -98,6 +98,16 @@ export function createSampleSessions(): RecordSession[] {
   ];
 }
 
+/** localStorageにまだ何も保存されていないか。初回起動の判定に使う */
+export function isFirstVisit(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(STORE_KEY) === null;
+  } catch {
+    return false;
+  }
+}
+
 /** 初期状態のストア。サンプルを投入し、先頭をアクティブにする */
 export function createInitialStore(): RecordStore {
   const sessions = createSampleSessions();
