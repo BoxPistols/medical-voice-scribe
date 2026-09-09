@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, JetBrains_Mono, Noto_Sans_JP } from "next/font/googl
 import "./globals.css";
 import ServiceWorkerRegistrar from "./components/ServiceWorkerRegistrar";
 import { ThemeScript } from "./components/ThemeScript";
+import { Analytics } from "@vercel/analytics/next";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -60,6 +61,7 @@ export default function RootLayout({
       >
         <ServiceWorkerRegistrar />
         {children}
+        <Analytics />
       </body>
     </html>
   );
