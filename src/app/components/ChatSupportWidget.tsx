@@ -83,7 +83,7 @@ const HELP_TOPICS: HelpTopic[] = [
     id: "analysis-model",
     question: "AIモデルの違いは何ですか？",
     answer:
-      "GPT-5.6 Luna（高速・コスパ最強）を使用します。以前の GPT-5.4 系（nano / mini）は提供終了のため統合されました。",
+      "GPT-6 Luna（高速・コスパ最強）を使用します。以前の GPT-5.4 系（nano / mini）は提供終了のため統合されました。",
     category: "analysis",
   },
   {

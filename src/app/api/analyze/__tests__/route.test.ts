@@ -39,8 +39,8 @@ describe('Helpers used by /api/analyze', () => {
   })
 
   describe('Model Validation', () => {
-    const VALID_MODELS = ['gpt-5.6-luna']
-    const DEFAULT_MODEL = 'gpt-5.6-luna'
+    const VALID_MODELS = ['gpt-6-luna']
+    const DEFAULT_MODEL = 'gpt-6-luna'
 
     const validateModel = (model: string | undefined): string => {
       if (!model || !VALID_MODELS.includes(model)) {

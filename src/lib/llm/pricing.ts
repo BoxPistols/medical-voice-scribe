@@ -19,7 +19,8 @@ export const PRICING_AS_OF = "2026-09-06";
 
 const DEFAULT_PRICING: Record<string, ModelPricing> = {
   // OpenAI
-  "gpt-5.6-luna": { input: 0.2, output: 1.2 },
+  // 2026-09-23にdevelopers.openai.com/api/docs/modelsで確認した
+  "gpt-6-luna": { input: 0.1, output: 0.5 },
 
   // Gemini
   // 2026-12-31までの期間価格。2027-01-01から $1.50/$7.50に戻るので、その時点で更新する。

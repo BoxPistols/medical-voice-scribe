@@ -201,7 +201,7 @@ export const SolutionScene: React.FC<{ sceneDuration: number }> = ({
                 margin: "4px 0 0",
               }}
             >
-              GPT-5.6 Luna
+              GPT-6 Luna
             </p>
           </div>
         </div>
