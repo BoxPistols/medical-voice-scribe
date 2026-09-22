@@ -4,8 +4,8 @@ import type { ModelId } from "@/app/api/analyze/types";
 //  - temperature のカスタム値を受け付けない（既定 1.0 のみ）
 //  - max_tokens ではなく max_completion_tokens を要求する
 // これらを満たさないと 400 (unsupported_value) になる。
-// ai-api:allow-superseded 世代の前方一致で判定するので旧IDが要る
 // gpt-6を外すとgpt-6-lunaにtemperatureとmax_tokensが送られ400になる
+// ai-api:allow-superseded 世代の前方一致で判定するので旧IDが要る
 const RESTRICTED_PREFIX = /^(gpt-6|gpt-5|gpt-4\.1|o1|o3)/;
 
 // reasoning 系は reasoning トークンも max_completion_tokens に乗るため、
