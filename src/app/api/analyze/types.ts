@@ -26,22 +26,9 @@ const MODEL_CATALOG: Omit<ModelInfo, "inputPrice" | "outputPrice">[] = [
     speed: 5,
     quality: 4,
   },
-  {
-    id: "gemini-3.8-flash",
-    provider: "gemini",
-    name: "Gemini 3.8 Flash",
-    description: "無料枠あり・最新",
-    speed: 5,
-    quality: 5,
-  },
-  {
-    id: "gemini-3.6-flash",
-    provider: "gemini",
-    name: "Gemini 3.6 Flash",
-    description: "無料枠あり・3.8の枠を使い切った日に",
-    speed: 5,
-    quality: 4,
-  },
+  // Geminiは選択肢から外した。2026-09-23夜から3.8 Flashが、24日未明には3.6 Flashも、
+  // Google側の混雑で503を返し続け、本番のカルテ生成が失敗した。アプリ持ちのキーなので利用者は回避できない。
+  // 呼び出しのコード（lib/llm/providers.ts）は残しているので、ここに戻せば再び選べる。
 ];
 
 export const AVAILABLE_MODELS: ModelInfo[] = MODEL_CATALOG.map((m) => {
