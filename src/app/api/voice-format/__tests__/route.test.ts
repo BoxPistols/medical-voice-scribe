@@ -288,8 +288,8 @@ describe('/api/voice-format', () => {
       const res = await POST(makeRequest({ text: 'テスト', mode: 'organize' }))
       const data = await res.json()
 
-      // デフォルトモデル gpt-5.6-luna: input $0.20/1M, output $1.20/1M
-      const expectedUSD = 0.20 + 1.20
+      // デフォルトモデルgpt-6-luna: input $0.10/1M, output $0.50/1M
+      const expectedUSD = 0.10 + 0.50
       expect(data.tokenUsage.estimatedCostUSD).toBeCloseTo(expectedUSD, 4)
       expect(data.tokenUsage.estimatedCostJPY).toBeCloseTo(expectedUSD * 150, 2)
     })

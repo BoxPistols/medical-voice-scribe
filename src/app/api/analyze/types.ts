@@ -19,9 +19,9 @@ export interface ModelInfo {
 
 const MODEL_CATALOG: Omit<ModelInfo, "inputPrice" | "outputPrice">[] = [
   {
-    id: "gpt-5.6-luna",
+    id: "gpt-6-luna",
     provider: "openai",
-    name: "GPT-5.6 Luna",
+    name: "GPT-6 Luna",
     description: "高速・コスパ最強",
     speed: 5,
     quality: 4,
@@ -51,7 +51,7 @@ export const AVAILABLE_MODELS: ModelInfo[] = MODEL_CATALOG.map((m) => {
 
 export type ModelId = string;
 
-export const DEFAULT_MODEL = "gpt-5.6-luna";
+export const DEFAULT_MODEL = "gpt-6-luna";
 
 /** そのモデルを提供するプロバイダーの環境変数名 */
 export function envKeyForModel(modelId: string): string | null {

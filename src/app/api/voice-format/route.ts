@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     const openai = getOpenAI();
     const systemPrompt = mode === 'organize' ? ORGANIZE_PROMPT : mode === 'chat-reformat' ? CHAT_REFORMAT_PROMPT : SUMMARIZE_PROMPT;
 
-    // トークン上限（nano は 4000、gpt-5.6-luna 等それ以外は 16000）
+    // トークン上限（nanoは4000、gpt-6-luna等それ以外は16000）
     // luna を 4000 にすると推論トークンが上限を食い切り可視出力が空になる（実測）
     const maxCompletionTokens = model.includes('nano') ? 4000 : 16000;
 

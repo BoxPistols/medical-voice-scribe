@@ -34,7 +34,7 @@ async function prepare(page: Page, theme: (typeof THEMES)[number]) {
     localStorage.setItem("medical-scribe-theme", t);
     localStorage.setItem("medical-scribe-app-mode", "medical");
     localStorage.setItem("medical-scribe-show-clock", "true");
-    localStorage.setItem("medical-scribe-model", "gpt-5.6-luna");
+    localStorage.setItem("medical-scribe-model", "gpt-6-luna");
     // セッションはサンプルの初期状態から始める
     localStorage.removeItem("medical-scribe-records");
   }, theme);

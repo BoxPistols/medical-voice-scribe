@@ -78,14 +78,14 @@ function ComponentGallery() {
 
       <Row title="生成中" note="開始直後と、応答が流れている途中">
         <div className="w-full max-w-md bg-surface-raised rounded-lg">
-          <AnalysisProgress isStreaming={false} streamingText="" progress={0} modelName="GPT-5.6 Luna" />
+          <AnalysisProgress isStreaming={false} streamingText="" progress={0} modelName="GPT-6 Luna" />
         </div>
         <div className="w-full max-w-md bg-surface-raised rounded-lg">
           <AnalysisProgress
             isStreaming={true}
             streamingText="S: 45歳男性。昨夜から右足親指に激しい痛みと腫れが出現。"
             progress={62}
-            modelName="GPT-5.6 Luna"
+            modelName="GPT-6 Luna"
           />
         </div>
       </Row>

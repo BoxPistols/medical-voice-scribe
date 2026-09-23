@@ -31,7 +31,7 @@ describe("プロバイダーレジストリ", () => {
 
   it("モデルIDからプロバイダーを引ける", async () => {
     const m = await load();
-    expect(m.providerOf("gpt-5.6-luna")).toBe("openai");
+    expect(m.providerOf("gpt-6-luna")).toBe("openai");
     expect(m.providerOf("gemini-3.6-flash")).toBe("gemini");
     expect(m.providerOf("存在しないモデル")).toBeNull();
   });

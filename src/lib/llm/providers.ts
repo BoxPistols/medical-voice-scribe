@@ -25,7 +25,7 @@ export const PROVIDERS: Record<ProviderKey, ProviderConfig> = {
   openai: {
     label: "OpenAI",
     envKey: "OPENAI_API_KEY",
-    models: ["gpt-5.6-luna"],
+    models: ["gpt-6-luna"],
   },
   gemini: {
     label: "Gemini",

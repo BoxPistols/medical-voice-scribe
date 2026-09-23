@@ -168,7 +168,7 @@ OpenAI GPT-4/5の軽量モデルを使用した、以下の情報を含む詳細
                              ▼
                     ┌─────────────────┐
                     │   OpenAI API    │
-                    │  GPT-5.6 Luna   │
+                    │   GPT-6 Luna    │
                     │  JSON Response  │
                     └─────────────────┘
 ```
@@ -371,7 +371,7 @@ http://localhost:3000
 1. **入力検証**
    - テキストの存在確認
    - モデルIDの検証とフォールバック
-   - レート制限チェック（gpt-5.6-luna: 50回/日）
+   - レート制限チェック（gpt-6-luna: 50回/日）
 
 2. **セマンティック医療辞書検索**
    - 入力テキスト（先頭1000文字）を `text-embedding-3-small` でベクトル化
@@ -385,7 +385,7 @@ http://localhost:3000
    - ストリーミング/非ストリーミング両対応
 
 4. **OpenAI API呼び出し**
-   - モデル: `gpt-5.6-luna`
+   - モデル: `gpt-6-luna`
    - レスポンス形式: `json_object`
    - トークン上限: 16000
 
@@ -434,7 +434,7 @@ Next.js API Route (/api/analyze)
     ↓
 System Prompt + Medical Context + User Text
     ↓
-OpenAI API (GPT-5.6 Luna)
+OpenAI API (GPT-6 Luna)
     ↓
 JSON Response
     ↓
@@ -741,7 +741,7 @@ pnpm generate:embeddings
    - 診断や治療の根拠として使用しないでください
 
 3. **AI生成内容の不確実性**
-   - GPT-5.6 Lunaの出力は100%正確ではありません
+   - GPT-6 Lunaの出力は100%正確ではありません
    - 必ず医師による確認・修正が必要です
    - 幻覚（Hallucination）により事実と異なる内容が生成される可能性があります
 
@@ -758,7 +758,7 @@ pnpm generate:embeddings
 
 OpenAI APIの使用料金が発生します：
 
-- **GPT-5.6 Luna**: $0.20 / 1M input tokens, $1.20 / 1M output tokens（`src/app/api/analyze/types.ts`のAVAILABLE_MODELSが正）
+- **GPT-6 Luna**: $0.10 / 1M input tokens, $0.50 / 1M output tokens（`src/app/api/analyze/types.ts`のAVAILABLE_MODELSが正）
 - 1回の解析あたり約$0.001-0.005（会話の長さによる）
 
 ### 法的考慮事項
